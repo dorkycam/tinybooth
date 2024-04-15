@@ -1,8 +1,8 @@
 import React, {useMemo} from 'react';
 import {useAppStackNavigation} from './appNavigation';
-import {StyleSheet, View} from 'react-native';
+import {StatusBar, StyleSheet, View} from 'react-native';
 import {StackHeaderProps} from '@react-navigation/stack';
-import {IconButton, Text} from 'react-native-paper';
+import {IconButton, Text, useTheme} from 'react-native-paper';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
 type TBHeaderProps = {
@@ -21,6 +21,7 @@ export function TBHeader({
   options,
   route,
 }: TBHeaderProps): JSX.Element {
+  const theme = useTheme();
   const stackNavigator = useAppStackNavigation();
 
   const headerLeftRightProps = useMemo(
@@ -140,12 +141,18 @@ export function TBHeader({
     //   </>
     // );
     return (
-      <SafeAreaView>
-        <View style={styles.navContainer}>
-          <View>{title}</View>
-          <View>{right}</View>
-        </View>
-      </SafeAreaView>
+      <>
+        <StatusBar
+          barStyle={'light-content'} //{isDarkMode ? 'light-content' : 'dark-content'}
+          backgroundColor={theme.colors.error}
+        />
+        <SafeAreaView>
+          <View style={styles.navContainer}>
+            <View style={styles.leftContainer}>{title}</View>
+            <View style={styles.rightContainer}>{right}</View>
+          </View>
+        </SafeAreaView>
+      </>
     );
   }
 
@@ -175,13 +182,19 @@ export function TBHeader({
   // );
 
   return (
-    <SafeAreaView>
-      <View style={styles.navContainer}>
-        <View style={styles.leftContainer}>{left}</View>
-        <View style={styles.middleContainer}>{title}</View>
-        <View style={styles.rightContainer}>{right}</View>
-      </View>
-    </SafeAreaView>
+    <>
+      <StatusBar
+        barStyle={'dark-content'} //{isDarkMode ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.background}
+      />
+      <SafeAreaView>
+        <View style={styles.navContainer}>
+          <View style={styles.leftContainer}>{left}</View>
+          <View style={styles.middleContainer}>{title}</View>
+          <View style={styles.rightContainer}>{right}</View>
+        </View>
+      </SafeAreaView>
+    </>
   );
 }
 
