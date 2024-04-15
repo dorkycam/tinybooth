@@ -67,7 +67,7 @@ export function TBHeader({
       // <Box marginLeft={5}>
       //   <ElectronMintLogo />
       // </Box>
-      <Text variant="headlineSmall">tinybooth logo</Text>
+      <Text variant="headlineSmall">tb logo</Text>
     ) : undefined;
   }, [
     backButton,
