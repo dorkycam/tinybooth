@@ -1,8 +1,9 @@
 import React, {useMemo} from 'react';
 import {useAppStackNavigation} from './appNavigation';
-import {Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {StackHeaderProps} from '@react-navigation/stack';
-import {IconButton} from 'react-native-paper';
+import {IconButton, Text} from 'react-native-paper';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 type TBHeaderProps = {
   backButton?: boolean;
@@ -65,7 +66,7 @@ export function TBHeader({
       // <Box marginLeft={5}>
       //   <ElectronMintLogo />
       // </Box>
-      <Text>tinybooth logo</Text>
+      <Text variant="headlineSmall">tinybooth logo</Text>
     ) : undefined;
   }, [
     backButton,
@@ -79,8 +80,7 @@ export function TBHeader({
   const title = useMemo(() => {
     if (typeof options.headerTitle === 'string') {
       if (closeButton && left == null) {
-        // TODO: make this big and bold
-        return <Text>{options.headerTitle}</Text>;
+        return <Text variant="headlineSmall">{options.headerTitle}</Text>;
       }
       return <Text>{options.headerTitle}</Text>;
     } else if (options.headerTitle != null) {
@@ -91,8 +91,7 @@ export function TBHeader({
 
     if (options.title != null) {
       if (closeButton && left == null) {
-        // TODO: make this big and bold
-        return <Text>{options.title}</Text>;
+        return <Text variant="headlineSmall">{options.title}</Text>;
       }
       return <Text>{options.title}</Text>;
     }
@@ -103,23 +102,6 @@ export function TBHeader({
   const right = useMemo(() => {
     if (closeButton) {
       return (
-        // <IconButton
-        //   backgroundColor={colors.grey.dark}
-        //   marginRight={5}
-        //   padding={3}
-        //   borderRadius="100px"
-        //   icon={
-        //     <CloseIcon color={colors.white.primary} opacity={0.7} size="sm" />
-        //   }
-        //   // borderRadius="full"
-        //   onPress={() => {
-        //     if (onClosePress != undefined) {
-        //       onClosePress();
-        //     } else {
-        //       navigation.goBack();
-        //     }
-        //   }}
-        // />
         <IconButton
           icon="close"
           size={20}
@@ -158,14 +140,12 @@ export function TBHeader({
     //   </>
     // );
     return (
-      <>
-        <View>
-          <View>
-            <View>{title}</View>
-            <View>{right}</View>
-          </View>
+      <SafeAreaView>
+        <View style={styles.navContainer}>
+          <View>{title}</View>
+          <View>{right}</View>
         </View>
-      </>
+      </SafeAreaView>
     );
   }
 
@@ -195,14 +175,34 @@ export function TBHeader({
   // );
 
   return (
-    <>
-      <View>
-        <View>
-          <View>{left}</View>
-          <View>{title}</View>
-          <View>{right}</View>
-        </View>
+    <SafeAreaView>
+      <View style={styles.navContainer}>
+        <View style={styles.leftContainer}>{left}</View>
+        <View style={styles.middleContainer}>{title}</View>
+        <View style={styles.rightContainer}>{right}</View>
       </View>
-    </>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  navContainer: {
+    alignItems: 'center',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+  },
+  leftContainer: {
+    alignItems: 'flex-start',
+    width: '33%',
+  },
+  rightContainer: {
+    alignItems: 'flex-end',
+    width: '33%',
+  },
+  middleContainer: {
+    alignItems: 'center',
+    width: '34%',
+  },
+});
