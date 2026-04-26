@@ -7,6 +7,15 @@
  * Stripe price. Apple's anti-steering rules outside the US still bite even
  * after the May 2025 ruling per docs/research/monetization.md.
  *
+ * Cal-AI safety (Apple removed Cal AI April 2026 for paywall design):
+ * 1. Show the actual billed amount large (`$14.99`), never a per-day
+ *    equivalent.
+ * 2. Consumables only at launch; auto-renewal language is not applicable.
+ * 3. If the user hits "Maybe later" we close the modal. No sequential
+ *    second-chance prompts.
+ * 4. No external buy buttons or web price hints, IAP only on iOS.
+ * See docs/research/iteration-2026-04.md for the source.
+ *
  * Tablet: cards laid out side by side. Phone: stacked.
  */
 import { useRouter } from 'expo-router';
@@ -202,7 +211,7 @@ function PriceCard({
         ))}
       </View>
       <PrimaryButton
-        label={isCurrent ? 'Already active' : busy ? 'Loading...' : `Continue — $${dollars}`}
+        label={isCurrent ? 'Already active' : busy ? 'Loading...' : `Continue, $${dollars}`}
         onPress={onBuy}
         disabled={busy || isCurrent}
       />

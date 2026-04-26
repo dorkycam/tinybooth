@@ -62,7 +62,7 @@ export default function StripUnlockModal(): JSX.Element {
         </Text>
         <Text style={[styles.price, { color: theme.colors.fg }]}>${dollars}</Text>
         <PrimaryButton
-          label={alreadyUnlocked ? 'Already unlocked' : busy ? 'Loading...' : `Continue — $${dollars}`}
+          label={alreadyUnlocked ? 'Already unlocked' : busy ? 'Loading...' : `Continue, $${dollars}`}
           onPress={() => void handleBuy()}
           disabled={busy || alreadyUnlocked}
         />
