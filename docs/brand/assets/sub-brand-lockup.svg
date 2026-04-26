@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Sub-brand lockup pattern.
+  Product name in heavy weight + "by tinybooth" in light weight, separated by a thin rule.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 240" width="720" height="240">
+  <title>TinyBooth Sub-Brand Lockup</title>
+  <rect width="720" height="240" fill="#FBF7EE"/>
+  <g transform="translate(48 80)">
+    <!-- Lens mark -->
+    <circle cx="36" cy="36" r="34" fill="none" stroke="#1F2937" stroke-width="9"/>
+    <circle cx="36" cy="36" r="14" fill="#1F2937"/>
+    <!-- Product name -->
+    <text x="100" y="50" font-family="Manrope, -apple-system, sans-serif"
+          font-weight="700" font-size="60" fill="#1F2937" letter-spacing="-1.5">tinywall</text>
+    <!-- Vertical rule -->
+    <line x1="364" y1="14" x2="364" y2="58" stroke="#1F2937" stroke-width="2" opacity="0.4"/>
+    <!-- "by tinybooth" tag -->
+    <text x="382" y="36" font-family="Manrope, -apple-system, sans-serif"
+          font-weight="500" font-size="20" fill="#1F2937" opacity="0.7">by</text>
+    <text x="382" y="60" font-family="Manrope, -apple-system, sans-serif"
+          font-weight="600" font-size="24" fill="#1F2937">tinybooth</text>
+  </g>
+  <text x="48" y="200" font-family="Manrope, -apple-system, sans-serif"
+        font-size="14" fill="#1F2937" opacity="0.6">
+    Coral accent for TinyBooth core. Lilac accent for TinyWall. Mint reserved for future TinyX.
+  </text>
+</svg>

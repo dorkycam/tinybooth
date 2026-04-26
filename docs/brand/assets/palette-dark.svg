@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" width="720" height="220">
+  <title>TinyBooth Palette - Dark</title>
+  <style>
+    .lbl { font: 600 13px -apple-system, "Inter", sans-serif; fill: #F4EAD8; }
+    .hex { font: 500 11px ui-monospace, "SF Mono", monospace; fill: #C9C2B3; }
+  </style>
+  <rect width="720" height="220" fill="#0F1216"/>
+  <!-- Surface -->
+  <rect x="20"  y="20" width="100" height="140" rx="14" fill="#181C22"/>
+  <text x="20"  y="178" class="lbl">Surface</text>
+  <text x="20"  y="195" class="hex">#181C22</text>
+  <!-- Cream -->
+  <rect x="140" y="20" width="100" height="140" rx="14" fill="#F4EAD8"/>
+  <text x="140" y="178" class="lbl">Cream</text>
+  <text x="140" y="195" class="hex">#F4EAD8</text>
+  <!-- Coral -->
+  <rect x="260" y="20" width="100" height="140" rx="14" fill="#FF7A6B"/>
+  <text x="260" y="178" class="lbl">Coral</text>
+  <text x="260" y="195" class="hex">#FF7A6B</text>
+  <!-- Mint -->
+  <rect x="380" y="20" width="100" height="140" rx="14" fill="#74D2B9"/>
+  <text x="380" y="178" class="lbl">Mint</text>
+  <text x="380" y="195" class="hex">#74D2B9</text>
+  <!-- Lilac -->
+  <rect x="500" y="20" width="100" height="140" rx="14" fill="#C9A4E8"/>
+  <text x="500" y="178" class="lbl">Lilac</text>
+  <text x="500" y="195" class="hex">#C9A4E8</text>
+  <!-- Hairline -->
+  <rect x="620" y="20" width="80"  height="140" rx="14" fill="#2A2F37"/>
+  <text x="620" y="178" class="lbl">Hairline</text>
+  <text x="620" y="195" class="hex">#2A2F37</text>
+</svg>
