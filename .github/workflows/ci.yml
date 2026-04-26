@@ -38,3 +38,11 @@ jobs:
 
       - name: Run lint, typecheck, test, build
         run: pnpm turbo run lint typecheck test build
+
+      - name: Coverage summary (web)
+        run: pnpm --filter @tinybooth/web test:coverage 2>&1 | tail -40
+        continue-on-error: true
+
+      - name: Coverage summary (billing)
+        run: pnpm --filter @tinybooth/billing test:coverage 2>&1 | tail -20
+        continue-on-error: true
