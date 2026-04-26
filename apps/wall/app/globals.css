@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* TinyWall sub-brand uses Lilac as the identity accent. */
 :root {
   --color-paper: #fbf7ee;
@@ -8,6 +12,7 @@
   --color-coral: #e85d5d;
   --color-mint: #5fbfa6;
   --color-lilac: #b488d6;
+  --color-carbon: #0f1216;
 }
 
 * {
@@ -20,7 +25,6 @@ body {
   padding: 0;
   background-color: var(--color-paper);
   color: var(--color-ink);
-  font-family: var(--font-manrope), system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
