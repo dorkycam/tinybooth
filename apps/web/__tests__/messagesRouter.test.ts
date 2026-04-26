@@ -38,7 +38,15 @@ describe('messages router', () => {
   it('add rejects FREE-tier events with TIER_REQUIRED payload', async () => {
     const proxy = {
       event: {
-        findUnique: vi.fn(async () => ({ id: 'e1', ownerId: 'me', tier: 'FREE' })),
+        findUnique: vi.fn(async () => ({
+          id: 'e1',
+          ownerId: 'me',
+          tier: 'FREE',
+          endsAt: null,
+          createdAt: new Date(),
+          emailDeliveries: 0,
+          smsDeliveries: 0,
+        })),
       },
     };
     const caller = messagesRouter.createCaller({
@@ -51,10 +59,42 @@ describe('messages router', () => {
     );
   });
 
-  it('add allows a paid host to insert a message', async () => {
+  it('add rejects EVENT_PASS-tier events too (custom messages are Plus-only)', async () => {
     const proxy = {
       event: {
-        findUnique: vi.fn(async () => ({ id: 'e1', ownerId: 'me', tier: 'EVENT_PASS' })),
+        findUnique: vi.fn(async () => ({
+          id: 'e1',
+          ownerId: 'me',
+          tier: 'EVENT_PASS',
+          endsAt: null,
+          createdAt: new Date(),
+          emailDeliveries: 0,
+          smsDeliveries: 0,
+        })),
+      },
+    };
+    const caller = messagesRouter.createCaller({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      db: proxy as any,
+      userId: 'me',
+    });
+    await expect(caller.add({ eventId: 'e1', text: 'Hi!' })).rejects.toThrow(
+      /TIER_REQUIRED/,
+    );
+  });
+
+  it('add allows an EVENT_PASS_PLUS host to insert a message', async () => {
+    const proxy = {
+      event: {
+        findUnique: vi.fn(async () => ({
+          id: 'e1',
+          ownerId: 'me',
+          tier: 'EVENT_PASS_PLUS',
+          endsAt: null,
+          createdAt: new Date(),
+          emailDeliveries: 0,
+          smsDeliveries: 0,
+        })),
       },
       customMessage: {
         create: vi.fn(async ({ data }: { data: { text: string } }) => ({

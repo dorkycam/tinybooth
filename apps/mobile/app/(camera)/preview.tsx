@@ -13,6 +13,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { StripLayout } from '@tinybooth/api-types';
 import { computeLayout } from '@tinybooth/strip-render';
+import { DeliveryPanel } from '@/components/DeliveryPanel';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SecondaryButton } from '@/components/SecondaryButton';
 import { Wordmark } from '@/components/Wordmark';
@@ -29,7 +30,7 @@ export default function PreviewScreen(): JSX.Element {
   const theme = useTheme();
   const router = useRouter();
   const { layoutClass } = useLayoutClass();
-  const params = useLocalSearchParams<{ layout?: string; uris?: string }>();
+  const params = useLocalSearchParams<{ layout?: string; uris?: string; stripId?: string }>();
   const layout = parseLayout(params.layout) ?? '1x4_classic';
   const uris = (params.uris ?? '').split('|').filter(Boolean);
   const stripUnlock = useEntitlement('strip_unlock');
@@ -152,6 +153,14 @@ export default function PreviewScreen(): JSX.Element {
             />
           ) : null}
         </View>
+        {connection ? (
+          <View style={styles.delivery}>
+            <Text style={[styles.deliveryTitle, { color: theme.colors.subtle }]}>
+              Send to a guest
+            </Text>
+            <DeliveryPanel stripId={params.stripId ?? null} />
+          </View>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
@@ -235,5 +244,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     maxWidth: 720,
+  },
+  delivery: {
+    width: '100%',
+    maxWidth: 480,
+    gap: 8,
+    marginTop: 24,
+    alignItems: 'center',
+  },
+  deliveryTitle: {
+    fontSize: 12,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });

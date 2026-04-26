@@ -9,6 +9,7 @@ import { router, publicProcedure, protectedProcedure } from '../trpc';
 import { generateSlug } from '../../../lib/slug';
 import { clean } from '../../../lib/profanity';
 import { applyPurchase, type ApplyPurchaseDb } from '../../jobs/applyPurchase';
+import { evaluateEvent } from '@tinybooth/billing';
 
 const FREE_RETENTION_DAYS = 7;
 const EVENT_PASS_RETENTION_DAYS = 60;
@@ -141,7 +142,28 @@ export const eventRouter = router({
       }
       const data: Record<string, unknown> = {};
       if (input.name !== undefined) data.name = clean(input.name);
-      if (input.branding !== undefined) data.branding = input.branding;
+      if (input.branding !== undefined) {
+        // Logo upload is paid-tier only. Free can change colors but not push
+        // a new logoUrl. Strip the field client-side too, but enforce on the
+        // server because we never trust the client.
+        if (input.branding.logoUrl !== undefined) {
+          const ent = evaluateEvent({
+            id: existing.id,
+            tier: existing.tier,
+            endsAt: existing.endsAt,
+            createdAt: existing.createdAt,
+            emailDeliveries: existing.emailDeliveries,
+            smsDeliveries: existing.smsDeliveries,
+          });
+          if (!ent.logoUploadAllowed) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: JSON.stringify({ code: 'TIER_REQUIRED', requiredTier: 'EVENT_PASS' }),
+            });
+          }
+        }
+        data.branding = input.branding;
+      }
       if (input.settings !== undefined) data.settings = input.settings;
       const updated = await ctx.db.event.update({ where: { id: input.id }, data });
       return updated;

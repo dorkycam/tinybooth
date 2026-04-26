@@ -69,7 +69,12 @@ interface MockStrip {
   photos: Array<{ url: string; order: number }>;
 }
 
-function makeDeliverDb(initial: { strip: MockStrip; event: MockEvent }) {
+function makeDeliverDb(initial: { strip: MockStrip; event: MockEvent }): {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  proxy: any;
+  eventStore: Map<string, MockEvent>;
+  stripStore: Map<string, MockStrip>;
+} {
   const eventStore = new Map<string, MockEvent>([[initial.event.id, initial.event]]);
   const stripStore = new Map<string, MockStrip>([[initial.strip.id, initial.strip]]);
   const proxy = {
@@ -99,7 +104,12 @@ function makeDeliverDb(initial: { strip: MockStrip; event: MockEvent }) {
       findFirst: vi.fn(async () => initial.strip.photos[0] ?? null),
     },
   };
-  return { proxy, eventStore, stripStore };
+  return { proxy: proxy as unknown, eventStore, stripStore } as {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    proxy: any;
+    eventStore: Map<string, MockEvent>;
+    stripStore: Map<string, MockStrip>;
+  };
 }
 
 beforeEach(async () => {
@@ -118,6 +128,7 @@ describe('strip.deliver', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     proxy: any;
     eventStore: Map<string, MockEvent>;
+    stripStore: Map<string, MockStrip>;
   } {
     return makeDeliverDb({
       event: {

@@ -95,7 +95,10 @@ export const stripRouter = router({
       }
       const strip = await ctx.db.strip.findUnique({
         where: { id: input.stripId },
-        include: { event: true },
+        include: {
+          event: true,
+          photos: { orderBy: { order: 'asc' }, take: 1 },
+        },
       });
       if (!strip) throw new TRPCError({ code: 'NOT_FOUND', message: 'Strip not found.' });
       if (!strip.event) {
@@ -123,7 +126,7 @@ export const stripRouter = router({
         input.channel === 'email' ? ent.emailDeliveriesRemaining : ent.smsDeliveriesRemaining;
       if (remaining <= 0) {
         throw new TRPCError({
-          code: 'RESOURCE_EXHAUSTED',
+          code: 'TOO_MANY_REQUESTS',
           message: `Delivery quota exhausted for ${input.channel}.`,
         });
       }

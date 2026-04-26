@@ -5,6 +5,7 @@
  */
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
+import { evaluateEvent } from '@tinybooth/billing';
 import { router, publicProcedure } from '../trpc';
 import { clean } from '../../../lib/profanity';
 
@@ -59,6 +60,24 @@ export const postRouter = router({
           code: 'PRECONDITION_FAILED',
           message: 'This event is no longer accepting uploads.',
         });
+      }
+      // Guest cap enforcement. FREE: 100 uploads. EVENT_PASS: 150. PLUS: unlimited.
+      const ent = evaluateEvent({
+        id: event.id,
+        tier: event.tier,
+        endsAt: event.endsAt,
+        createdAt: event.createdAt,
+        emailDeliveries: event.emailDeliveries,
+        smsDeliveries: event.smsDeliveries,
+      });
+      if (ent.guestCap !== null) {
+        const currentCount = await ctx.db.post.count({ where: { eventId: input.eventId } });
+        if (currentCount >= ent.guestCap) {
+          throw new TRPCError({
+            code: 'TOO_MANY_REQUESTS',
+            message: `Guest upload cap reached (${ent.guestCap}). Ask the host to upgrade the event.`,
+          });
+        }
       }
       const caption = sanitizeCaption(input.caption);
       const post = await ctx.db.post.create({

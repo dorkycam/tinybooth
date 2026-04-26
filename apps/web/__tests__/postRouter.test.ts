@@ -7,6 +7,11 @@ import { postRouter, sanitizeCaption } from '../src/server/api/routers/post';
 interface MockEvent {
   id: string;
   retainUntil: Date;
+  tier?: 'FREE' | 'EVENT_PASS' | 'EVENT_PASS_PLUS';
+  endsAt?: Date | null;
+  createdAt?: Date;
+  emailDeliveries?: number;
+  smsDeliveries?: number;
 }
 
 interface MockPost {
@@ -27,7 +32,16 @@ function makeDb(initial: { events?: MockEvent[]; posts?: MockPost[] } = {}): {
 } {
   const events = new Map<string, MockEvent>();
   const posts = new Map<string, MockPost>();
-  for (const e of initial.events ?? []) events.set(e.id, e);
+  for (const e of initial.events ?? []) {
+    events.set(e.id, {
+      tier: 'FREE',
+      endsAt: null,
+      createdAt: new Date(),
+      emailDeliveries: 0,
+      smsDeliveries: 0,
+      ...e,
+    });
+  }
   for (const p of initial.posts ?? []) posts.set(p.id, p);
 
   const proxy = {
@@ -37,6 +51,11 @@ function makeDb(initial: { events?: MockEvent[]; posts?: MockPost[] } = {}): {
       }),
     },
     post: {
+      count: vi.fn(async ({ where }: { where: { eventId: string } }) => {
+        let c = 0;
+        for (const p of posts.values()) if (p.eventId === where.eventId) c += 1;
+        return c;
+      }),
       create: vi.fn(
         async ({
           data,
@@ -179,5 +198,76 @@ describe('post router', () => {
     expect(sanitizeCaption('   ')).toBeNull();
     const long = 'x'.repeat(200);
     expect((sanitizeCaption(long) ?? '').length).toBe(100);
+  });
+
+  it('create rejects when free-tier guest cap (100) has been reached', async () => {
+    const now = Date.now();
+    const seedPosts: MockPost[] = [];
+    for (let i = 0; i < 100; i += 1) {
+      seedPosts.push({
+        id: `seed_${i}`,
+        eventId: 'e1',
+        caption: null,
+        approved: true,
+        createdAt: new Date(now - i * 1000),
+        photos: [],
+        uploaderToken: null,
+      });
+    }
+    const { proxy } = makeDb({
+      events: [{ id: 'e1', retainUntil: new Date(now + 60_000), tier: 'FREE' }],
+      posts: seedPosts,
+    });
+    const caller = postRouter.createCaller({ db: proxy, userId: null });
+    await expect(
+      caller.create({
+        eventId: 'e1',
+        photos: [
+          {
+            url: 'https://x/a.webp',
+            storageKey: 'k',
+            mediaType: 'image',
+            width: 1,
+            height: 1,
+            order: 0,
+          },
+        ],
+      }),
+    ).rejects.toThrow(/Guest upload cap/);
+  });
+
+  it('create allows uploads on EVENT_PASS_PLUS even past free cap', async () => {
+    const now = Date.now();
+    const seedPosts: MockPost[] = [];
+    for (let i = 0; i < 200; i += 1) {
+      seedPosts.push({
+        id: `seed_${i}`,
+        eventId: 'e1',
+        caption: null,
+        approved: true,
+        createdAt: new Date(now - i * 1000),
+        photos: [],
+        uploaderToken: null,
+      });
+    }
+    const { proxy } = makeDb({
+      events: [{ id: 'e1', retainUntil: new Date(now + 60_000), tier: 'EVENT_PASS_PLUS' }],
+      posts: seedPosts,
+    });
+    const caller = postRouter.createCaller({ db: proxy, userId: null });
+    const created = await caller.create({
+      eventId: 'e1',
+      photos: [
+        {
+          url: 'https://x/a.webp',
+          storageKey: 'k',
+          mediaType: 'image',
+          width: 1,
+          height: 1,
+          order: 0,
+        },
+      ],
+    });
+    expect(created.id).toBeTruthy();
   });
 });

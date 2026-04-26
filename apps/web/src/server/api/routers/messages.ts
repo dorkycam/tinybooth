@@ -5,6 +5,7 @@
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { STATIC_MESSAGES } from '@tinybooth/messages';
+import { evaluateEvent } from '@tinybooth/billing';
 import { router, publicProcedure, protectedProcedure } from '../trpc';
 
 const MAX_CUSTOM_MESSAGE_LEN = 80;
@@ -42,10 +43,18 @@ export const messagesRouter = router({
       const event = await ctx.db.event.findUnique({ where: { id: input.eventId } });
       if (!event) throw new TRPCError({ code: 'NOT_FOUND' });
       if (event.ownerId !== ctx.userId) throw new TRPCError({ code: 'FORBIDDEN' });
-      if (event.tier === 'FREE') {
+      const ent = evaluateEvent({
+        id: event.id,
+        tier: event.tier,
+        endsAt: event.endsAt,
+        createdAt: event.createdAt,
+        emailDeliveries: event.emailDeliveries,
+        smsDeliveries: event.smsDeliveries,
+      });
+      if (!ent.customMessagesAllowed) {
         throw new TRPCError({
           code: 'FORBIDDEN',
-          message: JSON.stringify({ code: 'TIER_REQUIRED', requiredTier: 'EVENT_PASS' }),
+          message: JSON.stringify({ code: 'TIER_REQUIRED', requiredTier: 'EVENT_PASS_PLUS' }),
         });
       }
       const created = await ctx.db.customMessage.create({

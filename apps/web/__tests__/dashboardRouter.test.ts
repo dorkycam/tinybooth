@@ -47,10 +47,18 @@ describe('dashboard router', () => {
     await expect(caller.eventPhotos({ eventId: 'a' })).rejects.toThrow();
   });
 
-  it('exportEvent rejects FREE-tier events with FORBIDDEN', async () => {
+  it('exportEvent rejects FREE-tier events with TIER_REQUIRED', async () => {
     const proxy = {
       event: {
-        findUnique: vi.fn(async () => ({ id: 'a', ownerId: 'me', tier: 'FREE' })),
+        findUnique: vi.fn(async () => ({
+          id: 'a',
+          ownerId: 'me',
+          tier: 'FREE',
+          endsAt: null,
+          createdAt: new Date(),
+          emailDeliveries: 0,
+          smsDeliveries: 0,
+        })),
       },
     };
     const caller = dashboardRouter.createCaller({
@@ -58,7 +66,7 @@ describe('dashboard router', () => {
       db: proxy as any,
       userId: 'me',
     });
-    await expect(caller.exportEvent({ eventId: 'a' })).rejects.toThrow(/Event Pass/);
+    await expect(caller.exportEvent({ eventId: 'a' })).rejects.toThrow(/TIER_REQUIRED/);
   });
 
   it('exportEvent inserts a PENDING export row when paid', async () => {
@@ -73,6 +81,10 @@ describe('dashboard router', () => {
           tier: 'EVENT_PASS',
           name: 'X',
           slug: 'x',
+          endsAt: null,
+          createdAt: new Date(),
+          emailDeliveries: 0,
+          smsDeliveries: 0,
         })),
       },
       photo: { findMany: vi.fn(async () => []) },

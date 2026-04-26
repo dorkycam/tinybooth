@@ -5,6 +5,7 @@
 import { createHmac, randomBytes } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
+import { evaluateEvent } from '@tinybooth/billing';
 import { router, protectedProcedure } from '../trpc';
 import { runExportJob, type ExportJobDb } from '../../jobs/exportEvent';
 import { getStorage } from '../../../lib/storage';
@@ -132,10 +133,18 @@ export const dashboardRouter = router({
       const event = await ctx.db.event.findUnique({ where: { id: input.eventId } });
       if (!event) throw new TRPCError({ code: 'NOT_FOUND' });
       if (event.ownerId !== ctx.userId) throw new TRPCError({ code: 'FORBIDDEN' });
-      if (event.tier === 'FREE') {
+      const ent = evaluateEvent({
+        id: event.id,
+        tier: event.tier,
+        endsAt: event.endsAt,
+        createdAt: event.createdAt,
+        emailDeliveries: event.emailDeliveries,
+        smsDeliveries: event.smsDeliveries,
+      });
+      if (!ent.dashboardExportAllowed) {
         throw new TRPCError({
           code: 'FORBIDDEN',
-          message: 'Bulk export requires Event Pass or Event Pass Plus.',
+          message: JSON.stringify({ code: 'TIER_REQUIRED', requiredTier: 'EVENT_PASS' }),
         });
       }
       const exp = await ctx.db.export.create({
