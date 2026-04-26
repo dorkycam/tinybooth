@@ -66,7 +66,12 @@ function stubSession(provider: MobileSession['provider'], email: string | null):
 }
 
 interface AppleAuthModule {
-  signInAsync(opts: unknown): Promise<{ identityToken?: string; email?: string | null }>;
+  signInAsync(opts: unknown): Promise<{
+    identityToken?: string;
+    authorizationCode?: string | null;
+    email?: string | null;
+  }>;
+  refreshAsync(opts: { user: string }): Promise<unknown>;
   AppleAuthenticationScope: { FULL_NAME: number; EMAIL: number };
 }
 
@@ -165,6 +170,36 @@ export async function sendMagicLink(email: string): Promise<void> {
 /** Sign the user out and clear the persisted session. */
 export async function signOut(): Promise<void> {
   await clearSession();
+}
+
+/**
+ * Revoke the Sign in with Apple token for the current session.
+ *
+ * Apple requires apps that use SIWA to call the Apple token-revocation
+ * endpoint as part of account deletion (in effect since 2024). The actual
+ * revocation runs server-side because it needs the team key. This client
+ * function POSTs the SIWA authorization code (captured at sign-in) to our
+ * server, which holds the team JWT signing key. If the user did not sign in
+ * with Apple this is a no-op.
+ *
+ * @param accessToken Bearer token to authenticate the revoke request.
+ * @param baseUrl Web base URL for the tRPC route.
+ */
+export async function revokeAppleToken(
+  accessToken: string,
+  baseUrl: string,
+): Promise<void> {
+  const session = await loadSession();
+  if (!session || session.provider !== 'apple') return;
+  const url = `${baseUrl}/api/trpc/account.revokeAppleToken?batch=1`;
+  await fetch(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ '0': { json: undefined } }),
+  });
 }
 
 /** Lazy-load a module by name; returns null when the package is missing. */

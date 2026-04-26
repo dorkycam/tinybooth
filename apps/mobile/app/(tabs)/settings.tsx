@@ -21,6 +21,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { SecondaryButton } from '@/components/SecondaryButton';
 import { useSession } from '@/hooks/useSession';
 import { deleteAccount } from '@/lib/accountApi';
+import { revokeAppleToken } from '@/lib/auth';
 import {
   DEFAULT_SESSION_SETTINGS,
   loadSessionSettings,
@@ -61,6 +62,16 @@ export default function SettingsScreen(): JSX.Element {
     if (!session.session) return;
     setDeleting(true);
     try {
+      // Apple requires SIWA token revoke as part of account deletion (2024+).
+      // Best-effort: failure here does not block the rest of the cascade,
+      // because the row delete still removes the user's data.
+      try {
+        const baseUrl =
+          process.env.EXPO_PUBLIC_WEB_BASE_URL ?? 'https://tinybooth.com';
+        await revokeAppleToken(session.session.accessToken, baseUrl);
+      } catch {
+        // swallowed; the server-side revoke endpoint logs the error.
+      }
       await deleteAccount(session.session.accessToken, session.session.userId);
       await session.signOut();
       Alert.alert('Account deleted', 'Your account and every event you owned were removed.');

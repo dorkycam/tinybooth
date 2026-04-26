@@ -16,10 +16,18 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.codesquad.tinybooth",
+      "usesAppleSignIn": true,
+      "entitlements": {
+        "com.apple.developer.applesignin": ["Default"]
+      },
+      "privacyManifests": {
+        "PrivacyInfoPath": "./ios/TinyBooth/PrivacyInfo.xcprivacy"
+      },
       "infoPlist": {
         "NSCameraUsageDescription": "TinyBooth uses your camera to take photostrips.",
         "NSPhotoLibraryAddUsageDescription": "TinyBooth saves your photostrips to your camera roll when you tap Save.",
-        "NSPhotoLibraryUsageDescription": "TinyBooth needs photo access to save your photostrips."
+        "NSPhotoLibraryUsageDescription": "TinyBooth needs photo access to save your photostrips.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -40,6 +48,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-apple-authentication",
       [
         "react-native-vision-camera",
         {
