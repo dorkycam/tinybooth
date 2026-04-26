@@ -18,11 +18,37 @@ export interface CleanupSummary {
   expiredExports: number;
 }
 
+/**
+ * Minimal Prisma-shaped surface this module touches. Defined structurally
+ * (not via `import { PrismaClient }`) so the test suite can pass an
+ * in-memory mock. Production passes the real PrismaClient, which structurally
+ * satisfies these methods.
+ */
+interface CleanupDb {
+  event: {
+    findMany(args: {
+      where: { retainUntil: { lt: Date } };
+      select: { id: true };
+    }): Promise<Array<{ id: string }>>;
+    deleteMany(args: { where: { id: { in: string[] } } }): Promise<unknown>;
+  };
+  photo: {
+    findMany(args: {
+      where: { OR: Array<{ post: { eventId: { in: string[] } } } | { strip: { eventId: { in: string[] } } }> };
+      select: { id: true; storageKey: true };
+    }): Promise<Array<{ id: string; storageKey: string | null }>>;
+  };
+  export?: {
+    findMany?(args: {
+      where: { expiresAt: { lt: Date }; status: 'READY' };
+      select: { id: true; storageKey: true };
+    }): Promise<Array<{ id: string; storageKey: string | null }>>;
+    deleteMany?(args: { where: { id: { in: string[] } } }): Promise<unknown>;
+  };
+}
+
 interface CleanupContext {
-  // Loose typing here keeps the test mock simple. Production passes the real
-  // Prisma client.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  db: any;
+  db: CleanupDb;
   storage: Storage;
   now: Date;
 }
@@ -49,7 +75,7 @@ export async function runCleanup(ctx: CleanupContext): Promise<CleanupSummary> {
   summary.expiredEvents = expired.length;
 
   if (expired.length > 0) {
-    const eventIds = expired.map((e: { id: string }) => e.id);
+    const eventIds = expired.map((e) => e.id);
     const photos = await ctx.db.photo.findMany({
       where: {
         OR: [
@@ -61,7 +87,7 @@ export async function runCleanup(ctx: CleanupContext): Promise<CleanupSummary> {
     });
     summary.deletedPhotos = photos.length;
 
-    for (const p of photos as Array<{ storageKey: string }>) {
+    for (const p of photos) {
       if (!p.storageKey) continue;
       try {
         await ctx.storage.deleteObject(p.storageKey);
@@ -81,7 +107,7 @@ export async function runCleanup(ctx: CleanupContext): Promise<CleanupSummary> {
       select: { id: true, storageKey: true },
     });
     summary.expiredExports = exports.length;
-    for (const e of exports as Array<{ id: string; storageKey: string | null }>) {
+    for (const e of exports) {
       if (e.storageKey) {
         try {
           await ctx.storage.deleteObject(e.storageKey);
@@ -93,7 +119,7 @@ export async function runCleanup(ctx: CleanupContext): Promise<CleanupSummary> {
     }
     if (exports.length > 0) {
       await ctx.db.export.deleteMany({
-        where: { id: { in: exports.map((x: { id: string }) => x.id) } },
+        where: { id: { in: exports.map((x) => x.id) } },
       });
     }
   }
