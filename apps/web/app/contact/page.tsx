@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * /contact — short page. Email + a simple form. The form POSTs to
+ * /contact. short page. Email + a simple form. The form POSTs to
  * /api/contact which logs in dev and sends via SES when configured.
  */
 export default function ContactPage(): JSX.Element {

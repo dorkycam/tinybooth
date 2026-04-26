@@ -55,7 +55,7 @@ interface TierColumn {
 }
 
 /**
- * /pricing — comparison table fed from @tinybooth/billing so the catalog
+ * /pricing. comparison table fed from @tinybooth/billing so the catalog
  * stays in lockstep with the actual product. Web vs IAP price both shown
  * because they intentionally differ ($12.99 vs $14.99 for Event Pass) to
  * pass through Apple's 15% Small Business take.

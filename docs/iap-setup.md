@@ -188,7 +188,7 @@ Strip Unlock is **not** sold on the web (IAP only).
 
 ## 5. Environment variables (Vercel + EAS)
 
-### 5.1 Vercel — `apps/web` and `apps/wall`
+### 5.1 Vercel: `apps/web` and `apps/wall`
 
 | Name | Used for | Staging | Production |
 |---|---|---|---|
@@ -218,7 +218,7 @@ Strip Unlock is **not** sold on the web (IAP only).
 | `NEXT_PUBLIC_WEB_BASE_URL` | Absolute URL for redirects | `https://staging.tinybooth.com` | `https://tinybooth.com` |
 | `PAIRING_SECRET` | HMAC for the booth-event QR pair flow | yes | yes |
 
-### 5.2 EAS — `apps/mobile` (`eas.json` env block)
+### 5.2 EAS: `apps/mobile` (`eas.json` env block)
 
 | Name | Used for | Staging | Production |
 |---|---|---|---|

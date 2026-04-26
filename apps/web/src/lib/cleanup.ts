@@ -3,9 +3,9 @@
  * its own module so tests can pass a frozen `now` and a mock db/storage.
  *
  * Two passes:
- *   1. Expired events — find events past `retainUntil`, delete their R2
+ *   1. Expired events: find events past `retainUntil`, delete their R2
  *      photos, then drop the rows (cascades to posts/strips/photos/messages).
- *   2. Expired exports — find Export rows whose 24h signed URL has expired,
+ *   2. Expired exports: find Export rows whose 24h signed URL has expired,
  *      delete the zip from storage, then drop the row.
  */
 import type { Storage } from './storage';

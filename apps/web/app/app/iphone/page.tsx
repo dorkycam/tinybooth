@@ -63,7 +63,7 @@ const IPHONE_FAQ = [
 ] as const;
 
 /**
- * /app/iphone — keyword landing page targeting "iphone photo booth app".
+ * /app/iphone. keyword landing page targeting "iphone photo booth app".
  * Phones are the secondary form factor; this page is honest about that and
  * leans into the casual / pocket-booth use case.
  */

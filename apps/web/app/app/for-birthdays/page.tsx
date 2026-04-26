@@ -62,7 +62,7 @@ const BIRTHDAY_FAQ = [
 ] as const;
 
 /**
- * /app/for-birthdays — birthday-vertical landing for the app. Lower-key
+ * /app/for-birthdays. birthday-vertical landing for the app. Lower-key
  * tone than the wedding page. Free is enough for most. Targets "photo
  * booth app birthday party" plus the long-tail birthday cluster.
  */

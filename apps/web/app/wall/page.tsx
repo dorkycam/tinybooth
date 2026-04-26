@@ -84,7 +84,7 @@ const WALL_FAQ = [
 ] as const;
 
 /**
- * /wall — TinyWall product landing. Replaces the Phase 1 minimal page with
+ * /wall. TinyWall product landing. Replaces the Phase 1 minimal page with
  * a real product story. The "Create a wall" CTA goes to /wall/new which
  * preserves the existing event-creation flow from Phase 1.
  */

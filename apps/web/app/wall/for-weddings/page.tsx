@@ -72,7 +72,7 @@ const WEDDING_WALL_FAQ = [
 ] as const;
 
 /**
- * /wall/for-weddings — wedding-vertical landing for TinyWall. Targets the
+ * /wall/for-weddings. wedding-vertical landing for TinyWall. Targets the
  * highest-intent wedding-photo-wall cluster from the SEO research. Heavy
  * on the candid-photo angle plus the dead-WedPics safety story.
  */

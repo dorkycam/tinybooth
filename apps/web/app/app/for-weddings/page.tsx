@@ -63,7 +63,7 @@ const WEDDING_FAQ = [
 ] as const;
 
 /**
- * /app/for-weddings — wedding-vertical landing for the app. The angle is
+ * /app/for-weddings. wedding-vertical landing for the app. The angle is
  * the rent-vs-DIY math from the user research, plus the wall as the
  * candid-photo capture story. Targets "photo booth app for wedding".
  */

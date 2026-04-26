@@ -53,7 +53,7 @@ const ANDROID_FAQ = [
 ] as const;
 
 /**
- * /app/android — keyword landing page for "android photo booth app". The
+ * /app/android. keyword landing page for "android photo booth app". The
  * page is honest about iOS being more battle-tested and explains the path
  * to parity. Tablets are the primary form factor; phones are secondary.
  */

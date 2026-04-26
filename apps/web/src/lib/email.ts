@@ -1,10 +1,10 @@
 /**
  * Email delivery wrapper. Two backends:
  *
- *   - SES — used in production when `AWS_SES_REGION` plus the standard AWS
+ *   - SES: used in production when `AWS_SES_REGION` plus the standard AWS
  *     credential envs are set. Lazy-imports `@aws-sdk/client-ses` so the
  *     local-dev path doesn't pay for the SDK weight.
- *   - Local file — writes the HTML payload to `apps/web/.emails/{ts}-{slug}.html`
+ *   - Local file: writes the HTML payload to `apps/web/.emails/{ts}-{slug}.html`
  *     and logs the path. Lets a dev see exactly what would have been sent
  *     without provisioning anything.
  */

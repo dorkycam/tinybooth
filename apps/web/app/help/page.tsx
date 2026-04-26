@@ -183,7 +183,7 @@ const RETENTION = [
 ] as const;
 
 /**
- * /help — long help page. Five sections of real Q&A grouped by topic.
+ * /help. long help page. Five sections of real Q&A grouped by topic.
  * No FAQPage schema (Google retired the rich result for non-government /
  * non-health sites in 2023 per docs/research/seo.md), so the content
  * lives in clean `<dl>` markup instead.

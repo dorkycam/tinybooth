@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * /about — short. Independent solo project, LA-based, the why.
+ * /about. short. Independent solo project, LA-based, the why.
  */
 export default function AboutPage(): JSX.Element {
   return (

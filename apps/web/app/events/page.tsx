@@ -135,7 +135,7 @@ function EventDiagram(): JSX.Element {
 }
 
 /**
- * /events — the cross-product story page. Explains how booth + wall +
+ * /events. the cross-product story page. Explains how booth + wall +
  * branding + dashboard fit together. Targets the "event photo" search
  * cluster but is also internally linked from every product page.
  */

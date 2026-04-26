@@ -1,10 +1,10 @@
 /**
  * SMS delivery wrapper. Two backends:
  *
- *   - Twilio — used in production when TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN
+ *   - Twilio: used in production when TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN
  *     + TWILIO_FROM are set. Lazy-imports `twilio` so the local-dev path does
  *     not pay for the SDK weight.
- *   - Local file — writes the rendered SMS to apps/web/.sms/{ts}.txt and logs
+ *   - Local file: writes the rendered SMS to apps/web/.sms/{ts}.txt and logs
  *     the path. Lets a dev see exactly what would have been sent without
  *     provisioning a Twilio account.
  */

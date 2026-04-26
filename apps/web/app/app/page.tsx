@@ -73,7 +73,7 @@ const APP_FAQ = [
 ] as const;
 
 /**
- * /app — TinyBooth app product hub. Server-rendered. Pulls together the
+ * /app. TinyBooth app product hub. Server-rendered. Pulls together the
  * five layouts, the AirPrint story, the random-message hook, and the
  * Instagram-format share angle into one page.
  */

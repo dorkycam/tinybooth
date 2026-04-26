@@ -73,7 +73,7 @@ const SLIDESHOW_FAQ = [
 ] as const;
 
 /**
- * /wall/live-slideshow — informational landing for the "live photo
+ * /wall/live-slideshow. informational landing for the "live photo
  * slideshow for tv" keyword cluster. Lots of practical setup instructions,
  * three setup paths (Smart TV, AirPlay, Chromecast / HDMI laptop).
  */

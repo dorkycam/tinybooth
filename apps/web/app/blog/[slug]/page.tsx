@@ -58,7 +58,7 @@ function formatDate(iso: string): string {
 }
 
 /**
- * /blog/[slug] — post template. Renders the post body inside Prose, plus
+ * /blog/[slug]. post template. Renders the post body inside Prose, plus
  * Article + BreadcrumbList JSON-LD, plus a related-posts footer.
  */
 export default function BlogPostPage({ params }: PageProps): JSX.Element {

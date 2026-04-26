@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * /legal/terms — terms of service. Real terms covering: free vs paid,
+ * /legal/terms. terms of service. Real terms covering: free vs paid,
  * IAP refunds, content ownership, retention policy, DMCA contact,
  * disclaimers, governing law (CA, since Camrynn is LA-based).
  */

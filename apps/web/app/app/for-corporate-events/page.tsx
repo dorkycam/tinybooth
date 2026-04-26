@@ -62,7 +62,7 @@ const CORPORATE_FAQ = [
 ] as const;
 
 /**
- * /app/for-corporate-events — corporate-vertical landing. The story is
+ * /app/for-corporate-events. corporate-vertical landing. The story is
  * branding + moderation + bulk export. Targets the lower-volume but
  * higher-intent corporate keyword cluster from the SEO research.
  */

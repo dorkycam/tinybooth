@@ -525,7 +525,7 @@ The force `exit(0)` during capture is aggressive but intentional. In a photoboot
 
 ## Recommendations for New App Build
 
-1. **Preserve Bundle ID:** Keep `com.codesquad.tinybooth` for seamless App Store update
+1. **Preserve Bundle ID:** Keep `com.codesquad.tinybooth` for an automatic App Store update
 2. **Extend Message Library:** The 9 messages are perfect starting point; plan for user customization at paid tier
 3. **Multiple Layouts:** Current single layout is a feature, not a limitation; add 2x2, 1x3, single-photo options in new app
 4. **Tablet-First Design:** Current app has device-specific hacks; new cross-platform design must handle landscape properly

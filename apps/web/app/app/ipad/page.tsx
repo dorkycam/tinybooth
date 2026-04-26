@@ -63,7 +63,7 @@ const IPAD_FAQ = [
 ] as const;
 
 /**
- * /app/ipad — keyword landing page targeting "photo booth app for iPad".
+ * /app/ipad. keyword landing page targeting "photo booth app for iPad".
  * Tablet-first sensibility per the plan: portrait orientation, ring light,
  * Guided Access, Selphy printer setup.
  */

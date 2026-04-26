@@ -32,7 +32,7 @@ function formatDate(iso: string): string {
 }
 
 /**
- * /blog — index page. Lists every post with title, excerpt, and date.
+ * /blog. index page. Lists every post with title, excerpt, and date.
  * Hero image placeholder sits at the top of each card; Camrynn replaces
  * the alt text + the file once real screenshots ship.
  */

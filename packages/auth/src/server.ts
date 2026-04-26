@@ -5,9 +5,9 @@
  * caller is anonymous. `requireSession` throws when the caller is anonymous.
  *
  * Two paths:
- *   1. Production / staging — Supabase envs set. We pull the bearer token off
+ *   1. Production / staging: Supabase envs set. We pull the bearer token off
  *      the Authorization header and call `auth.getUser()` for verification.
- *   2. Local dev — envs missing. We honor an `x-debug-user-id` header so the
+ *   2. Local dev: envs missing. We honor an `x-debug-user-id` header so the
  *      tRPC stubs and Vitest suites work without provisioning Supabase. The
  *      debug header is ignored in production (NODE_ENV check) so a misconfigured
  *      deploy can never turn into an auth bypass.
