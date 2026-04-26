@@ -1,0 +1,14 @@
+node_modules
+.next
+.turbo
+.expo
+dist
+build
+coverage
+pnpm-lock.yaml
+*.md
+docs/
+tinybooth-old/
+tinybooth-wall/
+data/
+infra/terraform/.terraform

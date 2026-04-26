@@ -1,0 +1,19 @@
+{
+  "name": "@tinybooth/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared base configs (tsconfig, eslint, prettier) for the TinyBooth monorepo.",
+  "exports": {
+    "./tsconfig": "./tsconfig.base.json",
+    "./eslint": "./eslint.base.js",
+    "./prettier": "./prettier.base.js"
+  },
+  "files": ["tsconfig.base.json", "eslint.base.js", "prettier.base.js"],
+  "scripts": {
+    "lint": "echo \"no source to lint\"",
+    "typecheck": "echo \"no source to typecheck\"",
+    "test": "echo \"no tests\"",
+    "build": "echo \"no build\""
+  }
+}

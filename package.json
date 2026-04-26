@@ -1,0 +1,28 @@
+{
+  "name": "tinybooth",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TinyBooth monorepo: photobooth app, marketing site, TinyWall live photo wall.",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "prettier": "^3.2.5",
+    "turbo": "^2.0.6",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0",
+    "tsx": "^4.7.2"
+  }
+}
