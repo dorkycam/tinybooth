@@ -23,6 +23,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['var(--font-manrope)', 'system-ui', 'sans-serif'],
+        handwritten: ['var(--font-caveat)', 'cursive'],
       },
     },
   },
