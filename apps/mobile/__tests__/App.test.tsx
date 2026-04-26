@@ -1,19 +1,25 @@
 import { describe, expect, it } from 'vitest';
 
 /**
- * Phase 0 smoke test. We do not boot React Native in vitest; the EAS preview
- * build is the integration test. Here we just confirm the entrypoint module
- * imports cleanly so a typo or broken cross-package import surfaces in CI.
- *
- * Phase 2 swaps this for a `@testing-library/react-native` render test once
- * the camera and strip components exist.
+ * Mobile entrypoint smoke test. Vitest in node cannot boot the React Native or
+ * Expo Router runtime, so we limit verification to cross-package imports the
+ * mobile app relies on. The full UI test plan is the EAS preview build.
  */
-describe('mobile entrypoint', () => {
-  it('App module is resolvable as a default export reference', async () => {
-    // Vitest in node cannot import the React Native runtime, so we limit the
-    // smoke test to the messages package import path that App relies on.
+describe('mobile cross-package imports', () => {
+  it('loads the random message library', async () => {
     const messages = await import('@tinybooth/messages');
     expect(typeof messages.getRandomMessage).toBe('function');
     expect(messages.STATIC_MESSAGES.length).toBe(9);
+  });
+
+  it('loads strip layout math from the shared package', async () => {
+    const stripRender = await import('@tinybooth/strip-render');
+    expect(typeof stripRender.computeLayout).toBe('function');
+    expect(stripRender.frameCountForLayout('1x4_classic')).toBe(4);
+  });
+
+  it('loads brand color tokens', async () => {
+    const tokens = await import('@tinybooth/ui-tokens');
+    expect(tokens.LIGHT_COLORS.coral).toBe('#E85D5D');
   });
 });
