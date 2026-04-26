@@ -111,3 +111,27 @@ function escapeHtml(s: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
+/**
+ * Send a strip-delivery email. Used by the camera flow when a guest opts to
+ * have their strip emailed at a paid event. Quota tracking lives in the
+ * strip router; this function only renders + sends.
+ *
+ * @param input Recipient email, event id, and a public strip URL.
+ */
+export async function sendStripDelivery(input: {
+  to: string;
+  eventName: string;
+  stripUrl: string;
+}): Promise<EmailDeliveryResult> {
+  const safeName = escapeHtml(input.eventName);
+  const safeUrl = escapeHtml(input.stripUrl);
+  const html = `<p>Your strip from <strong>${safeName}</strong> is ready.</p>
+<p><a href="${safeUrl}">Tap here to download or share</a>.</p>
+<p>Thanks for celebrating with TinyBooth.</p>`;
+  return sendEmail({
+    to: input.to,
+    subject: `Your strip from ${input.eventName}`,
+    html,
+  });
+}
