@@ -7,13 +7,14 @@
   "scripts": {
     "lint": "echo \"lint stub\"",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"no tests\"",
+    "test": "vitest run",
     "build": "echo \"no build\"",
     "migrate-tinywall": "tsx migrate-tinywall.ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
     "tsx": "^4.7.2",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
   }
 }
