@@ -322,6 +322,28 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@20.19.39)(terser@5.46.2)
 
+  packages/auth:
+    dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.45.0
+        version: 2.104.1
+    devDependencies:
+      '@tinybooth/config':
+        specifier: workspace:*
+        version: link:../config
+      '@types/node':
+        specifier: ^20.11.30
+        version: 20.19.39
+      '@vitest/coverage-v8':
+        specifier: ^1.6.0
+        version: 1.6.1(vitest@1.6.1(@types/node@20.19.39)(terser@5.46.2))
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.39)(terser@5.46.2)
+
   packages/config: {}
 
   packages/messages:
