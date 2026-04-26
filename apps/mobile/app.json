@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "TinyBooth",
+    "slug": "tinybooth",
+    "version": "0.0.1",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FBF7EE"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.codesquad.tinybooth"
+    },
+    "android": {
+      "package": "com.codesquad.tinybooth",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FBF7EE"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

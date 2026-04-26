@@ -1,0 +1,26 @@
+/* Root CSS variables sourced from @tinybooth/ui-tokens (light mode v0). */
+:root {
+  --color-paper: #fbf7ee;
+  --color-cream: #f4ead8;
+  --color-ink: #1f2937;
+  --color-graphite: #5b6470;
+  --color-stone: #e5e0d5;
+  --color-coral: #e85d5d;
+  --color-mint: #5fbfa6;
+  --color-lilac: #b488d6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-manrope), system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

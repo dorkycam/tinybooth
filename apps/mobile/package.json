@@ -1,0 +1,30 @@
+{
+  "name": "@tinybooth/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
+    "lint": "echo \"lint stub (per-app config added in Phase 2)\"",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "echo \"native builds run via EAS, not turbo\""
+  },
+  "dependencies": {
+    "expo": "^51.0.0",
+    "expo-status-bar": "~1.12.1",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-safe-area-context": "4.10.5",
+    "@tinybooth/messages": "workspace:*",
+    "@tinybooth/ui-tokens": "workspace:*"
+  },
+  "devDependencies": {
+    "@tinybooth/config": "workspace:*",
+    "@types/react": "~18.2.45",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.0"
+  }
+}
