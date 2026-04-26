@@ -11,7 +11,7 @@ const handler = (req: Request): Promise<Response> =>
     endpoint: '/api/trpc',
     req,
     router: appRouter,
-    createContext: () => createContext(req),
+    createContext: async () => createContext(req),
     onError({ error, path }) {
       // eslint-disable-next-line no-console
       console.error(`[trpc] ${path ?? '<unknown>'} ->`, error.message);

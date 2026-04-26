@@ -202,6 +202,9 @@ importers:
       '@tinybooth/api-types':
         specifier: workspace:*
         version: link:../../packages/api-types
+      '@tinybooth/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@tinybooth/messages':
         specifier: workspace:*
         version: link:../../packages/messages
