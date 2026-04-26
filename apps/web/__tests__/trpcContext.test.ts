@@ -12,7 +12,9 @@ import { dashboardRouter } from '../src/server/api/routers/dashboard';
 beforeEach(() => {
   delete process.env.NEXT_PUBLIC_SUPABASE_URL;
   delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  process.env.NODE_ENV = 'test';
+  // Force the dev-fallback path. Vitest's typings widen NODE_ENV to readonly,
+  // so we round-trip through a writable record to set it.
+  (process.env as Record<string, string>).NODE_ENV = 'test';
 });
 
 describe('createContext', () => {

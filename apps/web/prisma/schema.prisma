@@ -29,12 +29,16 @@ model User {
   purchases     Purchase[]
 }
 
+// Note: Export.userId is intentionally a free string (matches the user id we
+// stash from auth) without a Prisma relation, so an in-flight export does not
+// block account deletion. The cleanup cron sweeps orphan rows.
+
 // Event is the cross-product unit. Owned by a User, or null for free anonymous
 // TinyWall rooms. Branding propagates to TinyBooth strips and TinyWall TVs.
 model Event {
   id              String          @id @default(cuid())
   ownerId         String?
-  owner           User?           @relation(fields: [ownerId], references: [id])
+  owner           User?           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   name            String
   slug            String          @unique
   tier            EventTier       @default(FREE)
@@ -45,11 +49,16 @@ model Event {
   settings        Json            @default("{}")
   emailDeliveries Int             @default(0)
   smsDeliveries   Int             @default(0)
+  // One-time token issued at creation time so an anon creator can later claim
+  // ownership of a free event by signing in. Cleared on first successful claim.
+  claimToken      String?
+  claimedAt       DateTime?
   createdAt       DateTime        @default(now())
   posts           Post[]
   strips          Strip[]
   customMessages  CustomMessage[]
   purchases       Purchase[]
+  exports         Export[]
 
   @@index([slug])
   @@index([ownerId, createdAt])
@@ -151,8 +160,36 @@ model Subscription {
   createdAt   DateTime  @default(now())
 }
 
+// Export records an asynchronous bulk-download job for an event. The dashboard
+// kicks one off, the background job streams photos out of object storage,
+// builds a zip, uploads it back, and stores the signed URL on the row.
+model Export {
+  id          String       @id @default(cuid())
+  eventId     String
+  event       Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId      String
+  status      ExportStatus @default(PENDING)
+  storageKey  String?
+  signedUrl   String?
+  expiresAt   DateTime?
+  errorMsg    String?
+  createdAt   DateTime     @default(now())
+  completedAt DateTime?
+
+  @@index([eventId])
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+}
+
 enum EventTier {
   FREE
   EVENT_PASS
   EVENT_PASS_PLUS
+}
+
+enum ExportStatus {
+  PENDING
+  RUNNING
+  READY
+  FAILED
 }

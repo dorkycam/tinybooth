@@ -15,7 +15,7 @@ import {
 beforeEach(() => {
   delete process.env.NEXT_PUBLIC_SUPABASE_URL;
   delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  process.env.NODE_ENV = 'test';
+  (process.env as Record<string, string>).NODE_ENV = 'test';
 });
 
 afterEach(() => {
@@ -74,7 +74,7 @@ describe('getSession (debug fallback)', () => {
   });
 
   it('refuses to honor the debug header in production', async () => {
-    process.env.NODE_ENV = 'production';
+    (process.env as Record<string, string>).NODE_ENV = 'production';
     const headers = new Headers({ [DEBUG_USER_HEADER]: 'user-42' });
     const session = await getSession(headers);
     expect(session).toBeNull();
