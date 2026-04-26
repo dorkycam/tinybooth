@@ -11,12 +11,16 @@
  * to help and privacy.
  */
 import Constants from 'expo-constants';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LayoutPicker } from '@/components/LayoutPicker';
 import { Wordmark } from '@/components/Wordmark';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { SecondaryButton } from '@/components/SecondaryButton';
+import { useSession } from '@/hooks/useSession';
+import { deleteAccount } from '@/lib/accountApi';
 import {
   DEFAULT_SESSION_SETTINGS,
   loadSessionSettings,
@@ -31,7 +35,11 @@ const PREVIEW_CHOICES: PreviewClassOverride[] = ['auto', 'phone', 'tablet'];
 /** Settings tab. */
 export default function SettingsScreen(): JSX.Element {
   const theme = useTheme();
+  const router = useRouter();
+  const session = useSession();
   const [settings, setSettings] = useState<SessionSettings>(DEFAULT_SESSION_SETTINGS);
+  const [confirmStep, setConfirmStep] = useState<0 | 1 | 2>(0);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,6 +55,22 @@ export default function SettingsScreen(): JSX.Element {
     const next = { ...settings, ...patch };
     setSettings(next);
     void saveSessionSettings(patch);
+  }
+
+  async function handleDeleteAccount(): Promise<void> {
+    if (!session.session) return;
+    setDeleting(true);
+    try {
+      await deleteAccount(session.session.accessToken, session.session.userId);
+      await session.signOut();
+      Alert.alert('Account deleted', 'Your account and every event you owned were removed.');
+      router.replace('/');
+    } catch (err) {
+      Alert.alert('Could not delete', (err as Error).message);
+    } finally {
+      setDeleting(false);
+      setConfirmStep(0);
+    }
   }
 
   return (
@@ -111,7 +135,45 @@ export default function SettingsScreen(): JSX.Element {
           <Link href="/(tabs)/privacy" style={[styles.link, { color: theme.colors.coral }]}>
             Privacy
           </Link>
+          <Link href="/(tabs)/event" style={[styles.link, { color: theme.colors.coral }]}>
+            Connect to event
+          </Link>
         </Section>
+
+        {session.session ? (
+          <Section title="Account" theme={theme}>
+            <Text style={[styles.aboutLine, { color: theme.colors.subtle }]}>
+              Signed in as {session.session.email ?? session.session.userId}
+            </Text>
+            <SecondaryButton label="Sign out" onPress={() => void session.signOut()} />
+            {confirmStep === 0 ? (
+              <PrimaryButton label="Delete account" onPress={() => setConfirmStep(1)} />
+            ) : null}
+            {confirmStep === 1 ? (
+              <View style={{ gap: 8 }}>
+                <Text style={[styles.aboutLine, { color: theme.colors.fg }]}>
+                  This removes your account, every event you own, and the photos
+                  attached to those events. There is no undo. Continue?
+                </Text>
+                <PrimaryButton label="Yes, continue" onPress={() => setConfirmStep(2)} />
+                <SecondaryButton label="Cancel" onPress={() => setConfirmStep(0)} />
+              </View>
+            ) : null}
+            {confirmStep === 2 ? (
+              <View style={{ gap: 8 }}>
+                <Text style={[styles.aboutLine, { color: theme.colors.coral }]}>
+                  Last confirmation. Tap delete to permanently remove the account.
+                </Text>
+                <PrimaryButton
+                  label={deleting ? 'Deleting...' : 'Delete forever'}
+                  onPress={() => void handleDeleteAccount()}
+                  disabled={deleting}
+                />
+                <SecondaryButton label="Cancel" onPress={() => setConfirmStep(0)} />
+              </View>
+            ) : null}
+          </Section>
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );
