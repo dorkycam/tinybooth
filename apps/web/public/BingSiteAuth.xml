@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!--
+  Placeholder for Bing Webmaster Tools verification.
+
+  Replace the <user> value below with the GUID Bing Webmaster Tools gives
+  you when you add the tinybooth.com property. Then click Verify in the
+  console. The file path stays at /BingSiteAuth.xml at the site root.
+
+  Created during Phase 5 of the rebuild on 2026-04-26 by Camrynn.
+-->
+<users>
+  <user>REPLACE_WITH_BING_VERIFICATION_GUID</user>
+</users>
