@@ -17,6 +17,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { SecondaryButton } from '@/components/SecondaryButton';
 import { Wordmark } from '@/components/Wordmark';
 import { useEntitlement } from '@/hooks/useEntitlement';
+import { useEventConnection } from '@/hooks/useEventConnection';
 import { saveToCameraRoll } from '@/lib/cameraRoll';
 import { useLayoutClass } from '@/lib/layout';
 import { printStrip } from '@/lib/print';
@@ -32,7 +33,16 @@ export default function PreviewScreen(): JSX.Element {
   const layout = parseLayout(params.layout) ?? '1x4_classic';
   const uris = (params.uris ?? '').split('|').filter(Boolean);
   const stripUnlock = useEntitlement('strip_unlock');
-  const layoutResult = computeLayout(layout);
+  const { connection } = useEventConnection();
+  const branding = connection
+    ? {
+        logoUrl: connection.branding.logoUrl,
+        primaryColor: connection.branding.primaryColor,
+        accentColor: connection.branding.accentColor,
+      }
+    : undefined;
+  const layoutResult = computeLayout(layout, { branding });
+  const accentColor = branding?.accentColor ?? branding?.primaryColor;
   // Phase 2: the composed file URI is supplied by the Skia bridge (host app).
   // Until the bridge is wired, fall back to the first capture URI so the
   // print / share / save buttons still have something to act on.
@@ -97,7 +107,8 @@ export default function PreviewScreen(): JSX.Element {
             styles.stripCard,
             {
               backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.hairline,
+              borderColor: accentColor ?? theme.colors.hairline,
+              borderWidth: accentColor ? 4 : 1,
               aspectRatio: layoutResult.canvas.w / layoutResult.canvas.h,
               maxWidth: isTablet ? 480 : 320,
             },
@@ -106,7 +117,16 @@ export default function PreviewScreen(): JSX.Element {
           <Text style={[styles.placeholder, { color: theme.colors.subtle }]}>
             {uris.length} photo{uris.length === 1 ? '' : 's'} captured
           </Text>
-          {!stripUnlock ? (
+          {layoutResult.footer?.kind === 'logo' ? (
+            <Text
+              style={[
+                styles.watermark,
+                { color: branding?.primaryColor ?? theme.colors.fg },
+              ]}
+            >
+              {connection?.eventName ?? 'event logo'}
+            </Text>
+          ) : !stripUnlock ? (
             <Text style={[styles.watermark, { color: theme.colors.fg }]}>tinybooth.com</Text>
           ) : null}
         </View>
