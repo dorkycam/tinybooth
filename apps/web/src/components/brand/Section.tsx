@@ -1,7 +1,7 @@
 import type { ReactNode, HTMLAttributes } from 'react';
 
 interface SectionProps extends HTMLAttributes<HTMLElement> {
-  children: ReactNode;
+  children?: ReactNode;
   /** Optional eyebrow text rendered above the heading. */
   eyebrow?: string;
   /** Optional section heading; renders as h2. */
