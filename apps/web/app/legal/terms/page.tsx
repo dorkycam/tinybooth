@@ -13,6 +13,11 @@ export const metadata: Metadata = {
     'TinyBooth terms of service. Free vs paid features, in-app purchase refunds, content ownership, retention, DMCA, governing law (California).',
   alternates: { canonical: '/legal/terms' },
   robots: { index: true, follow: true },
+  openGraph: {
+    title: 'Terms of service - TinyBooth',
+    description: 'TinyBooth terms of service. Refunds, retention, DMCA, governing law.',
+    url: '/legal/terms',
+  },
 };
 
 /**
