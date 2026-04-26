@@ -1,7 +1,7 @@
 /**
- * Settings / help / privacy tab group. We use a Stack rather than a Tabs nav
- * because the three screens are reachable from a settings menu, not a bottom
- * bar.
+ * Settings / help / privacy / event tab group. We use a Stack rather than a
+ * Tabs nav because the screens are reachable from a settings menu, not a
+ * bottom bar.
  */
 import { Stack } from 'expo-router';
 
@@ -12,6 +12,7 @@ export default function TabsLayout(): JSX.Element {
       <Stack.Screen name="settings" />
       <Stack.Screen name="help" />
       <Stack.Screen name="privacy" />
+      <Stack.Screen name="event" />
     </Stack>
   );
 }
