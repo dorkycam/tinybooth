@@ -44,6 +44,13 @@ order, update both this doc and the upstream doc together.
 - [ ] Apple Developer account in good standing under the
       `codesquad` team. Confirm the membership renewal is paid through
       at least the next 12 months.
+- [ ] Confirm the App Privacy questionnaire answer for "Third-Party AI"
+      is "no". TinyBooth ships zero third-party AI integrations at
+      launch (Apple Guideline 5.1.2(i), Nov 13, 2025). If we ever add
+      Apple Intelligence, OpenAI, Google Gemini, or any other third-party
+      model, update the questionnaire AND add an explicit consent UI
+      before sharing data, per
+      `docs/research/iteration-2026-04.md` section 3.
 - [ ] App Store Connect listing for `com.codesquad.tinybooth` is
       reachable (the existing Swift app's listing). If the bundle ID
       ownership has moved, run an account transfer FIRST.
@@ -222,6 +229,11 @@ order, update both this doc and the upstream doc together.
 - Do NOT amend a commit that has been pushed.
 - Do NOT re-enable a banned word ("leverage", "robust", etc) in App
   Store copy or release notes.
+- Do NOT ship JS via `eas update` that bypasses native gates (Apple
+  Guideline 2.5.2 enforced against Replit/Vibecode in March 2026 per
+  `docs/research/iteration-2026-04.md`). Copy and UI-only OTA changes are
+  fine; logic that changes paywall behavior or unlocks features without
+  a native binary review is not.
 
 ---
 

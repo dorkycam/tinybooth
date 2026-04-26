@@ -42,6 +42,16 @@ follow-ups. Pre-filled below.
   EU data residency with anonymized device ids; per Apple's definition,
   that is not tracking.
 
+### 2.1a Third-Party AI Disclosure (Guideline 5.1.2(i), Nov 13, 2025)
+
+- **None.** TinyBooth does not share personal data with any third-party
+  AI service. There is no OpenAI, Google Gemini, Anthropic Claude, or
+  Apple Intelligence integration in the launch build. The static random
+  message library in `packages/messages/` is on-device only; no model
+  inference happens. If we add any AI feature later, this section must be
+  updated AND the in-app consent flow must ship before the data leaves
+  the device.
+
 ### 2.2 Data Linked to You
 
 | Data type | Used for | Code path |
