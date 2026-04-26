@@ -1,21 +1,58 @@
 /**
- * Entitlement hook stub. Phase 2 ships with no purchases wired up; the hook
- * always returns `false`. Phase 4 will replace this implementation with a
- * RevenueCat-backed lookup, keeping the call signature intact.
+ * Entitlement hook backed by the IAP wrapper.
+ *
+ * Phase 4 replaces the Phase 2 placeholder. The hook subscribes to the
+ * customer-info snapshot via `getCustomerInfo()` and re-reads on demand. In
+ * stub mode the snapshot reflects whatever Strip Unlock / Event Pass
+ * entitlements have been written via `purchase()`.
+ *
+ * Usage:
+ *   const stripUnlocked = useEntitlement('strip_unlock');
  */
+import { useEffect, useState, useCallback } from 'react';
+import type { EntitlementKey } from '@tinybooth/billing';
+import { getCustomerInfo } from '@/lib/iap';
 
-/** Known entitlement keys. */
-export type EntitlementKey = 'strip_unlock' | 'event_pass' | 'event_pass_plus';
+/** Re-export for convenience so callers don't need a second import. */
+export type { EntitlementKey } from '@tinybooth/billing';
 
 /**
- * Returns whether the user holds the entitlement. Phase 2 placeholder always
- * returns false. Phase 4 swaps to the RevenueCat client.
+ * Returns whether the user holds the named entitlement. Re-reads on focus and
+ * on the lazy `refresh` callback the hook returns alongside the boolean.
  *
- * @param key Entitlement key to check.
+ * @param key Entitlement key.
  */
 export function useEntitlement(key: EntitlementKey): boolean {
-  // Reference the parameter so the linter does not flag it as unused; this is
-  // the call signature future code consumes.
-  void key;
-  return false;
+  const { active } = useEntitlementSnapshot();
+  return active.has(key);
+}
+
+interface EntitlementSnapshotHook {
+  /** Set of all currently-active entitlement keys. */
+  active: Set<EntitlementKey>;
+  /** True until the first read resolves. */
+  loading: boolean;
+  /** Force a re-read of customer info. */
+  refresh(): Promise<void>;
+}
+
+/**
+ * Read the full set of active entitlements. Useful when a screen needs to
+ * branch on more than one key (e.g. the upgrade page).
+ */
+export function useEntitlementSnapshot(): EntitlementSnapshotHook {
+  const [active, setActive] = useState<Set<EntitlementKey>>(new Set());
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async (): Promise<void> => {
+    const info = await getCustomerInfo();
+    setActive(info.activeEntitlements);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
+
+  return { active, loading, refresh };
 }

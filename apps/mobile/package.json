@@ -34,6 +34,7 @@
     "react-native-vision-camera": "^4.5.0",
     "@shopify/react-native-skia": "1.3.10",
     "@tinybooth/api-types": "workspace:*",
+    "@tinybooth/billing": "workspace:*",
     "@tinybooth/messages": "workspace:*",
     "@tinybooth/strip-render": "workspace:*",
     "@tinybooth/ui-tokens": "workspace:*"

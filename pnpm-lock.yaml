@@ -38,6 +38,9 @@ importers:
       '@tinybooth/api-types':
         specifier: workspace:*
         version: link:../../packages/api-types
+      '@tinybooth/billing':
+        specifier: workspace:*
+        version: link:../../packages/billing
       '@tinybooth/messages':
         specifier: workspace:*
         version: link:../../packages/messages
