@@ -33,13 +33,6 @@ Last updated: 2026-04-26.
 
 ## From the audit (`docs/audit-2026-04.md`)
 
-- **Per-photo pull from a strip (`users.md` #5).** Not implemented.
-  Two of the loudest user-research complaints were "no reprint after
-  the fact" and "no way to pull a single shot from a strip". Reprint is
-  implicit on the preview screen, but extracting one frame is not. Add
-  a "Save frame" button next to "Save strip" in
-  `apps/mobile/app/(camera)/preview.tsx`. ~1 day of work including the
-  Skia crop and a unit test.
 - **Photo AI moderation opt-in (`users.md` #11).** Caption profanity
   filter exists. Photo nudity / inappropriate-image moderation is not
   implemented. Sell as a paid add-on toggle at the host level,
@@ -57,6 +50,16 @@ Last updated: 2026-04-26.
   client-side, the server-side revoke is the missing piece.
 - **Apple server-to-server notifications endpoint.** Same source.
 - **Fastlane Screengrab lane for Android screenshots.** Same source.
+- **Skia bridge real implementation.** `apps/mobile/src/lib/skiaBridge.ts`
+  ships a placeholder that throws. Real wiring lands once `expo prebuild`
+  runs against a development client. A server-side Sharp fallback could
+  unblock the dev/preview path in the meantime; out of scope for the
+  unattended pass because passing photo URLs to a `/api/strip/render`
+  endpoint is a sizeable change.
+- **Supabase `auth.users -> public.User` mirror trigger in production.**
+  Tracked in `docs/launch-checklist.md` section 1 (Supabase). Dev mode
+  now has a tRPC-side `userMirrorMiddleware` upsert as a guard, but a
+  real DB trigger is the long-term answer.
 
 ## Open questions stuck behind Camrynn
 
