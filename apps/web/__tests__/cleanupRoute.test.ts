@@ -9,6 +9,7 @@ vi.mock('../src/lib/db', () => ({
   db: {
     event: { findMany: vi.fn(async () => []), deleteMany: vi.fn() },
     photo: { findMany: vi.fn(async () => []) },
+    export: { findMany: vi.fn(async () => []), deleteMany: vi.fn() },
   },
 }));
 

@@ -41,6 +41,7 @@ describe('runCleanup', () => {
     expect(summary.deletedPhotos).toBe(2);
     expect(summary.storageDeletions).toBe(2);
     expect(summary.storageErrors).toBe(0);
+    expect(summary.expiredExports).toBe(0);
     expect(storage.deletes).toEqual([
       'events/e1/posts/p/a.webp',
       'events/e2/posts/p/b.webp',
@@ -60,6 +61,7 @@ describe('runCleanup', () => {
     const summary = await runCleanup({ db, storage, now: new Date() });
     expect(summary.expiredEvents).toBe(0);
     expect(summary.deletedPhotos).toBe(0);
+    expect(summary.expiredExports).toBe(0);
     expect(db.event.deleteMany).not.toHaveBeenCalled();
   });
 
@@ -81,5 +83,29 @@ describe('runCleanup', () => {
     expect(summary.storageErrors).toBe(1);
     expect(summary.storageDeletions).toBe(0);
     expect(db.event.deleteMany).toHaveBeenCalledOnce();
+  });
+
+  it('also sweeps expired Export rows + their zips', async () => {
+    const storage = new StubStorage();
+    const expiredExports = [
+      { id: 'x1', storageKey: 'events/e1/exports/x1.zip' },
+      { id: 'x2', storageKey: null },
+    ];
+    const db = {
+      event: {
+        findMany: vi.fn(async () => []),
+        deleteMany: vi.fn(),
+      },
+      photo: { findMany: vi.fn() },
+      export: {
+        findMany: vi.fn(async () => expiredExports),
+        deleteMany: vi.fn(async () => ({ count: 2 })),
+      },
+    };
+    const summary = await runCleanup({ db, storage, now: new Date() });
+    expect(summary.expiredExports).toBe(2);
+    expect(summary.storageDeletions).toBe(1);
+    expect(storage.deletes).toEqual(['events/e1/exports/x1.zip']);
+    expect(db.export.deleteMany).toHaveBeenCalledOnce();
   });
 });

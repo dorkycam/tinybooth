@@ -16,6 +16,8 @@ interface MockEvent {
   branding: Record<string, unknown>;
   settings: Record<string, unknown>;
   createdAt: Date;
+  claimToken?: string | null;
+  claimedAt?: Date | null;
 }
 
 interface MockPurchase {
@@ -49,6 +51,8 @@ function makeDb(initial: { events?: MockEvent[]; purchases?: MockPurchase[] } = 
           branding: (data.branding as Record<string, unknown>) ?? {},
           settings: (data.settings as Record<string, unknown>) ?? {},
           createdAt: new Date(),
+          claimToken: data.claimToken ?? null,
+          claimedAt: data.claimedAt ?? null,
         };
         events.set(id, ev);
         return ev;
@@ -208,5 +212,75 @@ describe('event helpers', () => {
     const plusDays = (passPlus.getTime() - ends.getTime()) / (24 * 60 * 60 * 1000);
     expect(passDays).toBeCloseTo(60, 5);
     expect(plusDays).toBeCloseTo(90, 5);
+  });
+});
+
+describe('event.claim', () => {
+  function makeClaimable(): {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    proxy: any;
+    event: MockEvent & { claimToken: string | null; claimedAt: Date | null };
+  } {
+    const event = {
+      id: 'a',
+      ownerId: null,
+      name: 'Mya 30',
+      slug: 'mya-30-x',
+      tier: 'FREE' as const,
+      retainUntil: new Date(Date.now() + 1000),
+      endsAt: null,
+      branding: {},
+      settings: {},
+      createdAt: new Date(),
+      claimToken: 'TOKEN_VALUE',
+      claimedAt: null,
+    };
+    const proxy = {
+      event: {
+        findUnique: vi.fn(async () => event),
+        update: vi.fn(async ({ data }: { data: Partial<typeof event> }) => {
+          Object.assign(event, data);
+          return event;
+        }),
+      },
+    };
+    return { proxy, event };
+  }
+
+  it('rejects when claim token does not match', async () => {
+    const { proxy } = makeClaimable();
+    const caller = eventRouter.createCaller({ db: proxy, userId: 'me' });
+    await expect(
+      caller.claim({ eventId: 'a', claimToken: 'WRONG' }),
+    ).rejects.toThrow();
+  });
+
+  it('rejects when the event is already owned', async () => {
+    const { proxy, event } = makeClaimable();
+    event.ownerId = 'someone-else';
+    const caller = eventRouter.createCaller({ db: proxy, userId: 'me' });
+    await expect(
+      caller.claim({ eventId: 'a', claimToken: 'TOKEN_VALUE' }),
+    ).rejects.toThrow();
+  });
+
+  it('sets ownerId, clears claim token, sets claimedAt on success', async () => {
+    const { proxy, event } = makeClaimable();
+    const caller = eventRouter.createCaller({ db: proxy, userId: 'me' });
+    const updated = await caller.claim({ eventId: 'a', claimToken: 'TOKEN_VALUE' });
+    expect(updated.ownerId).toBe('me');
+    expect(event.claimToken).toBeNull();
+    expect(event.claimedAt).toBeInstanceOf(Date);
+  });
+
+  it('create returns a claim token for anon callers and null for authed', async () => {
+    const { proxy } = makeDb();
+    const anon = eventRouter.createCaller({ db: proxy, userId: null });
+    const a = await anon.create({ name: 'Anon party' });
+    expect(typeof a.claimToken === 'string' && a.claimToken.length > 0).toBe(true);
+
+    const authed = eventRouter.createCaller({ db: proxy, userId: 'owner1' });
+    const b = await authed.create({ name: 'Owner party' });
+    expect(b.claimToken).toBeNull();
   });
 });

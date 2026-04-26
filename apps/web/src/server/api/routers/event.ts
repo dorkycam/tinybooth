@@ -2,6 +2,7 @@
  * Event router. Handles create/read/update/delete plus the cross-product
  * `applyPurchase` action that bumps an event's tier and retention window.
  */
+import { randomBytes } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { router, publicProcedure, protectedProcedure } from '../trpc';
@@ -45,8 +46,10 @@ function computeRetainUntil(tier: 'FREE' | 'EVENT_PASS' | 'EVENT_PASS_PLUS', end
 
 export const eventRouter = router({
   /**
-   * Create an event. Anonymous callers get an event with `ownerId = null`; an
-   * authed caller becomes the owner.
+   * Create an event. Anonymous callers get an event with `ownerId = null`
+   * and a `claimToken` returned alongside the event so they can claim it
+   * later by signing in. Authed callers become the owner immediately and
+   * receive `claimToken: null`.
    */
   create: publicProcedure
     .input(
@@ -54,6 +57,8 @@ export const eventRouter = router({
         name: z.string().min(1).max(120),
         settings: SettingsSchema.optional(),
         branding: BrandingSchema.optional(),
+        startsAt: z.date().optional(),
+        endsAt: z.date().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -62,6 +67,7 @@ export const eventRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'Event name is required.' });
       }
       const slug = generateSlug(cleanedName);
+      const claimToken = ctx.userId ? null : generateClaimToken();
       const event = await ctx.db.event.create({
         data: {
           name: cleanedName,
@@ -71,9 +77,35 @@ export const eventRouter = router({
           retainUntil: computeRetainUntil('FREE', null),
           branding: (input.branding ?? {}) as object,
           settings: (input.settings ?? {}) as object,
+          startsAt: input.startsAt ?? null,
+          endsAt: input.endsAt ?? null,
+          claimToken,
         },
       });
-      return event;
+      return { ...event, claimToken };
+    }),
+
+  /**
+   * Claim ownership of an anonymous event using the one-time claim token
+   * issued at creation time. Single-use; after a successful claim the token
+   * is cleared so it cannot be replayed.
+   */
+  claim: protectedProcedure
+    .input(z.object({ eventId: z.string().min(1), claimToken: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const event = await ctx.db.event.findUnique({ where: { id: input.eventId } });
+      if (!event) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (event.ownerId) {
+        throw new TRPCError({ code: 'CONFLICT', message: 'Event is already owned.' });
+      }
+      if (!event.claimToken || event.claimToken !== input.claimToken) {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Invalid claim token.' });
+      }
+      const updated = await ctx.db.event.update({
+        where: { id: input.eventId },
+        data: { ownerId: ctx.userId, claimToken: null, claimedAt: new Date() },
+      });
+      return updated;
     }),
 
   /**
@@ -171,6 +203,14 @@ export function mapProductToTier(
   if (product === 'event_pass') return 'EVENT_PASS';
   if (product === 'event_pass_plus') return 'EVENT_PASS_PLUS';
   return null;
+}
+
+/**
+ * Generate a URL-safe one-time claim token for anonymous event creation.
+ * 24 random bytes hex-encoded gives 48 chars of entropy.
+ */
+export function generateClaimToken(): string {
+  return randomBytes(24).toString('hex');
 }
 
 export { computeRetainUntil, TierEnum };

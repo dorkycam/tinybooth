@@ -8,6 +8,7 @@ import { postRouter } from './routers/post';
 import { stripRouter } from './routers/strip';
 import { dashboardRouter } from './routers/dashboard';
 import { messagesRouter } from './routers/messages';
+import { accountRouter } from './routers/account';
 
 export const appRouter = router({
   event: eventRouter,
@@ -15,6 +16,7 @@ export const appRouter = router({
   strip: stripRouter,
   dashboard: dashboardRouter,
   messages: messagesRouter,
+  account: accountRouter,
 });
 
 export type AppRouter = typeof appRouter;
