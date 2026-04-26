@@ -236,10 +236,10 @@ The party photo wall market is more fragmented and most players overlap heavily.
 - **Link**: [kululu.com](https://www.kululu.com/) | [Pricing](https://www.kululu.com/pricing)
 - **Platform**: Web. Guests upload via QR with no app. Casts to TV via browser.
 - **Pricing** (one-time per-event):
-  - Free: 50 uploads, 7-day retention, basic customization
-  - Plus: $39 (50% off from $79), 500 uploads, 3-month retention, better customization, bulk download
-  - Pro: $99 (50% off from $199), unlimited uploads, 1-year retention, advanced customization, moderation
-- **Free tier**: 50 photos/videos, 7 days. Live photo wall included even on free.
+  - Free: 500 uploads, 7-day retention, basic customization (was 50 uploads as of original research; updated April 2026 per `docs/research/iteration-2026-04.md`)
+  - Plus: $39, more retention + bulk download
+  - Pro: $99, unlimited uploads, 1-year retention, moderation
+- **Free tier**: 500 photos/videos, 7 days. Live photo wall included even on free. The 10x bump means Kululu now leads the pure-wall category on free-tier generosity.
 - **Top 3 strengths**:
   1. Free tier is actually usable (50 uploads + 7 days vs LiveShareNow's 10 posts).
   2. Live photo wall included on free.
@@ -554,6 +554,8 @@ The party photo wall market is more fragmented and most players overlap heavily.
 
 ### Party photo walls
 - [Kululu](https://www.kululu.com/) and [Kululu pricing](https://www.kululu.com/pricing)
+- [JoinMyMoment](https://joinmymoment.com/) (April 2026 entrant: $19.99 one-time, 100 guests, Google Photos auto-sync. See `docs/research/iteration-2026-04.md`.)
+- [EasyWeddingAlbum](https://easyweddingalbum.com/) (April 2026 entrant: $29 one-time, 12-month storage)
 - [Fotify](https://fotify.app/event-photo-sharing/)
 - [GuestPix wedding pricing](https://guestpix.com/weddings-pricing/) and [party pricing](https://guestpix.com/party-pricing/)
 - [GuestCam](https://guestcam.co/)
