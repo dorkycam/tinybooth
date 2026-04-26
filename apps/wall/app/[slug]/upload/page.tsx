@@ -14,12 +14,19 @@ export default async function UploadPage({ params }: UploadPageProps): Promise<J
   const event = await getEventBySlug(params.slug);
   if (!event) notFound();
 
+  const branding = (event.branding ?? {}) as {
+    logoUrl?: string;
+    primaryColor?: string;
+    accentColor?: string;
+  };
+
   return (
     <UploadFlow
       eventId={event.id}
       eventName={event.name}
       eventSlug={event.slug}
       webApiBase={webBase()}
+      branding={branding}
     />
   );
 }

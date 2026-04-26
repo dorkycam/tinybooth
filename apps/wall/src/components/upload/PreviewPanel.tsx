@@ -10,6 +10,8 @@ interface PreviewPanelProps {
   error: string | null;
   onSubmit: (caption: string) => void;
   onBack: () => void;
+  /** Optional event branding primary color override for the submit button. */
+  primaryColor?: string;
 }
 
 /**
@@ -22,6 +24,7 @@ export function PreviewPanel({
   error,
   onSubmit,
   onBack,
+  primaryColor,
 }: PreviewPanelProps): JSX.Element {
   const [caption, setCaption] = useState('');
   const [previews, setPreviews] = useState<string[]>([]);
@@ -59,7 +62,11 @@ export function PreviewPanel({
       {error ? <p className="text-coral text-sm">{error}</p> : null}
 
       <div className="flex flex-col gap-2 mt-auto">
-        <Button onClick={() => onSubmit(caption)} disabled={loading}>
+        <Button
+          onClick={() => onSubmit(caption)}
+          disabled={loading}
+          style={primaryColor ? { background: primaryColor, color: '#FFFFFF' } : undefined}
+        >
           {loading ? 'Posting...' : 'Post to wall'}
         </Button>
         <Button variant="secondary" onClick={onBack} disabled={loading}>

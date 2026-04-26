@@ -25,12 +25,19 @@ export default async function TVPage({ params }: TVPageProps): Promise<JSX.Eleme
   const origin = process.env.NEXT_PUBLIC_WALL_BASE_URL ?? '';
   const uploadUrl = `${origin}/${event.slug}/upload`;
 
+  const branding = (event.branding ?? {}) as {
+    logoUrl?: string;
+    primaryColor?: string;
+    accentColor?: string;
+  };
+
   return (
     <PhotoGrid
       eventId={event.id}
       eventName={event.name}
       uploadUrl={uploadUrl}
       initialPosts={posts}
+      initialBranding={branding}
       slideShowSpeed={speed}
     />
   );

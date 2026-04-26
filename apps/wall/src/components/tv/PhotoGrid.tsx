@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { PhotoTile } from './PhotoTile';
 import { QROverlay } from './QROverlay';
-import { subscribeToPosts } from '../../lib/realtime';
+import { subscribeToBranding, subscribeToPosts, type EventBranding } from '../../lib/realtime';
 
 interface GridPhoto {
   id: string;
@@ -25,6 +25,7 @@ interface PhotoGridProps {
   eventName: string;
   uploadUrl: string;
   initialPosts: GridPost[];
+  initialBranding?: EventBranding;
   slideShowSpeed: number;
 }
 
@@ -47,12 +48,16 @@ export function PhotoGrid({
   eventName,
   uploadUrl,
   initialPosts,
+  initialBranding,
   slideShowSpeed,
 }: PhotoGridProps): JSX.Element {
   const [posts, setPosts] = useState<GridPost[]>(initialPosts);
+  const [branding, setBranding] = useState<EventBranding>(initialBranding ?? {});
   const [grid, setGrid] = useState({ cols: 4, rows: 3 });
   const [visibleIds, setVisibleIds] = useState<string[]>([]);
   const capacity = grid.cols * grid.rows;
+  const primary = branding.primaryColor ?? '#1F2937';
+  const accent = branding.accentColor ?? '#E85D5D';
 
   useEffect(() => {
     const update = (): void => setGrid(computeGrid(window.innerWidth, window.innerHeight));
@@ -71,6 +76,14 @@ export function PhotoGrid({
     return subscribeToPosts({
       eventId,
       onPosts: (next) => setPosts(next as unknown as GridPost[]),
+    });
+  }, [eventId]);
+
+  // Subscribe to branding updates so dashboard edits land live on the TV.
+  useEffect(() => {
+    return subscribeToBranding({
+      eventId,
+      onBranding: (next) => setBranding((prev) => ({ ...prev, ...next })),
     });
   }, [eventId]);
 
@@ -96,9 +109,9 @@ export function PhotoGrid({
   if (posts.length === 0) {
     return (
       <div className="w-screen h-screen flex flex-col items-center justify-center gap-4 bg-carbon text-cream">
-        <h1 className="text-3xl font-bold">{eventName}</h1>
+        <BrandedHeader eventName={eventName} primary={primary} accent={accent} logoUrl={branding.logoUrl} />
         <p className="text-fog">Scan the QR code to post the first photo!</p>
-        <QROverlay uploadUrl={uploadUrl} />
+        <QROverlay uploadUrl={uploadUrl} accentColor={accent} />
       </div>
     );
   }
@@ -124,7 +137,36 @@ export function PhotoGrid({
           />
         ))}
       </div>
-      <QROverlay uploadUrl={uploadUrl} />
+      {/* Branded strip across the top so the host's logo + colors stay visible. */}
+      <div
+        className="fixed top-0 left-0 right-0 px-6 py-3 flex items-center gap-3 z-40"
+        style={{ background: primary, color: '#FFFFFF' }}
+      >
+        {branding.logoUrl ? (
+          <img src={branding.logoUrl} alt="" style={{ height: 28, borderRadius: 4 }} />
+        ) : null}
+        <p className="text-sm font-semibold">{eventName}</p>
+      </div>
+      <QROverlay uploadUrl={uploadUrl} accentColor={accent} />
+    </div>
+  );
+}
+
+interface BrandedHeaderProps {
+  eventName: string;
+  primary: string;
+  accent: string;
+  logoUrl?: string;
+}
+
+function BrandedHeader({ eventName, primary, accent, logoUrl }: BrandedHeaderProps): JSX.Element {
+  return (
+    <div
+      className="px-6 py-3 rounded-lg flex items-center gap-3"
+      style={{ background: primary, color: '#FFFFFF', borderBottom: `3px solid ${accent}` }}
+    >
+      {logoUrl ? <img src={logoUrl} alt="" style={{ height: 32, borderRadius: 4 }} /> : null}
+      <h1 className="text-3xl font-bold">{eventName}</h1>
     </div>
   );
 }
