@@ -11,6 +11,7 @@ import { BrandingTab } from './tabs/BrandingTab';
 import { MessagesTab } from './tabs/MessagesTab';
 import { SettingsTab } from './tabs/SettingsTab';
 import { DangerZone } from './DangerZone';
+import { PairingQR } from './PairingQR';
 
 interface DashboardEvent {
   id: string;
@@ -96,7 +97,18 @@ export function EventDetail({ eventId }: EventDetailProps): JSX.Element {
 
       <Tabs
         tabs={[
-          { id: 'overview', label: 'Overview', render: () => <OverviewTab stats={stats} /> },
+          {
+            id: 'overview',
+            label: 'Overview',
+            render: () => (
+              <div className="grid lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <OverviewTab stats={stats} />
+                </div>
+                <PairingQR eventId={event.id} />
+              </div>
+            ),
+          },
           { id: 'photos', label: 'Photos', render: () => <PhotosTab eventId={event.id} /> },
           {
             id: 'branding',

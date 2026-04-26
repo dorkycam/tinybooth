@@ -148,4 +148,35 @@ describe('dashboard router', () => {
     expect(stats.retentionDaysRemaining).toBeGreaterThanOrEqual(4);
     expect(stats.retentionDaysRemaining).toBeLessThanOrEqual(5);
   });
+
+  it('pairingCode returns a tinybooth:// url with id + code params', async () => {
+    const proxy = {
+      event: {
+        findUnique: vi.fn(async () => ({ id: 'a', ownerId: 'me' })),
+      },
+    };
+    const caller = dashboardRouter.createCaller({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      db: proxy as any,
+      userId: 'me',
+    });
+    const result = await caller.pairingCode({ eventId: 'a' });
+    expect(result.url.startsWith('tinybooth://event?id=a&code=')).toBe(true);
+    expect(result.code.length).toBeGreaterThan(10);
+    expect(result.expiresAt.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it('pairingCode rejects when caller does not own the event', async () => {
+    const proxy = {
+      event: {
+        findUnique: vi.fn(async () => ({ id: 'a', ownerId: 'someone-else' })),
+      },
+    };
+    const caller = dashboardRouter.createCaller({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      db: proxy as any,
+      userId: 'me',
+    });
+    await expect(caller.pairingCode({ eventId: 'a' })).rejects.toThrow();
+  });
 });

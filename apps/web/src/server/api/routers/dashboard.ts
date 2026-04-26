@@ -2,6 +2,7 @@
  * Dashboard router. Owner-only reads + the bulk-export kickoff that hands off
  * to a background job (`apps/web/src/server/jobs/exportEvent.ts`).
  */
+import { createHmac, randomBytes } from 'node:crypto';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
@@ -155,6 +156,32 @@ export const dashboardRouter = router({
         console.error('[exportEvent] background job failed:', err);
       });
       return { exportId: exp.id, status: exp.status };
+    }),
+
+  /**
+   * Issue a short-lived pairing code for the mobile booth's QR scan flow.
+   * The code is an HMAC of `eventId|nonce|expiresAt` keyed by `PAIRING_SECRET`
+   * (or a per-process random fallback when the env is missing). The mobile
+   * app POSTs eventId + code back via `event.bySlug`-equivalent flow; the
+   * pairing payload format is documented in `apps/mobile/src/lib/eventConnection.ts`.
+   *
+   * TTL: 10 minutes. The code is stateless (no DB write) so refreshing is
+   * cheap.
+   */
+  pairingCode: protectedProcedure
+    .input(z.object({ eventId: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const event = await ctx.db.event.findUnique({ where: { id: input.eventId } });
+      if (!event) throw new TRPCError({ code: 'NOT_FOUND' });
+      if (event.ownerId !== ctx.userId) throw new TRPCError({ code: 'FORBIDDEN' });
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+      const nonce = randomBytes(8).toString('hex');
+      const payloadParts = [input.eventId, nonce, expiresAt.toISOString()];
+      const secret = process.env.PAIRING_SECRET ?? 'tinybooth-dev-fallback-secret';
+      const hmac = createHmac('sha256', secret).update(payloadParts.join('|')).digest('hex');
+      const code = `${nonce}.${hmac.slice(0, 16)}`;
+      const url = `tinybooth://event?id=${encodeURIComponent(input.eventId)}&code=${encodeURIComponent(code)}`;
+      return { code, url, expiresAt };
     }),
 
   /** Poll an export's status. Owner only. */
