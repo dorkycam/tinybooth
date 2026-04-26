@@ -30,6 +30,26 @@ export interface WatermarkPlacement extends Rect {
   text: string;
 }
 
+/** Optional branding override accepted by `computeLayout`. */
+export interface LayoutBranding {
+  /** URL to a logo image; renders in place of the watermark text when set. */
+  logoUrl?: string;
+  /** Primary color used for borders / accent strokes. */
+  primaryColor?: string;
+  /** Secondary accent color. */
+  accentColor?: string;
+}
+
+/** Branded footer slot (logo or text), populated when branding is supplied. */
+export interface FooterSlot extends Rect {
+  /** "logo" when a logoUrl is provided, otherwise "watermark". */
+  kind: 'logo' | 'watermark';
+  /** URL of the logo to render when `kind === 'logo'`. */
+  logoUrl?: string;
+  /** Watermark text, present when `kind === 'watermark'`. */
+  text?: string;
+}
+
 /** Canvas dimensions for a layout. */
 export interface CanvasSize {
   w: number;
@@ -44,6 +64,14 @@ export interface LayoutResult {
   frames: Rect[];
   /** Watermark band at the bottom of the strip. */
   watermark: WatermarkPlacement;
+  /**
+   * Branded footer slot. Populated when branding was supplied to
+   * `computeLayout`; otherwise undefined and the consumer falls back to the
+   * `watermark` placement above.
+   */
+  footer?: FooterSlot;
+  /** Branding inputs echoed back so backends can apply colors. */
+  branding?: LayoutBranding;
 }
 
 /** Options for `computeLayout`. */
@@ -53,6 +81,12 @@ export interface LayoutOptions {
    * strips where the watermark band is hidden.
    */
   watermarkText?: string;
+  /**
+   * Optional event branding. When supplied, the watermark slot becomes a
+   * branded footer slot (logo when `branding.logoUrl` is present, custom
+   * watermark text otherwise).
+   */
+  branding?: LayoutBranding;
 }
 
 /** Outer margin used by every strip layout. Matches Swift PhotoUtil MARGIN. */
@@ -84,28 +118,64 @@ export function frameCountForLayout(layout: StripLayout): number {
  * Compute the full geometry for a strip layout.
  *
  * @param layout Layout identifier.
- * @param options Optional watermark text override.
- * @returns Canvas + frame + watermark rectangles in pixel space.
+ * @param options Optional watermark text override and event branding.
+ * @returns Canvas + frame + watermark rectangles in pixel space, plus an
+ *   optional branded footer slot when `options.branding` is supplied.
  */
 export function computeLayout(layout: StripLayout, options: LayoutOptions = {}): LayoutResult {
   const watermarkText = options.watermarkText ?? 'tinybooth.com';
-  switch (layout) {
-    case '1x4_classic':
-      return classic1x4(watermarkText);
-    case '2x2':
-      return grid2x2(watermarkText);
-    case '1x3':
-      return column1x3(watermarkText);
-    case 'single':
-      return single(watermarkText);
-    case '1x6_double':
-      return double1x6(watermarkText);
-    default: {
-      // exhaustiveness guard
-      const exhaustive: never = layout;
-      throw new Error(`Unknown layout: ${String(exhaustive)}`);
+  const base: LayoutResult = (() => {
+    switch (layout) {
+      case '1x4_classic':
+        return classic1x4(watermarkText);
+      case '2x2':
+        return grid2x2(watermarkText);
+      case '1x3':
+        return column1x3(watermarkText);
+      case 'single':
+        return single(watermarkText);
+      case '1x6_double':
+        return double1x6(watermarkText);
+      default: {
+        const exhaustive: never = layout;
+        throw new Error(`Unknown layout: ${String(exhaustive)}`);
+      }
     }
+  })();
+  if (options.branding) {
+    base.branding = options.branding;
+    base.footer = brandedFooter(base.watermark, options.branding, watermarkText);
   }
+  return base;
+}
+
+/**
+ * Build a branded footer slot from the watermark band. Reuses the same Rect
+ * so the existing geometry stays correct; only the kind/text/logo change.
+ */
+function brandedFooter(
+  band: WatermarkPlacement,
+  branding: LayoutBranding,
+  fallbackText: string,
+): FooterSlot {
+  if (branding.logoUrl && branding.logoUrl.length > 0) {
+    return {
+      x: band.x,
+      y: band.y,
+      w: band.w,
+      h: band.h,
+      kind: 'logo',
+      logoUrl: branding.logoUrl,
+    };
+  }
+  return {
+    x: band.x,
+    y: band.y,
+    w: band.w,
+    h: band.h,
+    kind: 'watermark',
+    text: fallbackText,
+  };
 }
 
 /**

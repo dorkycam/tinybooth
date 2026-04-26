@@ -143,6 +143,48 @@ function assertFramesInsideCanvas(result: LayoutResult): void {
   }
 }
 
+describe('computeLayout with branding', () => {
+  it('emits a footer slot of kind logo when branding.logoUrl is present', () => {
+    const result = computeLayout('1x4_classic', {
+      branding: { logoUrl: 'https://cdn.example.com/logo.png', primaryColor: '#FF00AA' },
+    });
+    expect(result.footer).toBeDefined();
+    expect(result.footer?.kind).toBe('logo');
+    expect(result.footer?.logoUrl).toBe('https://cdn.example.com/logo.png');
+    expect(result.branding?.primaryColor).toBe('#FF00AA');
+  });
+
+  it('emits a footer slot of kind watermark when branding has colors only', () => {
+    const result = computeLayout('2x2', {
+      branding: { primaryColor: '#FF00AA', accentColor: '#00FFAA' },
+    });
+    expect(result.footer?.kind).toBe('watermark');
+    expect(result.footer?.text).toBe('tinybooth.com');
+  });
+
+  it('honors the watermarkText override inside the branded footer', () => {
+    const result = computeLayout('single', {
+      watermarkText: 'sams30th.com',
+      branding: { primaryColor: '#000' },
+    });
+    expect(result.footer?.text).toBe('sams30th.com');
+  });
+
+  it('returns no footer when branding is absent (backwards compatible)', () => {
+    const result = computeLayout('1x4_classic');
+    expect(result.footer).toBeUndefined();
+    expect(result.branding).toBeUndefined();
+  });
+
+  it('footer rect matches the watermark band rect exactly', () => {
+    const result = computeLayout('1x4_classic', { branding: { logoUrl: 'http://x' } });
+    expect(result.footer?.x).toBe(result.watermark.x);
+    expect(result.footer?.y).toBe(result.watermark.y);
+    expect(result.footer?.w).toBe(result.watermark.w);
+    expect(result.footer?.h).toBe(result.watermark.h);
+  });
+});
+
 function assertNoFrameOverlap(result: LayoutResult): void {
   for (let i = 0; i < result.frames.length; i += 1) {
     for (let j = i + 1; j < result.frames.length; j += 1) {
