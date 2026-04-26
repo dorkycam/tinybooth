@@ -54,3 +54,16 @@ coverage/
 
 # Vercel
 .vercel
+
+# EAS submit credentials (App Store + Play Store)
+apps/mobile/secrets/
+
+# Fastlane outputs and secrets
+apps/mobile/fastlane/report.xml
+apps/mobile/fastlane/Preview.html
+apps/mobile/fastlane/screenshots/
+apps/mobile/fastlane/test_output/
+apps/mobile/fastlane/metadata/review_information/
+apps/mobile/fastlane/.env
+apps/mobile/fastlane/.env.*
+!apps/mobile/fastlane/.env.example
