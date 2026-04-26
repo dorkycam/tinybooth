@@ -1,0 +1,5 @@
+{
+  "extends": "@tinybooth/config/tsconfig",
+  "compilerOptions": { "noEmit": true },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}
