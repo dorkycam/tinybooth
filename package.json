@@ -15,7 +15,8 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "tinybooth": "tsx packages/cli/src/index.ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
