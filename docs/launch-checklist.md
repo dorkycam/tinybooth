@@ -10,6 +10,14 @@ How to use this doc: tick the box once the item is done. Most items link
 to a more detailed doc or file. If a step turns out to need a different
 order, update both this doc and the upstream doc together.
 
+The fast path for the env-var rows in section 1: run
+`pnpm tinybooth setup` once. It walks every login, creates the Vercel +
+Supabase + R2 + Resend objects, materializes the Stripe products from
+`@tinybooth/billing`, and writes secrets to `.env.tinybooth` so the apps
+can read them. Use `--dry-run` first to preview every step. The sections
+below still apply for the things only the App Store Connect and Play
+Console UIs can do (IAP product creation, KYC, privacy questionnaires).
+
 ---
 
 ## 1. Pre-launch (1 week out)
@@ -41,9 +49,11 @@ order, update both this doc and the upstream doc together.
 
 ### Apple Developer + App Store Connect
 
-- [ ] Apple Developer account in good standing under the
-      `codesquad` team. Confirm the membership renewal is paid through
-      at least the next 12 months.
+- [ ] Apple Developer account in good standing on Camrynn's personal
+      account (the existing app lives there). Confirm membership renewal
+      is paid through at least the next 12 months. Bundle ID stays
+      `com.codesquad.tinybooth` (legacy, internal-only); App Store
+      Connect display name + developer name read "TinyBooth".
 - [ ] Confirm the App Privacy questionnaire answer for "Third-Party AI"
       is "no". TinyBooth ships zero third-party AI integrations at
       launch (Apple Guideline 5.1.2(i), Nov 13, 2025). If we ever add
@@ -114,7 +124,9 @@ order, update both this doc and the upstream doc together.
 - [ ] `www.tinybooth.com` 301s to apex.
 - [ ] `wall.tinybooth.com` keeps its current Vercel deploy as a 301-only
       project for 12 months per `docs/plan.md` section 2.
-- [ ] Email-sending domain configured in SES (DKIM + SPF + DMARC).
+- [ ] Email-sending domain configured in Resend (verify `tinybooth.com`
+      and let Resend auto-add the DKIM + SPF + DMARC records to Cloudflare).
+      Set `RESEND_API_KEY` in Vercel for both web + wall projects.
 
 ### Search Console + Webmaster
 

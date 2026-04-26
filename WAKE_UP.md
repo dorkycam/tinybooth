@@ -43,13 +43,12 @@ Verified live with curl against `pnpm dev`. Full log:
 1. **Decide the 8 open questions in section 8 of `docs/plan.md`** (or
    confirm my recommendations below). All eight are reproduced at the
    bottom of this file. Effort: 30 min over coffee.
-2. **Provide credentials when you're ready to deploy.** Five are
-   blocked on you: TinyBooth Stripe account, AWS account ID for
-   Terraform, Apple Developer account confirmation under `codesquad`,
-   GoDaddy DNS handover for `tinybooth.com`, RevenueCat project (after
-   App Store Connect IAPs exist). Sections 1 and 2 of
-   `docs/launch-checklist.md` have the exact env-var names that need
-   filling.
+2. **Provide credentials when you're ready to deploy.** Four are
+   blocked on you: TinyBooth Stripe account, Resend project + API key
+   for transactional email, GoDaddy DNS handover for `tinybooth.com`,
+   RevenueCat project (after App Store Connect IAPs exist). Sections 1
+   and 2 of `docs/launch-checklist.md` have the exact env-var names
+   that need filling.
 3. **Pick one of the three logo directions** in
    `docs/brand/identity.md` section 2 so we can lock the mark before
    the next App Store submission. My pick was Direction B for the
@@ -83,16 +82,17 @@ If you have 30 min total:
    Unlock. Recommend: ship at these prices. Pocketbooth is $4.99 floor;
    Lense is $34.99 ceiling. We sit in between for the wedding-grade
    end. Adjust in App Store Connect before submission, never after.
-2. **Apple developer account ownership.** Bundle ID is
-   `com.codesquad.tinybooth`. Recommend: confirm `codesquad` membership
-   is still yours and renewed for 12+ months before Phase 6 submit. If
-   ownership has moved, you need an account transfer first.
+2. **Apple developer account ownership.** Bundle ID stays
+   `com.codesquad.tinybooth` (it lives on your personal Apple Dev
+   account; users never see it). App Store Connect display name and
+   developer name will read "TinyBooth". No account transfer needed.
 3. **Stripe account for TinyBooth.** Recommend: create a separate
    Stripe account from Bookish before Phase 4 wiring. I won't create
    it; tell me when keys are ready and I'll wire them.
-4. **AWS account for Terraform.** Recommend: separate AWS account from
-   Bookish, region `us-west-2` (LA). Send me the account ID and I'll
-   point the staging env at it.
+4. **AWS account for Terraform.** Resolved 2026-04-26: NOT NEEDED. Email
+   moved to Resend (free tier covers 3k/mo, $20/mo for 50k). Secrets live
+   in Vercel + Supabase. Terraform skeleton deleted from `infra/`. No AWS
+   account required for launch.
 5. **Brand refresh.** Recommend: Direction B for the lockup mark and
    favicon. Direction A as the App Store icon for continuity with
    existing iOS users. See `docs/brand/identity.md` section 2.
@@ -112,6 +112,25 @@ If you have 30 min total:
    creds when you're ready and I'll do the apex + `www` records.
 
 ## How to run it
+
+The new normal: every infra op goes through `pnpm tinybooth`. See
+`packages/cli/README.md` for the full command list, `docs/decisions/0003-single-cli-for-ops.md`
+for the why.
+
+```bash
+# Bootstrap providers once (interactive, idempotent, dry-runnable):
+pnpm tinybooth setup --dry-run     # see what it would do
+pnpm tinybooth setup               # actually do it
+
+# Day-to-day:
+pnpm tinybooth doctor              # health check
+pnpm tinybooth deploy --staging    # preview deploy
+pnpm tinybooth deploy              # production deploy
+pnpm tinybooth migrate --check     # CI guard for pending migrations
+pnpm tinybooth release ios --track=internal
+```
+
+To boot the apps locally without the CLI:
 
 ```bash
 # 1. Install dependencies (already done; safe to re-run).
