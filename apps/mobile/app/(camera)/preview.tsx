@@ -19,7 +19,7 @@ import { SecondaryButton } from '@/components/SecondaryButton';
 import { Wordmark } from '@/components/Wordmark';
 import { useEntitlement } from '@/hooks/useEntitlement';
 import { useEventConnection } from '@/hooks/useEventConnection';
-import { saveToCameraRoll } from '@/lib/cameraRoll';
+import { saveToCameraRoll, saveFramesToCameraRoll } from '@/lib/cameraRoll';
 import { useLayoutClass } from '@/lib/layout';
 import { printStrip } from '@/lib/print';
 import { shareStrip } from '@/lib/share';
@@ -48,7 +48,7 @@ export default function PreviewScreen(): JSX.Element {
   // Until the bridge is wired, fall back to the first capture URI so the
   // print / share / save buttons still have something to act on.
   const composedUri = uris[0] ?? '';
-  const [busy, setBusy] = useState<null | 'print' | 'share' | 'save'>(null);
+  const [busy, setBusy] = useState<null | 'print' | 'share' | 'save' | 'frames'>(null);
   const isTablet = layoutClass === 'tablet';
 
   async function handlePrint(): Promise<void> {
@@ -89,6 +89,32 @@ export default function PreviewScreen(): JSX.Element {
         Alert.alert(
           'Photo permission needed',
           "TinyBooth can't save to your camera roll without photo access. Open Settings to grant it.",
+        );
+      }
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  /**
+   * Save each captured frame as its own camera-roll asset. Lets users pull a
+   * single shot out of a strip without cropping by hand. Tracked as a quick-win
+   * followup in `docs/followups.md`.
+   */
+  async function handleSaveFrames(): Promise<void> {
+    if (uris.length === 0) return;
+    setBusy('frames');
+    try {
+      const result = await saveFramesToCameraRoll(uris);
+      if (result.reason === 'permission_denied') {
+        Alert.alert(
+          'Photo permission needed',
+          "TinyBooth can't save to your camera roll without photo access. Open Settings to grant it.",
+        );
+      } else if (result.saved < result.total) {
+        Alert.alert(
+          'Saved with errors',
+          `Saved ${result.saved} of ${result.total} frames. Try again to retry the missing ones.`,
         );
       }
     } finally {
@@ -144,6 +170,13 @@ export default function PreviewScreen(): JSX.Element {
           <PrimaryButton label="Print" onPress={handlePrint} disabled={busy !== null} />
           <SecondaryButton label="Share" onPress={handleShare} disabled={busy !== null} />
           <SecondaryButton label="Save" onPress={handleSave} disabled={busy !== null} />
+          {uris.length > 1 ? (
+            <SecondaryButton
+              label="Save frames"
+              onPress={handleSaveFrames}
+              disabled={busy !== null}
+            />
+          ) : null}
           <SecondaryButton label="Redo" onPress={() => router.back()} disabled={busy !== null} />
           {connection ? (
             <SecondaryButton
