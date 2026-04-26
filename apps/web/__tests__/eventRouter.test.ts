@@ -23,6 +23,11 @@ interface MockEvent {
 interface MockPurchase {
   id: string;
   product: string;
+  eventId?: string | null;
+  userId?: string;
+  source?: string;
+  externalId?: string;
+  createdAt?: Date;
 }
 
 function makeDb(initial: { events?: MockEvent[]; purchases?: MockPurchase[] } = {}): {
@@ -80,6 +85,10 @@ function makeDb(initial: { events?: MockEvent[]; purchases?: MockPurchase[] } = 
       findUnique: vi.fn(async ({ where }: { where: { id: string } }) => {
         return purchases.get(where.id) ?? null;
       }),
+    },
+    strip: {
+      findFirst: vi.fn(async () => null),
+      update: vi.fn(async ({ where }: { where: { id: string } }) => ({ id: where.id })),
     },
   };
   return { events, purchases, proxy };
@@ -163,7 +172,9 @@ describe('event router', () => {
     };
     const { proxy } = makeDb({
       events: [ev],
-      purchases: [{ id: 'p1', product: 'event_pass' }],
+      purchases: [
+        { id: 'p1', product: 'event_pass', eventId: 'a', userId: 'owner1', source: 'web_stripe', externalId: 'cs_x', createdAt: new Date() },
+      ],
     });
     const caller = eventRouter.createCaller({ db: proxy, userId: 'owner1' });
     const updated = await caller.applyPurchase({ eventId: 'a', purchaseId: 'p1' });

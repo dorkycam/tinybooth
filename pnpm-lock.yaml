@@ -205,6 +205,9 @@ importers:
       '@tinybooth/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@tinybooth/billing':
+        specifier: workspace:*
+        version: link:../../packages/billing
       '@tinybooth/messages':
         specifier: workspace:*
         version: link:../../packages/messages

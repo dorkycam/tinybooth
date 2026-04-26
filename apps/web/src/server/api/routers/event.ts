@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { router, publicProcedure, protectedProcedure } from '../trpc';
 import { generateSlug } from '../../../lib/slug';
 import { clean } from '../../../lib/profanity';
+import { applyPurchase, type ApplyPurchaseDb } from '../../jobs/applyPurchase';
 
 const FREE_RETENTION_DAYS = 7;
 const EVENT_PASS_RETENTION_DAYS = 60;
@@ -149,7 +150,8 @@ export const eventRouter = router({
   /**
    * Apply a paid Purchase to an Event: bumps the tier and recomputes
    * retainUntil. Idempotent: if the event is already at-or-above the requested
-   * tier, the call is a no-op.
+   * tier, the call is a no-op. Delegates the actual mutation to
+   * `applyPurchase` so the same code path runs from webhooks.
    */
   applyPurchase: protectedProcedure
     .input(
@@ -166,17 +168,15 @@ export const eventRouter = router({
       if (event.ownerId && event.ownerId !== ctx.userId) {
         throw new TRPCError({ code: 'FORBIDDEN' });
       }
-      const tier = mapProductToTier(purchase.product);
-      if (!tier) {
-        // Strip Unlock or unknown product. No tier change.
-        return event;
-      }
-      const newRetain = computeRetainUntil(tier, event.endsAt);
-      const updated = await ctx.db.event.update({
-        where: { id: input.eventId },
-        data: { tier, retainUntil: newRetain },
-      });
-      return updated;
+      // Delegate to the shared applier so webhooks + manual catch-up agree.
+      // Cast at the boundary since the prisma client carries stricter generics
+      // than the loose ApplyPurchaseDb shape needs.
+      await applyPurchase(
+        ctx.db as unknown as ApplyPurchaseDb,
+        purchase.id,
+      );
+      const updated = await ctx.db.event.findUnique({ where: { id: input.eventId } });
+      return updated ?? event;
     }),
 
   /** Owner-only delete. Cascades to posts/photos/strips via Prisma relations. */

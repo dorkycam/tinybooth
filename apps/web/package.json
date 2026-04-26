@@ -19,6 +19,7 @@
     "@tinybooth/api-client": "workspace:*",
     "@tinybooth/api-types": "workspace:*",
     "@tinybooth/auth": "workspace:*",
+    "@tinybooth/billing": "workspace:*",
     "@tinybooth/messages": "workspace:*",
     "@tinybooth/ui-tokens": "workspace:*",
     "@trpc/server": "^11.0.0-rc.660",
