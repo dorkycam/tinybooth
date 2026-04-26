@@ -3,14 +3,22 @@
  *
  * Tablet layout splits the wordmark and CTAs into a two-column hero. Phone
  * layout stacks them vertically.
+ *
+ * Also owns the first-launch "what's new" modal so it shows once per app
+ * version regardless of whether the user starts the booth or opens settings
+ * first. Persistence lives in `src/lib/whatsNew.ts`.
  */
+import Constants from 'expo-constants';
 import { Link } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SecondaryButton } from '@/components/SecondaryButton';
+import { WhatsNewModal } from '@/components/WhatsNewModal';
 import { Wordmark } from '@/components/Wordmark';
 import { useLayoutClass } from '@/lib/layout';
+import { markSeenVersion, shouldShowWhatsNew } from '@/lib/whatsNew';
 import { useTheme } from '@/theme/useTheme';
 
 /**
@@ -20,6 +28,23 @@ export default function HomeScreen(): JSX.Element {
   const theme = useTheme();
   const { layoutClass } = useLayoutClass();
   const isTablet = layoutClass === 'tablet';
+  const version = Constants.expoConfig?.version ?? '0.0.0';
+  const [whatsNewVisible, setWhatsNewVisible] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void shouldShowWhatsNew(version).then((show) => {
+      if (!cancelled && show) setWhatsNewVisible(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [version]);
+
+  function dismissWhatsNew(): void {
+    setWhatsNewVisible(false);
+    void markSeenVersion(version);
+  }
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
@@ -48,6 +73,11 @@ export default function HomeScreen(): JSX.Element {
           </Link>
         </View>
       </View>
+      <WhatsNewModal
+        visible={whatsNewVisible}
+        version={version}
+        onDismiss={dismissWhatsNew}
+      />
     </SafeAreaView>
   );
 }
