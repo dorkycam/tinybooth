@@ -75,28 +75,64 @@ export function PhotosTab({ eventId }: PhotosTabProps): JSX.Element {
     }
   }
 
-  if (error) return <p className="text-coral">{error}</p>;
-  if (loading) return <p className="text-graphite">Loading photos...</p>;
+  if (error) return <p className="text-coral" role="alert">{error}</p>;
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3" aria-hidden>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="aspect-square rounded-lg bg-cream/60 border border-stone animate-pulse" />
+        ))}
+        <p className="sr-only" role="status">Loading photos.</p>
+      </div>
+    );
+  }
   if (items.length === 0) {
-    return <p className="text-graphite">No photos yet. Once a guest uploads or you take a strip, it shows up here.</p>;
+    return (
+      <div className="rounded-3xl bg-cream/60 border border-stone p-10 text-center">
+        <h3 className="text-xl font-bold mb-2">No photos yet</h3>
+        <p className="text-graphite">
+          Once a guest uploads to the wall or you take a strip on the booth, it shows up here.
+        </p>
+      </div>
+    );
   }
 
   return (
     <div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {items.flatMap((item) =>
-          item.photos.map((photo) => (
-            <a
-              key={`${item.kind}-${item.id}-${photo.id}`}
-              href={photo.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block aspect-square overflow-hidden rounded-lg bg-stone"
-              title={item.kind === 'strip' ? 'Booth strip' : 'Guest upload'}
-            >
-              <img src={photo.url} alt="" className="h-full w-full object-cover" />
-            </a>
-          )),
+        {items.flatMap((item, itemIdx) =>
+          item.photos.map((photo, photoIdx) => {
+            const label =
+              item.kind === 'strip'
+                ? `Booth strip frame ${photoIdx + 1}`
+                : `Guest upload ${itemIdx + 1}`;
+            const fileName = `${item.kind}-${item.id}-${photo.id}.webp`;
+            return (
+              <div
+                key={`${item.kind}-${item.id}-${photo.id}`}
+                className="group relative aspect-square overflow-hidden rounded-lg bg-stone"
+              >
+                <a
+                  href={photo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block h-full w-full focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-paper rounded-lg"
+                  title={label}
+                  aria-label={`${label}, open full size`}
+                >
+                  <img src={photo.url} alt={label} className="h-full w-full object-cover" />
+                </a>
+                <a
+                  href={photo.url}
+                  download={fileName}
+                  className="absolute bottom-2 right-2 rounded-full bg-ink/85 text-paper text-xs font-semibold px-3 py-1 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-coral transition-opacity"
+                  aria-label={`Download ${label}`}
+                >
+                  Download
+                </a>
+              </div>
+            );
+          }),
         )}
       </div>
       {cursor ? (

@@ -23,7 +23,7 @@ export function CtaButton({
   className = '',
 }: CtaButtonProps): JSX.Element {
   const base =
-    'inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold transition-colors text-base';
+    'inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold transition-colors text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral focus-visible:ring-offset-2 focus-visible:ring-offset-paper';
   const styles =
     variant === 'primary'
       ? 'bg-ink text-paper hover:bg-coral'

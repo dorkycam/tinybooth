@@ -39,10 +39,26 @@ export function EventsList(): JSX.Element {
   }, [auth]);
 
   if (error) {
-    return <p className="text-coral">Could not load events: {error}</p>;
+    return (
+      <p className="text-coral" role="alert">
+        Could not load events: {error}
+      </p>
+    );
   }
   if (!events) {
-    return <p className="text-graphite">Loading...</p>;
+    return (
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-hidden>
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="rounded-3xl bg-cream/60 border border-stone p-6 h-44 animate-pulse"
+          />
+        ))}
+        <p className="sr-only" role="status">
+          Loading your events.
+        </p>
+      </div>
+    );
   }
   if (events.length === 0) {
     return (

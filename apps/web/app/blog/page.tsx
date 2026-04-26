@@ -55,6 +55,16 @@ export default function BlogIndexPage(): JSX.Element {
         </Section>
       </Container>
 
+      {ALL_POSTS.length === 0 ? (
+        <Container>
+          <div className="rounded-3xl bg-cream/60 border border-stone p-10 text-center mb-16">
+            <p className="text-graphite">
+              No posts yet. The first batch lands soon. Check back in a few weeks.
+            </p>
+          </div>
+        </Container>
+      ) : null}
+
       <Container>
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-16">
           {ALL_POSTS.map((post) => (
