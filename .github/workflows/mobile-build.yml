@@ -1,0 +1,126 @@
+# Mobile build + submit pipeline.
+#
+# Triggered by:
+#   - workflow_dispatch (manual): pick the profile in the dispatch UI.
+#   - tag push matching mobile-v* (e.g. mobile-v1.0.0): always production.
+#
+# What it does:
+#   - Sets up Node + pnpm with frozen lockfile.
+#   - Runs `eas build --platform all --profile <profile> --non-interactive`.
+#   - On success, runs `eas submit --platform all --profile <profile> --non-interactive`.
+#
+# Required GitHub secrets (Settings -> Secrets -> Actions):
+#   - EXPO_TOKEN              EAS personal access token (Expo dashboard)
+#   - APPLE_ID                Apple ID email
+#   - APPLE_TEAM_ID           Apple Developer team id (10 chars)
+#   - ASC_APP_ID              numeric App Store Connect app id
+#   - ASC_API_KEY_ID          App Store Connect API key id
+#   - ASC_API_KEY_ISSUER_ID   App Store Connect API key issuer id
+#   - ASC_API_KEY_BASE64      base64-encoded contents of the .p8 key file
+#   - ANDROID_SERVICE_ACCOUNT_JSON   contents of Play Console service account JSON
+#
+# Hard rule: this workflow never runs on push to a regular branch. It only
+# fires on a deliberate tag or manual dispatch so a stray commit cannot
+# trigger a build / submission.
+
+name: mobile-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "EAS profile to build and submit"
+        required: true
+        default: preview
+        type: choice
+        options:
+          - preview
+          - production
+      submit:
+        description: "Submit to App Store + Play Store after build"
+        required: true
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "mobile-v*"
+
+concurrency:
+  group: mobile-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-submit:
+    name: build (${{ github.event.inputs.profile || 'production' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      ASC_APP_ID: ${{ secrets.ASC_APP_ID }}
+      ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+      ASC_API_KEY_ISSUER_ID: ${{ secrets.ASC_API_KEY_ISSUER_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.0.0
+        with:
+          version: 9.15.0
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4.0.3
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup EAS CLI
+        uses: expo/expo-github-action@v8.2.1
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Materialize Apple API key
+        if: ${{ secrets.ASC_API_KEY_BASE64 != '' }}
+        run: |
+          mkdir -p apps/mobile/secrets
+          echo "${{ secrets.ASC_API_KEY_BASE64 }}" | base64 --decode > apps/mobile/secrets/asc-api-key.p8
+          chmod 600 apps/mobile/secrets/asc-api-key.p8
+
+      - name: Materialize Play service account
+        if: ${{ secrets.ANDROID_SERVICE_ACCOUNT_JSON != '' }}
+        run: |
+          mkdir -p apps/mobile/secrets
+          printf '%s' '${{ secrets.ANDROID_SERVICE_ACCOUNT_JSON }}' > apps/mobile/secrets/play-service-account.json
+          chmod 600 apps/mobile/secrets/play-service-account.json
+
+      - name: Build (both platforms)
+        working-directory: apps/mobile
+        run: |
+          PROFILE="${{ github.event.inputs.profile || 'production' }}"
+          eas build \
+            --platform all \
+            --profile "$PROFILE" \
+            --non-interactive \
+            --message "ci ${{ github.sha }}"
+
+      - name: Submit (both platforms)
+        if: ${{ github.event.inputs.submit == 'true' || startsWith(github.ref, 'refs/tags/mobile-v') }}
+        working-directory: apps/mobile
+        run: |
+          PROFILE="${{ github.event.inputs.profile || 'production' }}"
+          eas submit \
+            --platform all \
+            --profile "$PROFILE" \
+            --non-interactive
+
+      - name: Cleanup secrets
+        if: always()
+        run: rm -rf apps/mobile/secrets

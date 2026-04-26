@@ -1,0 +1,91 @@
+# Terraform apply. Manual dispatch only. Never auto-runs.
+#
+# Required inputs:
+#   - environment   staging | production
+#   - confirm       must be the literal string "I_HAVE_REVIEWED" to proceed
+#
+# Required GitHub secrets: same as infra-plan.yml.
+#
+# Hard rules:
+#   - Refuses to run unless confirm == "I_HAVE_REVIEWED".
+#   - Refuses to run on production unless the actor is the repo owner.
+#   - Always re-plans before apply so the plan in the apply log is the actual
+#     plan being executed.
+
+name: infra-apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      confirm:
+        description: "Type I_HAVE_REVIEWED to apply"
+        required: true
+        type: string
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: infra-apply-${{ github.event.inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    name: apply ${{ github.event.inputs.environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Confirm input
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "I_HAVE_REVIEWED" ]; then
+            echo "::error::confirm input must be 'I_HAVE_REVIEWED'. Got: ${{ github.event.inputs.confirm }}"
+            exit 1
+          fi
+
+      - name: Restrict production to owner
+        if: ${{ github.event.inputs.environment == 'production' }}
+        run: |
+          if [ "${{ github.actor }}" != "${{ github.repository_owner }}" ]; then
+            echo "::error::Production apply requires the repository owner. Actor was ${{ github.actor }}"
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4.1.7
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4.0.2
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: us-west-2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3.1.2
+        with:
+          terraform_version: 1.9.5
+          terraform_wrapper: true
+
+      - name: Terraform init
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_BACKEND_BUCKET }}" \
+            -backend-config="dynamodb_table=${{ secrets.TF_BACKEND_LOCK_TABLE }}" \
+            -backend-config="key=tinybooth/${{ github.event.inputs.environment }}/terraform.tfstate"
+
+      - name: Terraform plan
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}
+        run: terraform plan -no-color -out=tfplan
+
+      - name: Terraform apply
+        working-directory: infra/terraform/environments/${{ github.event.inputs.environment }}
+        run: terraform apply -no-color -auto-approve tfplan
