@@ -347,6 +347,21 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@20.19.39)(terser@5.46.2)
 
+  packages/billing:
+    devDependencies:
+      '@tinybooth/config':
+        specifier: workspace:*
+        version: link:../config
+      '@vitest/coverage-v8':
+        specifier: ^1.6.0
+        version: 1.6.1(vitest@1.6.1(@types/node@20.19.39)(terser@5.46.2))
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+      vitest:
+        specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.39)(terser@5.46.2)
+
   packages/config: {}
 
   packages/messages:
