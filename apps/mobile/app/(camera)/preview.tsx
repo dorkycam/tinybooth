@@ -9,7 +9,7 @@
  */
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { StripLayout } from '@tinybooth/api-types';
 import { computeLayout } from '@tinybooth/strip-render';
@@ -127,7 +127,16 @@ export default function PreviewScreen(): JSX.Element {
               {connection?.eventName ?? 'event logo'}
             </Text>
           ) : !stripUnlock ? (
-            <Text style={[styles.watermark, { color: theme.colors.fg }]}>tinybooth.com</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Remove the wordmark"
+              onPress={() => router.push('/(camera)/strip-unlock')}
+              style={({ pressed }) => [styles.watermark, { opacity: pressed ? 0.5 : 1 }]}
+            >
+              <Text style={[styles.watermarkText, { color: theme.colors.fg }]}>
+                tinybooth.com
+              </Text>
+            </Pressable>
           ) : null}
         </View>
         <View style={[styles.actions, isTablet ? styles.actionsTablet : null]}>
@@ -135,6 +144,13 @@ export default function PreviewScreen(): JSX.Element {
           <SecondaryButton label="Share" onPress={handleShare} disabled={busy !== null} />
           <SecondaryButton label="Save" onPress={handleSave} disabled={busy !== null} />
           <SecondaryButton label="Redo" onPress={() => router.back()} disabled={busy !== null} />
+          {connection ? (
+            <SecondaryButton
+              label="Upgrade event"
+              onPress={() => router.push('/(camera)/paywall')}
+              disabled={busy !== null}
+            />
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -201,6 +217,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 12,
     right: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  watermarkText: {
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1.5,

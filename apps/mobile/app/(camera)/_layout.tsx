@@ -10,6 +10,8 @@ export default function CameraGroupLayout(): JSX.Element {
     <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="preview" />
+      <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="strip-unlock" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }
