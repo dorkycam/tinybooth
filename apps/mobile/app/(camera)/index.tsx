@@ -40,7 +40,12 @@ type Phase = 'idle' | 'countdown' | 'reveal' | 'done';
 
 /** Camera screen entry point. */
 export default function CameraScreen(): JSX.Element {
-  const theme = useTheme();
+  // Force dark mode on the camera screen regardless of OS scheme. TinyBooth runs
+  // on a propped-up tablet at dim-lit venues; a Paper-white background blasts
+  // the room and washes out the live preview. Dark venue mode keeps the booth
+  // discreet and readable. Per docs/brand/identity.md "Why this palette" notes
+  // and PROMPT.md UX polish item #9.
+  const theme = useTheme('dark');
   const router = useRouter();
   const { layoutClass, orientation } = useLayoutClass();
   const isTablet = layoutClass === 'tablet';
