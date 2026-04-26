@@ -1,0 +1,99 @@
+# Fastfile - TinyBooth iOS lanes.
+#
+# Lanes:
+#   metadata_pull     - pull current App Store metadata down into
+#                       `fastlane/metadata/`. Useful right after Camrynn edits
+#                       the listing in App Store Connect by hand.
+#   metadata_push     - push `fastlane/metadata/` to App Store Connect without
+#                       touching the binary or screenshots.
+#   screenshots       - run `fastlane snapshot` against the UI tests in
+#                       `ios/TinyBoothUITests`, then `frameit` to add device
+#                       frames.
+#   screenshots_push  - push the generated screenshots to App Store Connect
+#                       without touching the binary or metadata.
+#
+# Hard rules per docs/launch-checklist.md:
+#   - No lane uploads a binary. EAS owns binary submission via `eas submit`.
+#   - No lane submits for review. Camrynn always reviews in App Store Connect
+#     and clicks "Submit" by hand.
+#   - Real Apple credentials live in `fastlane/.env` (gitignored). Lanes never
+#     log secrets.
+#
+# Usage:
+#   bundle install
+#   cp fastlane/.env.example fastlane/.env  (then fill in real values)
+#   bundle exec fastlane metadata_pull
+#   bundle exec fastlane metadata_push
+#   bundle exec fastlane screenshots
+#   bundle exec fastlane screenshots_push
+
+require "dotenv"
+Dotenv.load(File.expand_path("./.env", __dir__))
+
+# `before_all` runs ahead of every lane and bails early on missing env so we
+# never try to talk to Apple with half a credential set.
+before_all do |lane|
+  required = %w[APPLE_ID APPLE_TEAM_ID APP_IDENTIFIER]
+  missing = required.select { |k| ENV[k].nil? || ENV[k].empty? }
+  unless missing.empty?
+    UI.user_error!("Missing required env: #{missing.join(", ")}. Copy fastlane/.env.example to fastlane/.env and fill it in.")
+  end
+end
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Pull current App Store metadata into fastlane/metadata/."
+  lane :metadata_pull do
+    deliver(
+      run_precheck_before_submit: false,
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      skip_metadata: false,
+      force: false,
+      download_metadata: true,
+      metadata_path: "./fastlane/metadata"
+    )
+  end
+
+  desc "Push metadata-only updates to App Store Connect."
+  lane :metadata_push do
+    deliver(
+      run_precheck_before_submit: true,
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      skip_metadata: false,
+      force: true,
+      submit_for_review: false,
+      automatic_release: false,
+      metadata_path: "./fastlane/metadata"
+    )
+  end
+
+  desc "Capture screenshots via the TinyBoothUITests scheme, then frameit."
+  lane :screenshots do
+    capture_screenshots(
+      workspace: "./ios/TinyBooth.xcworkspace",
+      scheme: "TinyBoothUITests",
+      output_directory: "./fastlane/screenshots",
+      clear_previous_screenshots: true,
+      override_status_bar: true,
+      stop_after_first_error: true
+    )
+    frameit(path: "./fastlane/screenshots")
+  end
+
+  desc "Push screenshots-only updates to App Store Connect."
+  lane :screenshots_push do
+    deliver(
+      run_precheck_before_submit: false,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_screenshots: false,
+      force: true,
+      submit_for_review: false,
+      automatic_release: false,
+      screenshots_path: "./fastlane/screenshots"
+    )
+  end
+end
