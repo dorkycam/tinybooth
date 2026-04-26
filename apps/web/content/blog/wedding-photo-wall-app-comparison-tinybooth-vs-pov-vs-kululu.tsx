@@ -41,36 +41,42 @@ export const post: Post = {
             <th className="text-left py-2 pr-4 font-semibold text-ink">TinyWall</th>
             <th className="text-left py-2 pr-4 font-semibold text-ink">Kululu</th>
             <th className="text-left py-2 pr-4 font-semibold text-ink">POV</th>
+            <th className="text-left py-2 pr-4 font-semibold text-ink">JoinMyMoment</th>
           </tr>
         </thead>
         <tbody>
           <tr className="border-b border-stone">
             <td className="py-2 pr-4">Free tier upload cap</td>
             <td className="py-2 pr-4">100</td>
-            <td className="py-2 pr-4">50</td>
+            <td className="py-2 pr-4">500 (changed in 2026)</td>
             <td className="py-2 pr-4">10 guests</td>
+            <td className="py-2 pr-4">No free tier</td>
           </tr>
           <tr className="border-b border-stone">
             <td className="py-2 pr-4">Free retention</td>
             <td className="py-2 pr-4">7 days</td>
             <td className="py-2 pr-4">7 days</td>
             <td className="py-2 pr-4">N/A (per guest)</td>
+            <td className="py-2 pr-4">N/A</td>
           </tr>
           <tr className="border-b border-stone">
             <td className="py-2 pr-4">Live slideshow on free</td>
             <td className="py-2 pr-4">Yes</td>
             <td className="py-2 pr-4">Yes</td>
             <td className="py-2 pr-4">Paid add-on</td>
+            <td className="py-2 pr-4">N/A</td>
           </tr>
           <tr className="border-b border-stone">
             <td className="py-2 pr-4">Cheapest paid tier</td>
             <td className="py-2 pr-4">$12.99 web / $14.99 IAP</td>
             <td className="py-2 pr-4">$39 one-time</td>
             <td className="py-2 pr-4">~$4.99 (25 guests)</td>
+            <td className="py-2 pr-4">$19.99 (100 guests)</td>
           </tr>
           <tr className="border-b border-stone">
             <td className="py-2 pr-4">Photo booth app bundled</td>
             <td className="py-2 pr-4">Yes (TinyBooth)</td>
+            <td className="py-2 pr-4">No</td>
             <td className="py-2 pr-4">No</td>
             <td className="py-2 pr-4">No</td>
           </tr>
@@ -79,18 +85,21 @@ export const post: Post = {
             <td className="py-2 pr-4">Yes</td>
             <td className="py-2 pr-4">Yes</td>
             <td className="py-2 pr-4">Yes (web) + optional iOS</td>
+            <td className="py-2 pr-4">Yes</td>
           </tr>
           <tr className="border-b border-stone">
             <td className="py-2 pr-4">Bulk export</td>
             <td className="py-2 pr-4">Paid (24-hour zip URL)</td>
             <td className="py-2 pr-4">Paid (Plus)</td>
             <td className="py-2 pr-4">Paid</td>
+            <td className="py-2 pr-4">Google Photos auto-sync</td>
           </tr>
           <tr className="border-b border-stone">
             <td className="py-2 pr-4">Custom branding</td>
             <td className="py-2 pr-4">Paid</td>
             <td className="py-2 pr-4">Paid (Plus / Pro)</td>
             <td className="py-2 pr-4">Business add-on</td>
+            <td className="py-2 pr-4">Limited</td>
           </tr>
         </tbody>
       </table>
@@ -119,21 +128,44 @@ export const post: Post = {
 
       <p>
         The category leader on the pure-wall side. Web product, no app for guests, three tiers
-        (Free 50 / Plus $39 with 500 uploads / Pro $99 with unlimited uploads). Polished
-        copywriting on the landing pages and a dedicated wedding-photo-sharing page that is
-        legitimately well-written.
+        (Free with a 500-photo cap as of 2026, Plus at $39, Pro at $99 with unlimited uploads).
+        Polished copywriting on the landing pages and a dedicated wedding-photo-sharing page that
+        is legitimately well-written. Heads-up: their free cap jumped from 50 to 500 in the past
+        year, which makes their free tier the most generous in the pure-wall category right now.
+        Our 100-upload free tier is smaller; we trade raw cap for the booth-plus-wall bundle.
       </p>
 
       <p>
-        The 500-upload cap on Plus is the weak spot for actual weddings. The Knot data on their
-        Guest app tracked 870 photos per wedding average. A typical wedding maxes out the Plus
-        tier and forces an upgrade to Pro at $99. TinyWall&apos;s Event Pass is $12.99 with no
-        guest cap on Plus and a 60-day retention.
+        The 500-photo cap on the free plan is the weak spot for actual weddings. The Knot data on
+        their Guest app tracked 870 photos per wedding average. A typical wedding maxes out the
+        free tier and forces a paid upgrade. TinyWall&apos;s Event Pass at $12.99 (web) keeps the
+        same 60-day retention and stays cheaper than Kululu&apos;s entry paid tier.
       </p>
 
       <p>
-        Pick Kululu if you only need the wall, you have a small wedding under 500 uploads, and
-        the brand familiarity matters to your planner.
+        Pick Kululu if you only need the wall, you want the most-generous free cap, and the brand
+        familiarity matters to your planner.
+      </p>
+
+      <h2>JoinMyMoment</h2>
+
+      <p>
+        New entrant. $19.99 one-time for 100 guests. No free tier, browser-based, real-time photo
+        and video sharing, and the headline feature is automatic Google Photos sync so the host
+        gets every guest photo in their main camera roll without any export step. Voice messages
+        and digital wedding invitations are bundled.
+      </p>
+
+      <p>
+        For a small or mid-size wedding under 100 guests where you do not need a photo booth or
+        live TV slideshow, JoinMyMoment is the cheapest way to bulk-collect guest photos. It is
+        not a TinyWall replacement: there is no live slideshow on a venue TV, no booth bundle,
+        and no event branding worth speaking of.
+      </p>
+
+      <p>
+        Pick JoinMyMoment if your only goal is &ldquo;everyone&apos;s photos end up in my Google
+        Photos&rdquo; and you do not need the booth or the TV slideshow.
       </p>
 
       <h2>POV</h2>
@@ -227,8 +259,13 @@ export const post: Post = {
           the only one-event solution.
         </li>
         <li>
-          Do you need a real free tier for a small event under 100 uploads? TinyWall&apos;s 100-
-          upload free tier beats Kululu&apos;s 50 and crushes POV&apos;s 10 guests.
+          Do you need the largest free tier for a small event? Kululu now leads at 500 uploads
+          (changed in 2026); TinyWall is 100 uploads with a 7-day retention plus the bundled
+          booth.
+        </li>
+        <li>
+          Just want photos in your Google Photos? JoinMyMoment&apos;s $19.99 one-time is the
+          cheapest path; no live wall, no booth.
         </li>
         <li>
           Is brand familiarity important to your planner? Kululu wins. They have more
