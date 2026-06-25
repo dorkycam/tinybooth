@@ -4,7 +4,7 @@
  */
 import type { JSX } from 'react';
 import { StyleSheet, Text, type TextStyle } from 'react-native';
-import { useTheme } from '../theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 /** Wordmark size variants. */
 export type WordmarkSize = 'sm' | 'md' | 'lg';

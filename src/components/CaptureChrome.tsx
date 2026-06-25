@@ -8,7 +8,7 @@
 import type { JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { GlassSurface } from './GlassSurface';
-import { useTheme } from '../theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 interface CaptureChromeProps {
   /** Primary line of the status pill (e.g. "Get ready!", "2 / 4"). */

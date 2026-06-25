@@ -11,8 +11,8 @@ import type { JSX, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { CameraSurface } from './CameraSurface';
-import { getCameraPermissionStatus } from '../lib/permissions';
-import { useTheme } from '../theme/useTheme';
+import { getCameraPermissionStatus } from '@/lib/permissions';
+import { useTheme } from '@/theme/useTheme';
 
 /** Props for {@link StartBackdrop}. */
 export interface StartBackdropProps {

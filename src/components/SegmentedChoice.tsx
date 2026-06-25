@@ -10,7 +10,7 @@
  */
 import type { JSX } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 interface SegmentedChoiceProps<T extends string | number> {
   /** Selectable options, in display order. */

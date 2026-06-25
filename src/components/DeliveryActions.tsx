@@ -11,7 +11,7 @@
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { IconButton } from './IconButton';
-import { useTheme } from '../theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 /** Props for {@link DeliveryActions}. */
 export interface DeliveryActionsProps {

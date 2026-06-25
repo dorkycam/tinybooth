@@ -15,7 +15,7 @@ import type { JSX } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from './PrimaryButton';
-import { useTheme } from '../theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 interface PermissionPrimerProps {
   /** Headline shown at the top of the primer. */

@@ -11,7 +11,7 @@
  */
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useTheme } from '../theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 interface SafeCropOverlayProps {
   /** Width / height of the per-frame rect in the layout. */

@@ -15,8 +15,8 @@ import type { JSX } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { GLASS_AVAILABLE, GlassSurface } from './GlassSurface';
-import { buttonHaptic } from '../lib/haptics';
-import { useTheme } from '../theme/useTheme';
+import { buttonHaptic } from '@/lib/haptics';
+import { useTheme } from '@/theme/useTheme';
 
 /** Visual tone of an {@link IconButton}. */
 export type IconButtonVariant = 'primary' | 'neutral' | 'ghost';

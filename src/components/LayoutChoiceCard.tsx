@@ -11,8 +11,8 @@
  */
 import type { JSX } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { StripLayout } from '../lib/layouts';
-import { useTheme } from '../theme/useTheme';
+import type { StripLayout } from '@/lib/layouts';
+import { useTheme } from '@/theme/useTheme';
 
 interface LayoutChoiceCardProps {
   /** Which layout this card selects. */
