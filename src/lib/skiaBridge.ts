@@ -1,65 +1,50 @@
 /**
  * Skia strip-composition bridge.
  *
- * Composes the captured frames into a single strip JPEG. The function is
- * registered on `globalThis.__TINYBOOTH_SKIA_RENDER__` so the capture flow can
- * call it without a static import of the native Skia module (which is absent in
- * unit tests). Phase 2 supplies the resolved layout geometry from
- * `src/lib/layouts.ts`.
+ * Composes the captured frames into a single strip JPEG at print resolution.
+ * The compose function is registered on `globalThis.__TINYBOOTH_SKIA_RENDER__`
+ * (from the root layout) so the capture flow can call it without a static import
+ * of the native Skia module (which is absent in unit tests and web bundles).
+ *
+ * Geometry comes from `src/lib/layouts.ts`. The resolved layout's `frames` array
+ * already includes the duplicated right-column rects for the Classic strip, so
+ * this bridge has no layout-specific branching: it draws each shot into each
+ * frame rect in order, cropping the shot to the rect's aspect ratio.
  *
  * Implementation:
- *   1. Decode each photo URI via `Skia.Data.fromURI` + `Skia.Image.MakeImageFromEncoded`.
- *   2. Build an offscreen Surface at the layout's canvas size (white background).
- *   3. Draw each frame, cropped to the frame's aspect ratio (centered crop).
- *   4. If `printDuplication === 'horizontal'`, draw the same frame again in
- *      the duplicate column so the printed sheet has two identical strips.
- *   5. Snapshot the surface, encode to JPEG bytes, write to a temp file via
+ *   1. Resolve the layout geometry from `layouts.ts`.
+ *   2. Decode each photo URI via `Skia.Data.fromURI` + `MakeImageFromEncoded`.
+ *   3. Build an offscreen surface at the canvas size with a white background.
+ *   4. Draw each shot center-cropped into its frame rect (Classic duplicates the
+ *      shot into both columns because the rect list contains both).
+ *   5. Snapshot the surface, encode to JPEG, write to a temp file via
  *      `expo-file-system`, return the `file://` URI.
  *
- * Both `@shopify/react-native-skia` and `expo-file-system` are lazy-loaded
- * here so unit tests + web bundles continue to work without those native
- * modules.
+ * Both `@shopify/react-native-skia` and `expo-file-system` are lazy-loaded with
+ * static import strings (per the Metro lazy-import rule) so unit tests and web
+ * bundles continue to load without those native modules.
  */
-/**
- * A single frame rectangle on the strip canvas, in canvas pixels.
- */
-interface FrameRect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
+import { resolveLayout, type ResolvedLayout, type StripLayout } from './layouts';
 
-/**
- * Resolved layout geometry passed to the bridge. Phase 2 produces this from
- * `src/lib/layouts.ts`; the bridge only needs the canvas size and frame rects.
- */
-interface ResolvedLayout {
-  canvas: { w: number; h: number };
-  frames: FrameRect[];
-  /** When 'horizontal', each frame is mirrored into the right column. */
-  printDuplication?: 'horizontal' | 'none';
-  /** Left edge of the duplicated right column, in canvas pixels. */
-  rightColumnX?: number;
-}
-
-/** Input to the compose bridge: the resolved layout plus the captured photos. */
-interface SkiaBridgePayload {
-  layout: ResolvedLayout;
+/** Input to the compose bridge: the layout id plus the captured photos. */
+export interface SkiaBridgePayload {
+  /** Which layout to compose. The bridge resolves geometry internally. */
+  layout: StripLayout;
+  /** Captured shot URIs, in capture order. */
   photos: Array<{ uri: string }>;
   /** Optional explicit output path; defaults to the cache directory. */
   outputPath?: string;
 }
 
 /** What the bridge returns: a file URI for the composed JPEG and its size. */
-interface SkiaComposeResult {
+export interface SkiaComposeResult {
   uri: string;
   width: number;
   height: number;
 }
 
 /** The compose function shape installed on `globalThis`. */
-type SkiaBridge = (payload: SkiaBridgePayload) => Promise<SkiaComposeResult>;
+export type SkiaBridge = (payload: SkiaBridgePayload) => Promise<SkiaComposeResult>;
 
 interface SkiaImageLike {
   width(): number;
@@ -137,27 +122,36 @@ async function loadFs(): Promise<FileSystemModule | null> {
   }
 }
 
-/** Install the host bridge. Call once from the root layout. */
+/**
+ * Install the host compose bridge on `globalThis`. Call once from the root
+ * layout. Subsequent calls are no-ops.
+ */
 export function installSkiaBridge(): void {
   const ref = globalThis as { __TINYBOOTH_SKIA_RENDER__?: SkiaBridge };
   if (ref.__TINYBOOTH_SKIA_RENDER__) return;
   ref.__TINYBOOTH_SKIA_RENDER__ = composeBridge;
 }
 
+/**
+ * Compose the captured shots into a single strip JPEG at print resolution.
+ *
+ * @param payload The layout id, captured photo URIs, and optional output path.
+ * @returns The composed strip's `file://` URI and pixel dimensions.
+ */
 async function composeBridge(payload: SkiaBridgePayload): Promise<SkiaComposeResult> {
   const skiaMod = await loadSkia();
   const fs = await loadFs();
   if (!skiaMod) {
     throw new Error(
-      '[skiaBridge] @shopify/react-native-skia is not loadable. Run a native build (eas build or expo run:ios).',
+      '[skiaBridge] @shopify/react-native-skia is not loadable. Run a native build (expo run:ios / run:android).',
     );
   }
   if (!fs) {
     throw new Error('[skiaBridge] expo-file-system is not loadable.');
   }
   const { Skia, ImageFormat } = skiaMod;
-  const layout = payload.layout;
-  const surface = Skia.Surface.MakeOffscreen(layout.canvas.w, layout.canvas.h);
+  const layout: ResolvedLayout = resolveLayout(payload.layout);
+  const surface = Skia.Surface.MakeOffscreen(layout.canvas.width, layout.canvas.height);
   if (!surface) {
     throw new Error('[skiaBridge] Skia.Surface.MakeOffscreen returned null.');
   }
@@ -168,27 +162,34 @@ async function composeBridge(payload: SkiaBridgePayload): Promise<SkiaComposeRes
   // White background so the printed sheet has clean separators between photos.
   canvas.drawColor(Skia.Color('#FFFFFF'));
 
-  // Decode every photo once, draw it into one (or two) frame rectangles.
+  // Decode each distinct shot once and cache it, then draw it into every frame
+  // rect that maps to it. The Classic layout repeats shots across two columns,
+  // so frame index `i` maps to shot index `i % photos.length`.
+  const photoCount = payload.photos.length;
+  const decoded = new Map<number, SkiaImageLike>();
   for (let i = 0; i < layout.frames.length; i += 1) {
-    const photo = payload.photos[i];
     const frame = layout.frames[i];
-    if (!photo || !frame) continue;
-    let img: SkiaImageLike | null = null;
-    try {
-      const data = await Skia.Data.fromURI(photo.uri);
-      img = Skia.Image.MakeImageFromEncoded(data);
-      data.dispose?.();
-    } catch {
-      img = null;
+    if (!frame || photoCount === 0) continue;
+    const shotIndex = i % photoCount;
+    let img = decoded.get(shotIndex) ?? null;
+    if (!img) {
+      const photo = payload.photos[shotIndex];
+      if (!photo) continue;
+      try {
+        const data = await Skia.Data.fromURI(photo.uri);
+        img = Skia.Image.MakeImageFromEncoded(data);
+        data.dispose?.();
+      } catch {
+        img = null;
+      }
+      if (!img) continue;
+      decoded.set(shotIndex, img);
     }
-    if (!img) continue;
     const srcRect = centeredCropRect(img.width(), img.height(), frame.w, frame.h);
     const dstRect = Skia.XYWHRect(frame.x, frame.y, frame.w, frame.h);
     canvas.drawImageRect(img, srcRect, dstRect, paint);
-    if (layout.printDuplication === 'horizontal' && typeof layout.rightColumnX === 'number') {
-      const mirrorDst = Skia.XYWHRect(layout.rightColumnX, frame.y, frame.w, frame.h);
-      canvas.drawImageRect(img, srcRect, mirrorDst, paint);
-    }
+  }
+  for (const img of decoded.values()) {
     img.dispose?.();
   }
 
@@ -207,10 +208,20 @@ async function composeBridge(payload: SkiaBridgePayload): Promise<SkiaComposeRes
   const outputPath = payload.outputPath ?? `${dir}tinybooth-strip-${Date.now()}.jpg`;
   await fs.writeAsStringAsync(outputPath, base64, { encoding: fs.EncodingType.Base64 });
 
-  return { uri: outputPath, width: layout.canvas.w, height: layout.canvas.h };
+  return { uri: outputPath, width: layout.canvas.width, height: layout.canvas.height };
 }
 
-function centeredCropRect(
+/**
+ * Compute the source rectangle that center-crops a shot to the destination
+ * frame's aspect ratio, so the shot fills the frame without distortion.
+ *
+ * @param srcW Source image width in pixels.
+ * @param srcH Source image height in pixels.
+ * @param dstW Destination frame width in pixels.
+ * @param dstH Destination frame height in pixels.
+ * @returns The crop rectangle in source-image pixels.
+ */
+export function centeredCropRect(
   srcW: number,
   srcH: number,
   dstW: number,
@@ -232,9 +243,14 @@ function centeredCropRect(
   return { x, y, width: cropW, height: cropH };
 }
 
+/**
+ * Base64-encode JPEG bytes when the Skia build lacks `encodeToBase64`.
+ *
+ * @param bytes The encoded JPEG bytes, or undefined when encoding failed.
+ * @returns The base64 string, or null when there are no bytes.
+ */
 function encodeFromBytes(bytes: Uint8Array | undefined): string | null {
   if (!bytes) return null;
-  // RN's btoa-equivalent: build via standard base64 fast path.
   let binary = '';
   for (let i = 0; i < bytes.length; i += 1) {
     binary += String.fromCharCode(bytes[i] ?? 0);

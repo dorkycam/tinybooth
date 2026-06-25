@@ -5,9 +5,10 @@
  * actions: Print, Share, Redo, Done. Strips also auto-save to the photo
  * library on mount.
  *
- * Strip composition (the Skia bridge) is wired in Phase 2. Until then the
- * screen renders the first captured frame so the buttons have something to act
- * on. The composed file URI, once supplied, takes precedence.
+ * The capture screen composes the strip (via the Skia bridge) and passes the
+ * composed file URI as `composedUri`. If composition failed, the screen falls
+ * back to the first captured frame so the buttons still have something to act on
+ * and surfaces the error.
  */
 import type { JSX } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -54,8 +55,9 @@ export default function PreviewScreen(): JSX.Element {
   const uris = urisParam.split('|').filter(Boolean);
   const composedUriParam = (params.composedUri ?? '').trim();
   const composeError = (params.composeError ?? '').trim();
-  // Phase 2 supplies the composed strip URI; fall back to the first frame so the
-  // print / share buttons still have something to point at.
+  // The capture screen supplies the composed strip URI. Fall back to the first
+  // frame so the print / share buttons still have something to point at when
+  // composition failed.
   const composedUri = composedUriParam || uris[0] || '';
   const [busy, setBusy] = useState<null | 'print' | 'share'>(null);
   const [autoSave, setAutoSave] = useState<AutoSaveState>('idle');

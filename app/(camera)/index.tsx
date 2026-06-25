@@ -8,10 +8,9 @@
  * A safe-crop overlay shows guests exactly what part of the frame will end up
  * on the strip.
  *
- * After the last shot the screen routes to the preview with the captured frame
- * URIs. Strip composition (the Skia bridge) is wired in Phase 2; until then the
- * preview renders the first frame so Print / Share / Save have something to act
- * on.
+ * After the last shot the screen composes the strip via the Skia bridge and
+ * routes to the preview with the composed strip URI (plus the raw frame URIs so
+ * the optional "save individual frames" preference still works).
  */
 import type { JSX } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -24,6 +23,7 @@ import { PermissionPrimer } from '@/components/PermissionPrimer';
 import { SafeCropOverlay } from '@/components/SafeCropOverlay';
 import {
   DEFAULT_STRIP_LAYOUT,
+  frameAspectForLayout,
   parseStripLayout,
   shotCountForLayout,
   stripLayoutLabel,
@@ -43,6 +43,7 @@ import {
   releaseBoothSounds,
 } from '@/lib/sounds';
 import { useTheme } from '@/theme/useTheme';
+import type { SkiaBridge } from '@/lib/skiaBridge';
 
 /** Capture loop tick rate. One tick per second of the countdown. */
 const TICK_MS = 1000;
@@ -64,9 +65,9 @@ export default function CameraScreen(): JSX.Element {
   }>();
   const initialLayout = parseStripLayout(params.layout) ?? DEFAULT_STRIP_LAYOUT;
   const [layout, setLayout] = useState<StripLayout>(initialLayout);
-  // Phase 2 supplies the real per-frame aspect from the layout geometry. The
-  // booth crop overlay defaults to a 4:3 portrait window until then.
-  const frameAspect = 3 / 4;
+  // The safe-crop overlay matches the per-cell aspect of the chosen layout so
+  // guests see exactly what lands on the strip.
+  const frameAspect = useMemo<number>(() => frameAspectForLayout(layout), [layout]);
 
   const [permStep, setPermStep] = useState<PermStep>('priming-camera');
   const [cameraStatus, setCameraStatus] = useState<PermissionStatus>('unknown');
@@ -144,20 +145,47 @@ export default function CameraScreen(): JSX.Element {
     return () => clearTimeout(timer);
   }, [phase]);
 
-  // After the last frame, route to preview with the captured URIs. Phase 2
-  // wires the Skia composition; for now the preview composes from the frames.
+  // After the last frame, compose the strip via the Skia bridge and route to
+  // preview with the composed strip URI. The raw frame URIs ride along so the
+  // optional "save individual frames" preference still works on the preview.
   useEffect(() => {
     if (phase !== 'composing') return;
-    router.push({
-      pathname: '/(camera)/preview',
-      params: {
-        layout,
-        uris: captured.current.join('|'),
-      },
-    });
-    captured.current = [];
-    setFramesCaptured(0);
-    setPhase('idle');
+    let cancelled = false;
+    const frames = [...captured.current];
+    void (async () => {
+      const compose = (globalThis as { __TINYBOOTH_SKIA_RENDER__?: SkiaBridge })
+        .__TINYBOOTH_SKIA_RENDER__;
+      let composedUri = '';
+      let composeError = '';
+      try {
+        if (!compose) {
+          throw new Error('Strip composer is not available.');
+        }
+        const result = await compose({
+          layout,
+          photos: frames.map((uri) => ({ uri })),
+        });
+        composedUri = result.uri;
+      } catch (error) {
+        composeError = error instanceof Error ? error.message : 'Could not compose the strip.';
+      }
+      if (cancelled) return;
+      router.push({
+        pathname: '/(camera)/preview',
+        params: {
+          layout,
+          uris: frames.join('|'),
+          composedUri,
+          composeError,
+        },
+      });
+      captured.current = [];
+      setFramesCaptured(0);
+      setPhase('idle');
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [phase, layout, router]);
 
   async function fireShutter(): Promise<void> {
