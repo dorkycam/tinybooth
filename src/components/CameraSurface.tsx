@@ -8,16 +8,26 @@
  *
  * If the native module is missing (vitest, web preview), we fall back to an
  * empty dark view so screen layouts compose without crashing.
+ *
+ * The public props are derived from the real `CameraProps` so consumers keep the
+ * underlying surface (`isActive`, `style`, `testID`) and stay in sync with the
+ * library. We only narrow `flash` to the on/off subset the booth uses.
  */
 import type { JSX } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import type {
+  Camera as VisionCamera,
+  CameraDevice,
+  CameraProps,
+  TakePhotoOptions,
+} from 'react-native-vision-camera';
 import { useTheme } from '@/theme/useTheme';
 
-interface CameraSurfaceProps {
-  isActive: boolean;
-  flash: 'on' | 'off';
-  style?: ViewStyle;
+/** Public props, derived from the real camera so the wrapped surface stays intact. */
+interface CameraSurfaceProps extends Pick<CameraProps, 'isActive' | 'style' | 'testID'> {
+  /** Flash mode applied to each `takePhoto()` call. */
+  flash: Extract<NonNullable<TakePhotoOptions['flash']>, 'on' | 'off'>;
 }
 
 /** Imperative handle exposed via `ref`. */
@@ -29,41 +39,34 @@ export interface CameraSurfaceHandle {
   takePhoto(): Promise<string>;
 }
 
-/** Lazy-loaded vision-camera module shape. */
-interface VisionCameraModule {
-  Camera: React.ForwardRefExoticComponent<
-    {
-      device: unknown;
-      isActive: boolean;
-      photo?: boolean;
-      style?: ViewStyle;
-    } & React.RefAttributes<unknown>
-  >;
-  useCameraDevice(position: 'front' | 'back'): unknown;
-}
+/** Full module shape, derived from the real package so wrapper types stay in sync. */
+type VisionCameraModule = typeof import('react-native-vision-camera');
 
-interface VisionCameraInstance {
-  takePhoto(opts?: { flash?: 'on' | 'off' }): Promise<{ path: string }>;
-}
-
+/**
+ * Live front-camera preview with an imperative `takePhoto()` handle.
+ *
+ * @param props Whether the preview is active, the flash mode, and optional
+ *   `style`/`testID` passthrough.
+ * @param ref Imperative handle used by the capture loop to fire the shutter.
+ */
 export const CameraSurface = forwardRef<CameraSurfaceHandle, CameraSurfaceProps>(
-  function CameraSurface({ isActive, flash, style }, ref): JSX.Element {
+  function CameraSurface({ isActive, flash, style, testID }, ref): JSX.Element {
     const theme = useTheme('dark');
     const [mod, setMod] = useState<VisionCameraModule | null>(null);
-    const cameraRef = useRef<VisionCameraInstance | null>(null);
+    const cameraRef = useRef<VisionCamera | null>(null);
 
     useEffect(() => {
-      let cancelled = false;
+      let ignore = false;
       void (async () => {
         try {
-          const loaded = (await import('react-native-vision-camera')) as unknown as VisionCameraModule;
-          if (!cancelled) setMod(loaded);
+          const loaded = await import('react-native-vision-camera');
+          if (!ignore) setMod(loaded);
         } catch {
-          if (!cancelled) setMod(null);
+          if (!ignore) setMod(null);
         }
       })();
       return () => {
-        cancelled = true;
+        ignore = true;
       };
     }, []);
 
@@ -76,45 +79,58 @@ export const CameraSurface = forwardRef<CameraSurfaceHandle, CameraSurfaceProps>
             throw new Error('Camera is not ready.');
           }
           const photo = await cam.takePhoto({ flash });
-          const uri = photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`;
-          return uri;
+          return photo.path.startsWith('file://') ? photo.path : `file://${photo.path}`;
         },
       }),
       [flash],
     );
 
     if (!mod) {
-      return <View style={[styles.root, { backgroundColor: theme.colors.bg }, style]} />;
+      return (
+        <View testID={testID} style={[styles.root, { backgroundColor: theme.colors.bg }, style]} />
+      );
     }
 
-    return <CameraInner mod={mod} isActive={isActive} cameraRef={cameraRef} style={style} />;
+    return (
+      <CameraInner mod={mod} isActive={isActive} cameraRef={cameraRef} style={style} testID={testID} />
+    );
   },
 );
 
 interface CameraInnerProps {
   mod: VisionCameraModule;
   isActive: boolean;
-  cameraRef: React.MutableRefObject<VisionCameraInstance | null>;
-  style?: ViewStyle;
+  cameraRef: React.MutableRefObject<VisionCamera | null>;
+  style?: CameraProps['style'];
+  testID?: CameraProps['testID'];
 }
 
-function CameraInner({ mod, isActive, cameraRef, style }: CameraInnerProps): JSX.Element {
+/**
+ * Resolves the front device and renders the live camera, falling back to a dark
+ * view while the device is unavailable. Kept separate so the device hook only
+ * runs once the native module has loaded.
+ *
+ * @param props The loaded module, active flag, shutter ref, and passthrough props.
+ */
+function CameraInner({ mod, isActive, cameraRef, style, testID }: CameraInnerProps): JSX.Element {
   const theme = useTheme('dark');
-  const device = mod.useCameraDevice('front');
+  const device: CameraDevice | undefined = mod.useCameraDevice('front');
   if (!device) {
-    return <View style={[styles.root, { backgroundColor: theme.colors.bg }, style]} />;
+    return (
+      <View testID={testID} style={[styles.root, { backgroundColor: theme.colors.bg }, style]} />
+    );
   }
   const Camera = mod.Camera;
-  const composedStyle: ViewStyle = { ...styles.root, ...(style ?? {}) };
   return (
     <Camera
       ref={(instance) => {
-        cameraRef.current = instance as unknown as VisionCameraInstance;
+        cameraRef.current = instance;
       }}
       device={device}
       isActive={isActive}
       photo
-      style={composedStyle}
+      style={[styles.root, style]}
+      testID={testID}
     />
   );
 }

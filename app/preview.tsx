@@ -20,23 +20,19 @@
 import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useCallback } from 'react';
+import { Image, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AutoCloseBar } from '@/components/AutoCloseBar';
 import { DeliveryActions } from '@/components/DeliveryActions';
 import { IconButton } from '@/components/IconButton';
 import { useIdleReset } from '@/hooks/useIdleReset';
 import { useSettings } from '@/hooks/useSettings';
-import { saveFramesToCameraRoll, saveToCameraRoll } from '@/lib/cameraRoll';
+import { useStripDelivery } from '@/hooks/useStripDelivery';
+import type { SaveState } from '@/hooks/useStripDelivery';
 import { useLayoutClass } from '@/lib/layout';
 import { DEFAULT_STRIP_LAYOUT, parseStripLayout, stripLayoutLabel } from '@/lib/layouts';
-import { printStrip } from '@/lib/print';
-import { shareStrip } from '@/lib/share';
 import { useTheme } from '@/theme/useTheme';
-
-type SaveState = 'idle' | 'saving' | 'saved' | 'permission_denied' | 'error';
-type BusyAction = 'print' | 'save' | 'share';
 
 /** Circle diameter for the delivery actions, by form factor. */
 const ACTION_SIZE = { phone: 60, tablet: 72 } as const;
@@ -68,8 +64,11 @@ export default function PreviewScreen(): JSX.Element {
   const composedUri = composedUriParam || uris[0] || '';
   const isTablet = layoutClass === 'tablet';
 
-  const [busy, setBusy] = useState<BusyAction | null>(null);
-  const [saveState, setSaveState] = useState<SaveState>('idle');
+  const { busy, saveState, print, save, share } = useStripDelivery({
+    composedUri,
+    uris,
+    saveFrames: settings.saveFrames,
+  });
 
   // Discard the session and return to Start. Also the idle-timeout handler.
   const handleDone = useCallback((): void => {
@@ -78,55 +77,6 @@ export default function PreviewScreen(): JSX.Element {
   }, [router]);
   const { secondsLeft, reset: resetIdleTimer } = useIdleReset(settings.idleReset, handleDone);
   const idleTotal = settings.idleReset === 'never' ? 0 : settings.idleReset;
-
-  async function handlePrint(): Promise<void> {
-    if (!composedUri) {
-      Alert.alert('No strip yet', 'Take some photos first.');
-      return;
-    }
-    setBusy('print');
-    try {
-      const result = await printStrip(composedUri);
-      if (!result.success && !result.canceled) {
-        Alert.alert('Print queue may be stuck', 'Tap Print again to restart printing.');
-      }
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function handleSave(): Promise<void> {
-    if (!composedUri) return;
-    setBusy('save');
-    setSaveState('saving');
-    try {
-      const result = await saveToCameraRoll(composedUri);
-      if (result.saved) {
-        setSaveState('saved');
-        if (settings.saveFrames && uris.length > 1) {
-          void saveFramesToCameraRoll(uris).catch(() => undefined);
-        }
-      } else if (result.reason === 'permission_denied') {
-        setSaveState('permission_denied');
-      } else {
-        setSaveState('error');
-      }
-    } catch {
-      setSaveState('error');
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function handleShare(): Promise<void> {
-    if (!composedUri) return;
-    setBusy('share');
-    try {
-      await shareStrip(composedUri);
-    } finally {
-      setBusy(null);
-    }
-  }
 
   function handleRedo(): void {
     router.replace({ pathname: '/capture', params: { layout } });
@@ -169,9 +119,9 @@ export default function PreviewScreen(): JSX.Element {
         <Text style={[styles.errorText, { color: theme.colors.highlight }]}>{composeError}</Text>
       ) : null}
       <DeliveryActions
-        onPrint={handlePrint}
-        onSave={handleSave}
-        onShare={handleShare}
+        onPrint={print}
+        onSave={save}
+        onShare={share}
         onRedo={handleRedo}
         saved={saveState === 'saved'}
         disabled={busy !== null}

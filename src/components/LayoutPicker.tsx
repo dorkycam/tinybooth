@@ -11,22 +11,46 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { StripLayout } from '@/lib/layouts';
 import { useTheme } from '@/theme/useTheme';
 
-const LAYOUTS: Array<{ key: StripLayout; label: string; subtitle: string }> = [
+/** One selectable strip-layout option. */
+export interface LayoutOption {
+  /** The layout this pill selects. */
+  key: StripLayout;
+  /** Title shown on the pill. */
+  label: string;
+  /** One-line description under the title. */
+  subtitle: string;
+}
+
+/** Built-in strip-layout options, in display order. */
+const DEFAULT_LAYOUTS: readonly LayoutOption[] = [
   { key: 'classic', label: 'Classic', subtitle: '4 shots, two columns' },
   { key: 'quad', label: 'Quad', subtitle: '4 shots, 2x2 grid' },
 ];
 
 interface LayoutPickerProps {
+  /** Currently selected layout. */
   value: StripLayout;
+  /** Fired with the tapped layout. */
   onChange: (next: StripLayout) => void;
+  /** Selectable layouts, in display order. Defaults to the built-in Classic/Quad set. */
+  options?: readonly LayoutOption[];
 }
 
-/** Pill row of strip layout choices. */
-export function LayoutPicker({ value, onChange }: LayoutPickerProps): JSX.Element {
+/**
+ * Pill row of strip layout choices.
+ *
+ * @param props The selected layout, an `onChange` callback, and an optional
+ *   `options` list to override the built-in Classic/Quad set.
+ */
+export function LayoutPicker({
+  value,
+  onChange,
+  options = DEFAULT_LAYOUTS,
+}: LayoutPickerProps): JSX.Element {
   const theme = useTheme();
   return (
     <View style={styles.row}>
-      {LAYOUTS.map((layout) => {
+      {options.map((layout) => {
         const selected = layout.key === value;
         return (
           <Pressable

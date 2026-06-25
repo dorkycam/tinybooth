@@ -12,7 +12,7 @@
  * does no navigation itself.
  */
 import type { JSX } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme/useTheme';
 import { IconButton } from './IconButton';
@@ -28,6 +28,8 @@ export interface ScreenHeaderProps {
   subtitle?: string;
   /** Invoked when the back control is pressed. */
   onBack: () => void;
+  /** Optional style appended to the bar container (after the base styles). */
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -35,7 +37,12 @@ export interface ScreenHeaderProps {
  *
  * @returns The rendered header.
  */
-export function ScreenHeader({ title, subtitle, onBack }: ScreenHeaderProps): JSX.Element {
+export function ScreenHeader({
+  title,
+  subtitle,
+  onBack,
+  style,
+}: ScreenHeaderProps): JSX.Element {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -48,6 +55,7 @@ export function ScreenHeader({ title, subtitle, onBack }: ScreenHeaderProps): JS
           paddingBottom: theme.spacing.sm,
           paddingHorizontal: theme.spacing.xl,
         },
+        style,
       ]}
     >
       <View style={styles.bar}>

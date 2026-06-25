@@ -70,8 +70,14 @@ export function LayoutChoiceCard({
   );
 }
 
+/** Props for the layout preview glyphs. */
+interface LayoutGlyphProps {
+  /** Fill color for the preview cells. */
+  color: string;
+}
+
 /** Stacked-column glyph for the Classic strip. */
-function ClassicGlyph({ color }: { color: string }): JSX.Element {
+function ClassicGlyph({ color }: LayoutGlyphProps): JSX.Element {
   return (
     <View style={styles.classicColumn}>
       {[0, 1, 2, 3].map((cell) => (
@@ -82,7 +88,7 @@ function ClassicGlyph({ color }: { color: string }): JSX.Element {
 }
 
 /** 2x2 grid glyph for the Quad layout. */
-function QuadGlyph({ color }: { color: string }): JSX.Element {
+function QuadGlyph({ color }: LayoutGlyphProps): JSX.Element {
   return (
     <View style={styles.quadGrid}>
       {[0, 1, 2, 3].map((cell) => (

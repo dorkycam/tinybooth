@@ -3,15 +3,18 @@
  * splash text never drift from the brand identity.
  */
 import type { JSX } from 'react';
-import { StyleSheet, Text, type TextStyle } from 'react-native';
+import { type StyleProp, StyleSheet, Text, type TextStyle } from 'react-native';
 import { useTheme } from '@/theme/useTheme';
 
 /** Wordmark size variants. */
 export type WordmarkSize = 'sm' | 'md' | 'lg';
 
-interface WordmarkProps {
+/** Props for {@link Wordmark}. */
+export interface WordmarkProps {
+  /** Type scale of the wordmark. Defaults to `md`. */
   size?: WordmarkSize;
-  style?: TextStyle;
+  /** Optional style appended to the text (after the base styles). */
+  style?: StyleProp<TextStyle>;
 }
 
 /** Render the brand wordmark. */

@@ -3,15 +3,27 @@
  * actions on the preview screen.
  */
 import type { JSX } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import {
+  Pressable,
+  type PressableProps,
+  type StyleProp,
+  StyleSheet,
+  Text,
+  type ViewStyle,
+} from 'react-native';
 import { buttonHaptic } from '@/lib/haptics';
 import { useTheme } from '@/theme/useTheme';
 
-interface SecondaryButtonProps {
+/** Props for {@link SecondaryButton}. */
+export interface SecondaryButtonProps extends Pick<PressableProps, 'testID'> {
+  /** Button caption. */
   label: string;
+  /** Tap handler. */
   onPress: () => void;
+  /** Disable interaction and dim the control. */
   disabled?: boolean;
-  testID?: string;
+  /** Optional style appended to the pill (after the base styles). */
+  style?: StyleProp<ViewStyle>;
 }
 
 /** Outlined secondary action. */
@@ -20,6 +32,7 @@ export function SecondaryButton({
   onPress,
   disabled = false,
   testID,
+  style,
 }: SecondaryButtonProps): JSX.Element {
   const theme = useTheme();
   const handlePress = (): void => {
@@ -42,6 +55,7 @@ export function SecondaryButton({
           paddingHorizontal: theme.spacing.xl,
           paddingVertical: theme.spacing.md,
         },
+        style,
       ]}
     >
       <Text style={[styles.label, { color: theme.colors.fg }]}>{label}</Text>

@@ -6,16 +6,28 @@
  * carbon token because the mint `primary` fill is light in both themes.
  */
 import type { JSX } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import {
+  Pressable,
+  type PressableProps,
+  type StyleProp,
+  StyleSheet,
+  Text,
+  type ViewStyle,
+} from 'react-native';
 import { buttonHaptic } from '@/lib/haptics';
 import { ON_BRAND_FILL_TEXT } from '@/theme/tokens/colors';
 import { useTheme } from '@/theme/useTheme';
 
-interface PrimaryButtonProps {
+/** Props for {@link PrimaryButton}. */
+export interface PrimaryButtonProps extends Pick<PressableProps, 'testID'> {
+  /** Button caption. */
   label: string;
+  /** Tap handler. */
   onPress: () => void;
+  /** Disable interaction and desaturate the fill. */
   disabled?: boolean;
-  testID?: string;
+  /** Optional style appended to the pill (after the base styles). */
+  style?: StyleProp<ViewStyle>;
 }
 
 /** Brand-mint pill button. */
@@ -24,6 +36,7 @@ export function PrimaryButton({
   onPress,
   disabled = false,
   testID,
+  style,
 }: PrimaryButtonProps): JSX.Element {
   const theme = useTheme();
   const handlePress = (): void => {
@@ -46,6 +59,7 @@ export function PrimaryButton({
           paddingHorizontal: theme.spacing.xl,
           paddingVertical: theme.spacing.md,
         },
+        style,
       ]}
     >
       <Text style={[styles.label, { color: ON_BRAND_FILL_TEXT }]}>{label}</Text>

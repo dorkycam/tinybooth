@@ -6,15 +6,9 @@
  * Component code should import `useTheme()` (defined in `useTheme.ts`) instead
  * of reading from this file directly so dark-mode swaps stay automatic.
  */
-import {
-  DARK_COLORS,
-  FONT_FAMILIES,
-  LIGHT_COLORS,
-  OVERLAY_COLORS,
-  RADIUS,
-  SPACING,
-  TYPE_SCALE,
-} from './tokens';
+import { DARK_COLORS, LIGHT_COLORS, OVERLAY_COLORS } from './tokens/colors';
+import { FONT_FAMILIES, TYPE_SCALE } from './tokens/typography';
+import { RADIUS, SPACING } from './tokens/spacing';
 
 /** Resolved colors for one mode. */
 export interface ThemeColors {
