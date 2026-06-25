@@ -15,8 +15,8 @@ import { useRouter } from 'expo-router';
 import { Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AboutLink } from '@/components/AboutLink';
-import { IconButton } from '@/components/IconButton';
 import { LayoutPicker } from '@/components/LayoutPicker';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { SegmentedChoice } from '@/components/SegmentedChoice';
 import { SettingsRow } from '@/components/SettingsRow';
 import { SettingsSection } from '@/components/SettingsSection';
@@ -66,20 +66,13 @@ export default function SettingsScreen(): JSX.Element {
   }
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
-      <View style={[styles.header, { paddingHorizontal: theme.spacing.xl }]}>
-        <IconButton
-          icon="close"
-          accessibilityLabel="Close settings"
-          onPress={handleClose}
-          variant="ghost"
-          size={44}
-          testID="settings-close"
-        />
-      </View>
+    <SafeAreaView
+      edges={['left', 'right', 'bottom']}
+      style={[styles.root, { backgroundColor: theme.colors.bg }]}
+    >
+      <ScreenHeader title="Settings" onBack={handleClose} />
       <ScrollView contentContainerStyle={styles.content}>
         <Wordmark size="md" />
-        <Text style={[styles.title, { color: theme.colors.fg }]}>Settings</Text>
 
         <SettingsSection title="Capture defaults">
           <SettingsRow title="Flash on by default">
@@ -164,15 +157,7 @@ export default function SettingsScreen(): JSX.Element {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: {
-    paddingTop: 8,
-    alignItems: 'flex-start',
-  },
   content: { padding: 24, paddingTop: 8, gap: 16 },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-  },
   aboutLine: {
     fontSize: 15,
   },

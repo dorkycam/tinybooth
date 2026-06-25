@@ -24,11 +24,13 @@ import { CameraSurface, type CameraSurfaceHandle } from '@/components/CameraSurf
 import { CaptureChrome } from '@/components/CaptureChrome';
 import { CountdownOverlay } from '@/components/CountdownOverlay';
 import { IconButton } from '@/components/IconButton';
+import { PeekMessage } from '@/components/PeekMessage';
 import { PermissionPrimer } from '@/components/PermissionPrimer';
 import { SafeCropOverlay } from '@/components/SafeCropOverlay';
 import { ScreenFlash } from '@/components/ScreenFlash';
 import { useSettings } from '@/hooks/useSettings';
 import { captureHaptic, tickHaptic } from '@/lib/haptics';
+import { getRandomMessage } from '@/lib/messages';
 import {
   DEFAULT_STRIP_LAYOUT,
   frameAspectForLayout,
@@ -81,6 +83,7 @@ export default function CaptureScreen(): JSX.Element {
   const [digit, setDigit] = useState<number | null>(null);
   const [framesCaptured, setFramesCaptured] = useState<number>(0);
   const [peekUri, setPeekUri] = useState<string | null>(null);
+  const [peekMessage, setPeekMessage] = useState<string | null>(null);
   const [flashActive, setFlashActive] = useState<boolean>(false);
   const captured = useRef<string[]>([]);
   const cameraRef = useRef<CameraSurfaceHandle | null>(null);
@@ -116,6 +119,7 @@ export default function CaptureScreen(): JSX.Element {
     captured.current = [];
     setFramesCaptured(0);
     setPeekUri(null);
+    setPeekMessage(null);
     const timer = setTimeout(() => {
       setPhase('countdown');
     }, GET_READY_MS);
@@ -147,6 +151,7 @@ export default function CaptureScreen(): JSX.Element {
     if (phase !== 'reveal') return undefined;
     const timer = setTimeout(() => {
       setPeekUri(null);
+      setPeekMessage(null);
       setPhase('countdown');
     }, PEEK_HOLD_MS);
     return () => clearTimeout(timer);
@@ -210,6 +215,7 @@ export default function CaptureScreen(): JSX.Element {
     const nextCount = captured.current.length;
     setFramesCaptured(nextCount);
     setPeekUri(uri);
+    setPeekMessage(getRandomMessage());
     if (nextCount >= totalFrames) {
       setPhase('composing');
     } else {
@@ -268,17 +274,20 @@ export default function CaptureScreen(): JSX.Element {
       <View style={styles.preview}>
         <CameraSurface
           ref={cameraRef}
-          flash={flashOn ? 'on' : 'off'}
+          flash="off"
           isActive={phase !== 'composing'}
         />
         <SafeCropOverlay frameAspect={frameAspect} accent={theme.colors.primary} />
         {isReveal && peekUri ? (
-          <Image
-            source={{ uri: peekUri }}
-            style={styles.peek}
-            resizeMode="cover"
-            accessibilityLabel="Your last shot"
-          />
+          <>
+            <Image
+              source={{ uri: peekUri }}
+              style={styles.peek}
+              resizeMode="cover"
+              accessibilityLabel="Your last shot"
+            />
+            {peekMessage ? <PeekMessage message={peekMessage} /> : null}
+          </>
         ) : null}
         <CountdownOverlay digit={digit} message={getReadyMessage} />
         <ScreenFlash active={flashActive} onDone={() => setFlashActive(false)} />

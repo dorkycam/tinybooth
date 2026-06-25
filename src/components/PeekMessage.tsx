@@ -1,0 +1,68 @@
+/**
+ * Encouraging message overlay shown over the post-capture peek.
+ *
+ * The original PhotoBerry booth flashed a cheerful saying ("Cheese!", "Work
+ * it!", and friends) on top of each just-captured shot. This restores that
+ * beloved moment: a large, celebratory, centered message rendered over the
+ * peek photo.
+ *
+ * Library-style: purely presentational. The parent owns the photo, decides
+ * which message to show, and unmounts this overlay when the peek ends.
+ */
+import type { JSX } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '../theme/useTheme';
+
+interface PeekMessageProps {
+  /** The encouraging message to celebrate the shot with. */
+  message: string;
+}
+
+/**
+ * Large celebratory message centered over the peek photo.
+ *
+ * @param props The message string to display.
+ */
+export function PeekMessage({ message }: PeekMessageProps): JSX.Element {
+  const theme = useTheme('dark');
+  return (
+    <View pointerEvents="none" style={styles.root}>
+      <View style={[styles.scrim, { backgroundColor: theme.colors.scrimStrong }]}>
+        <Text
+          style={[styles.text, { color: theme.colors.bg }]}
+          numberOfLines={2}
+          adjustsFontSizeToFit
+          accessibilityRole="text"
+          accessibilityLabel={message}
+        >
+          {message}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrim: {
+    paddingHorizontal: 56,
+    paddingVertical: 28,
+    borderRadius: 36,
+    maxWidth: '88%',
+    alignItems: 'center',
+  },
+  text: {
+    fontSize: 72,
+    fontWeight: '800',
+    lineHeight: 80,
+    textAlign: 'center',
+  },
+});
