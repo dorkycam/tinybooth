@@ -11,9 +11,11 @@
  */
 import type { JSX } from 'react';
 import Constants from 'expo-constants';
+import { useRouter } from 'expo-router';
 import { Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AboutLink } from '@/components/AboutLink';
+import { IconButton } from '@/components/IconButton';
 import { LayoutPicker } from '@/components/LayoutPicker';
 import { SegmentedChoice } from '@/components/SegmentedChoice';
 import { SettingsRow } from '@/components/SettingsRow';
@@ -52,11 +54,29 @@ function openLink(url: string): void {
 export default function SettingsScreen(): JSX.Element {
   const theme = useTheme();
   const themePref = useThemePreference();
+  const router = useRouter();
   const { settings, update } = useSettings();
   const version = Constants.expoConfig?.version ?? '0.0.0';
 
+  // Always give the guest a way out of Settings. Fall back to Start when there
+  // is no screen to go back to (e.g. opened as the first route in dev).
+  function handleClose(): void {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  }
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
+      <View style={[styles.header, { paddingHorizontal: theme.spacing.xl }]}>
+        <IconButton
+          icon="close"
+          accessibilityLabel="Close settings"
+          onPress={handleClose}
+          variant="ghost"
+          size={44}
+          testID="settings-close"
+        />
+      </View>
       <ScrollView contentContainerStyle={styles.content}>
         <Wordmark size="md" />
         <Text style={[styles.title, { color: theme.colors.fg }]}>Settings</Text>
@@ -144,7 +164,11 @@ export default function SettingsScreen(): JSX.Element {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { padding: 24, gap: 16 },
+  header: {
+    paddingTop: 8,
+    alignItems: 'flex-start',
+  },
+  content: { padding: 24, paddingTop: 8, gap: 16 },
   title: {
     fontSize: 32,
     fontWeight: '700',

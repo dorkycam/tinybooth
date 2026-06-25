@@ -11,8 +11,9 @@ import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { IconButton } from '@/components/IconButton';
 import { LayoutChoiceCard } from '@/components/LayoutChoiceCard';
 import { useIdleReset } from '@/hooks/useIdleReset';
 import { useSettings } from '@/hooks/useSettings';
@@ -45,21 +46,26 @@ export default function ChooseLayoutScreen(): JSX.Element {
     router.push({ pathname: '/capture', params: { layout } });
   }
 
+  // Return to Start. Fall back to a replace when there is no back entry.
+  function handleBack(): void {
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
+  }
+
   return (
     <SafeAreaView
       style={[styles.root, { backgroundColor: theme.colors.bg }]}
       onTouchStart={resetIdleTimer}
     >
       <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-          hitSlop={16}
-          style={styles.back}
-        >
-          <Text style={[styles.backText, { color: theme.colors.subtle }]}>Back</Text>
-        </Pressable>
+        <IconButton
+          icon="chevron-back"
+          accessibilityLabel="Back to Start"
+          onPress={handleBack}
+          variant="ghost"
+          size={44}
+          testID="choose-layout-back"
+        />
         <Text style={[styles.title, { color: theme.colors.fg }]}>Pick a layout</Text>
         <Text style={[styles.subtitle, { color: theme.colors.subtle }]}>
           Both take 4 photos.
@@ -87,15 +93,8 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 24,
     paddingTop: 12,
-    gap: 4,
-  },
-  back: {
-    paddingVertical: 8,
-    alignSelf: 'flex-start',
-  },
-  backText: {
-    fontSize: 16,
-    fontWeight: '600',
+    gap: 8,
+    alignItems: 'flex-start',
   },
   title: {
     fontSize: 32,

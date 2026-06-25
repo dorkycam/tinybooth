@@ -1,70 +1,69 @@
 /**
  * Start / idle screen.
  *
- * The resting state of a booth on a stand: a big Start button that opens the
- * layout picker, and a gear icon in the corner for Settings. The screen is kept
- * awake here so a propped-up tablet does not dim between guests.
+ * The resting state of a booth on a stand. The background is the live front
+ * camera preview, dimmed by a scrim, so the booth reads as already on. A big
+ * Start button opens the layout picker, and a gear icon in the corner opens
+ * Settings. The screen is kept awake here so a propped-up tablet does not dim
+ * between guests.
  *
  * Tablet layout centers the brand with roomy spacing; phone stacks tight.
  */
 import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { IconButton } from '@/components/IconButton';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { StartBackdrop } from '@/components/StartBackdrop';
 import { Wordmark } from '@/components/Wordmark';
 import { useLayoutClass } from '@/lib/layout';
 import { useTheme } from '@/theme/useTheme';
 
 /**
- * Home screen. Start opens the layout picker; the gear opens Settings.
+ * Home screen. The live preview fills the background; Start opens the layout
+ * picker and the gear opens Settings.
  */
 export default function HomeScreen(): JSX.Element {
   useKeepAwake();
-  const theme = useTheme();
+  // Force dark tokens for foreground copy so it stays legible over the dark
+  // scrim regardless of the user's theme preference.
+  const theme = useTheme('dark');
   const router = useRouter();
   const { layoutClass } = useLayoutClass();
   const isTablet = layoutClass === 'tablet';
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
-      <View style={styles.topBar}>
-        <View />
-        <Pressable
-          onPress={() => router.push('/settings')}
-          accessibilityRole="button"
-          accessibilityLabel="Settings"
-          hitSlop={16}
-          style={({ pressed }) => [
-            styles.gearButton,
-            {
-              backgroundColor: theme.colors.surface,
-              borderColor: theme.colors.hairline,
-              opacity: pressed ? 0.7 : 1,
-            },
+    <StartBackdrop isActive>
+      <SafeAreaView style={styles.root}>
+        <View style={styles.topBar}>
+          <View />
+          <IconButton
+            icon="settings-outline"
+            accessibilityLabel="Settings"
+            onPress={() => router.push('/settings')}
+            size={44}
+          />
+        </View>
+        <View
+          style={[
+            styles.container,
+            isTablet ? styles.containerTablet : styles.containerPhone,
           ]}
         >
-          <Text style={[styles.gearIcon, { color: theme.colors.fg }]}>{'⚙'}</Text>
-        </Pressable>
-      </View>
-      <View
-        style={[
-          styles.container,
-          isTablet ? styles.containerTablet : styles.containerPhone,
-        ]}
-      >
-        <View style={styles.brand}>
-          <Wordmark size="lg" />
-          <Text style={[styles.tagline, { color: theme.colors.subtle }]}>
-            Take a photo. Get a strip. That's the whole app.
-          </Text>
+          <View style={styles.brand}>
+            <Wordmark size="lg" />
+            <Text style={[styles.tagline, { color: theme.colors.fg }]}>
+              Take a photo. Get a strip. That's the whole app.
+            </Text>
+          </View>
+          <View style={styles.actions}>
+            <PrimaryButton label="Start" onPress={() => router.push('/choose-layout')} />
+          </View>
         </View>
-        <View style={styles.actions}>
-          <PrimaryButton label="Start" onPress={() => router.push('/choose-layout')} />
-        </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </StartBackdrop>
   );
 }
 
@@ -78,17 +77,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 12,
-  },
-  gearButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gearIcon: {
-    fontSize: 22,
   },
   container: {
     flex: 1,
