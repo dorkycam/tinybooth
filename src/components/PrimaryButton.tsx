@@ -7,6 +7,7 @@
  */
 import type { JSX } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
+import { buttonHaptic } from '../lib/haptics';
 import { ON_BRAND_FILL_TEXT } from '../theme/tokens/colors';
 import { useTheme } from '../theme/useTheme';
 
@@ -25,12 +26,16 @@ export function PrimaryButton({
   testID,
 }: PrimaryButtonProps): JSX.Element {
   const theme = useTheme();
+  const handlePress = (): void => {
+    void buttonHaptic();
+    onPress();
+  };
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
-      onPress={onPress}
+      onPress={handlePress}
       testID={testID}
       style={({ pressed }) => [
         styles.root,

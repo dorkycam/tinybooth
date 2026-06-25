@@ -4,6 +4,7 @@
  */
 import type { JSX } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
+import { buttonHaptic } from '../lib/haptics';
 import { useTheme } from '../theme/useTheme';
 
 interface SecondaryButtonProps {
@@ -21,12 +22,16 @@ export function SecondaryButton({
   testID,
 }: SecondaryButtonProps): JSX.Element {
   const theme = useTheme();
+  const handlePress = (): void => {
+    void buttonHaptic();
+    onPress();
+  };
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ disabled }}
       disabled={disabled}
-      onPress={onPress}
+      onPress={handlePress}
       testID={testID}
       style={({ pressed }) => [
         styles.root,
