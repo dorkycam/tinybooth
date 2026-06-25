@@ -43,6 +43,7 @@ export default function HomeScreen(): JSX.Element {
             icon="settings-outline"
             accessibilityLabel="Settings"
             onPress={() => router.push('/settings')}
+            glass
             size={44}
           />
         </View>

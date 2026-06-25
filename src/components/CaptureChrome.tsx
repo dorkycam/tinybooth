@@ -7,6 +7,7 @@
  */
 import type { JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { GlassSurface } from './GlassSurface';
 import { useTheme } from '../theme/useTheme';
 
 interface CaptureChromeProps {
@@ -20,15 +21,17 @@ interface CaptureChromeProps {
 export function CaptureChrome({ hint, subhint }: CaptureChromeProps): JSX.Element {
   const theme = useTheme('dark');
   return (
-    <View
-      pointerEvents="none"
-      style={[styles.bottomHint, { backgroundColor: theme.colors.scrim }]}
+    <GlassSurface
+      glassStyle="regular"
+      colorScheme="dark"
+      fallbackColor={theme.colors.scrim}
+      style={styles.bottomHint}
     >
       <Text style={[styles.bottomHintText, { color: theme.colors.onPrimary }]}>{hint}</Text>
       {subhint ? (
         <Text style={[styles.bottomHintSub, { color: theme.colors.onPrimary }]}>{subhint}</Text>
       ) : null}
-    </View>
+    </GlassSurface>
   );
 }
 
@@ -41,6 +44,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 999,
+    overflow: 'hidden',
   },
   bottomHintText: {
     fontSize: 18,

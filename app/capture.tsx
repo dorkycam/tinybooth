@@ -302,6 +302,7 @@ export default function CaptureScreen(): JSX.Element {
           accessibilityLabel="Cancel and leave the booth"
           onPress={exitToHome}
           variant="ghost"
+          glass
           size={44}
         />
       </View>

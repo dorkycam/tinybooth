@@ -25,6 +25,7 @@ import { Alert, Image, ScrollView, StyleSheet, Text, useWindowDimensions, View }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AutoCloseBar } from '@/components/AutoCloseBar';
 import { DeliveryActions } from '@/components/DeliveryActions';
+import { GlassSurface } from '@/components/GlassSurface';
 import { IconButton } from '@/components/IconButton';
 import { useIdleReset } from '@/hooks/useIdleReset';
 import { useSettings } from '@/hooks/useSettings';
@@ -190,11 +191,13 @@ export default function PreviewScreen(): JSX.Element {
     >
       <AutoCloseBar secondsLeft={secondsLeft} total={idleTotal} />
       <View style={styles.center}>
-        <View
+        <GlassSurface
+          glassStyle="regular"
+          colorScheme="dark"
+          fallbackColor={theme.colors.surface}
           style={[
             styles.card,
             {
-              backgroundColor: theme.colors.surface,
               borderColor: theme.colors.hairline,
               borderRadius: theme.radius.xl,
               padding: theme.spacing.xl,
@@ -211,6 +214,7 @@ export default function PreviewScreen(): JSX.Element {
               icon="close"
               accessibilityLabel="Done"
               variant="ghost"
+              glass
               size={44}
               onPress={handleDone}
               disabled={busy !== null}
@@ -235,7 +239,7 @@ export default function PreviewScreen(): JSX.Element {
               {controls}
             </View>
           )}
-        </View>
+        </GlassSurface>
       </View>
     </SafeAreaView>
   );
@@ -269,7 +273,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
   // flexShrink lets the card cap at the available height so the pinned action
   // row and close control stay on screen even when the strip is very tall.
-  card: { width: '100%', borderWidth: 1, alignItems: 'stretch', flexShrink: 1 },
+  card: { width: '100%', borderWidth: 1, alignItems: 'stretch', flexShrink: 1, overflow: 'hidden' },
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontSize: 13, letterSpacing: 1, textTransform: 'uppercase' },
   // Phone: column with a shrinkable strip area above pinned controls.

@@ -3,12 +3,18 @@
  * the preview delivery actions (print / save / share / redo). Pass a `label` to
  * render a caption under the circle; omit it for a bare icon button.
  *
+ * Set `glass` to render the circle as Liquid Glass (iOS 26+) for controls that
+ * float over the camera or a photo; it falls back to the solid `neutral`
+ * surface where glass is unavailable. The `primary` variant stays a solid brand
+ * fill so the main action keeps its color.
+ *
  * Icons come from `@expo/vector-icons` Ionicons. Colors come from the theme so
  * nothing is hardcoded.
  */
 import type { JSX } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { GLASS_AVAILABLE, GlassSurface } from './GlassSurface';
 import { useTheme } from '../theme/useTheme';
 
 /** Visual tone of an {@link IconButton}. */
@@ -26,6 +32,8 @@ export interface IconButtonProps {
   label?: string;
   /** Color treatment. Defaults to `neutral`. */
   variant?: IconButtonVariant;
+  /** Render the circle as Liquid Glass (iOS 26+) for controls over content. */
+  glass?: boolean;
   /** Circle diameter in px. Defaults to 56. */
   size?: number;
   /** Disable interaction and dim the control. */
@@ -44,19 +52,26 @@ export function IconButton({
   onPress,
   label,
   variant = 'neutral',
+  glass = false,
   size = 56,
   disabled = false,
   testID,
 }: IconButtonProps): JSX.Element {
   const theme = useTheme();
+  // Glass only applies to non-primary controls; primary keeps its brand fill.
+  const useGlass = glass && variant !== 'primary' && GLASS_AVAILABLE;
+
   const background =
     variant === 'primary'
       ? theme.colors.primary
       : variant === 'ghost'
         ? 'transparent'
         : theme.colors.surface;
-  const iconColor = variant === 'primary' ? theme.colors.bg : theme.colors.fg;
-  const borderColor = variant === 'ghost' ? theme.colors.hairline : 'transparent';
+  const iconColor =
+    variant === 'primary' ? theme.colors.bg : useGlass ? theme.colors.flash : theme.colors.fg;
+  const borderColor = variant === 'ghost' && !useGlass ? theme.colors.hairline : 'transparent';
+
+  const glyph = <Ionicons name={icon} size={Math.round(size * 0.44)} color={iconColor} />;
 
   return (
     <View style={styles.wrap}>
@@ -73,14 +88,28 @@ export function IconButton({
             width: size,
             height: size,
             borderRadius: size / 2,
-            backgroundColor: background,
+            backgroundColor: useGlass ? 'transparent' : background,
             borderColor,
-            borderWidth: variant === 'ghost' ? 1 : 0,
+            borderWidth: borderColor === 'transparent' ? 0 : 1,
             opacity: pressed ? 0.7 : disabled ? 0.4 : 1,
           },
         ]}
       >
-        <Ionicons name={icon} size={Math.round(size * 0.44)} color={iconColor} />
+        {useGlass ? (
+          <GlassSurface
+            interactive
+            glassStyle="regular"
+            fallbackColor={theme.colors.surface}
+            style={[
+              StyleSheet.absoluteFill,
+              { borderRadius: size / 2, alignItems: 'center', justifyContent: 'center' },
+            ]}
+          >
+            {glyph}
+          </GlassSurface>
+        ) : (
+          glyph
+        )}
       </Pressable>
       {label ? (
         <Text style={[styles.label, { color: theme.colors.subtle }]} numberOfLines={1}>
@@ -99,6 +128,7 @@ const styles = StyleSheet.create({
   circle: {
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   label: {
     fontSize: 12,
