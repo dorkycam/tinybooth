@@ -9,7 +9,7 @@
  * The settings are global and rarely change, so a module-level store with a
  * subscriber set is enough. No Redux or Zustand needed.
  */
-import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import {
   DEFAULT_SESSION_SETTINGS,
   loadSessionSettings,
@@ -80,7 +80,10 @@ export function useSettings(): UseSettingsResult {
     void saveSessionSettings(patch);
   }, []);
 
-  return { settings, ready: hydrated, update };
+  return useMemo<UseSettingsResult>(
+    () => ({ settings, ready: hydrated, update }),
+    [settings, update],
+  );
 }
 
 /** Test-only: reset the in-memory store to defaults. */

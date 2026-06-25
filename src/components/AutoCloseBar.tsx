@@ -7,7 +7,7 @@
  * Renders nothing when the idle timer is disabled (`secondsLeft` is `null`).
  */
 import type { JSX } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/useTheme';
 
 /** Props for {@link AutoCloseBar}. */
@@ -16,6 +16,8 @@ export interface AutoCloseBarProps {
   secondsLeft: number | null;
   /** The full configured timeout in seconds, used to size the progress fill. */
   total: number;
+  /** Optional style appended to the bar container (after the base styles). */
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -23,12 +25,18 @@ export interface AutoCloseBarProps {
  *
  * @returns The rendered bar, or `null` when the timer is disabled.
  */
-export function AutoCloseBar({ secondsLeft, total }: AutoCloseBarProps): JSX.Element | null {
+export function AutoCloseBar({
+  secondsLeft,
+  total,
+  style,
+}: AutoCloseBarProps): JSX.Element | null {
   const theme = useTheme();
   if (secondsLeft === null) return null;
   const pct = total > 0 ? Math.round((secondsLeft / total) * 100) : 0;
   return (
-    <View style={[styles.bar, { paddingHorizontal: theme.spacing.xl, gap: theme.spacing.xs }]}>
+    <View
+      style={[styles.bar, { paddingHorizontal: theme.spacing.xl, gap: theme.spacing.xs }, style]}
+    >
       <Text style={[styles.text, { color: theme.colors.subtle }]}>Closing in {secondsLeft}s</Text>
       <View
         style={[

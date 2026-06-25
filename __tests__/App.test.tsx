@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { LIGHT_COLORS } from '../src/theme/tokens';
+import { LIGHT_COLORS } from '../src/theme/tokens/colors';
 
 /**
  * Mobile entrypoint smoke test. Vitest in node cannot boot the React Native or

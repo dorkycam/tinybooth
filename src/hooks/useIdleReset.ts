@@ -12,7 +12,7 @@
  * full timeout; the screen wires it to `onTouchStart` so every interaction
  * extends the session. `onTimeout` fires exactly once when the deadline passes.
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { IdleReset } from '@/lib/sessionSettings';
 
 /** How often the deadline is sampled, in milliseconds. */
@@ -82,5 +82,8 @@ export function useIdleReset(idleReset: IdleReset, onTimeout: () => void): UseId
     return () => clearInterval(interval);
   }, [enabled]);
 
-  return { secondsLeft: enabled ? secondsLeft : null, reset };
+  return useMemo<UseIdleResetResult>(
+    () => ({ secondsLeft: enabled ? secondsLeft : null, reset }),
+    [enabled, secondsLeft, reset],
+  );
 }

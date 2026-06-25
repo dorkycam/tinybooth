@@ -6,14 +6,24 @@
  * callback, so the screen owns where each link goes.
  */
 import type { JSX } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import {
+  Pressable,
+  type PressableProps,
+  type StyleProp,
+  StyleSheet,
+  Text,
+  type ViewStyle,
+} from 'react-native';
 import { useTheme } from '@/theme/useTheme';
 
-interface AboutLinkProps {
+/** Props for {@link AboutLink}. */
+export interface AboutLinkProps extends Pick<PressableProps, 'testID'> {
   /** The link text. */
   label: string;
   /** Fired when the row is tapped. */
   onPress: () => void;
+  /** Optional style appended to the row (after the base styles). */
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -21,14 +31,15 @@ interface AboutLinkProps {
  *
  * @param props The link label and its press handler.
  */
-export function AboutLink({ label, onPress }: AboutLinkProps): JSX.Element {
+export function AboutLink({ label, onPress, testID, style }: AboutLinkProps): JSX.Element {
   const theme = useTheme();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="link"
       hitSlop={8}
-      style={({ pressed }) => [styles.row, { opacity: pressed ? 0.6 : 1 }]}
+      testID={testID}
+      style={({ pressed }) => [styles.row, { opacity: pressed ? 0.6 : 1 }, style]}
     >
       <Text style={[styles.label, { color: theme.colors.accent }]}>{label}</Text>
     </Pressable>

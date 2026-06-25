@@ -13,7 +13,15 @@
  */
 import type { JSX } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Pressable,
+  type PressableProps,
+  type StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import { GLASS_AVAILABLE, GlassSurface } from './GlassSurface';
 import { buttonHaptic } from '@/lib/haptics';
 import { useTheme } from '@/theme/useTheme';
@@ -22,7 +30,7 @@ import { useTheme } from '@/theme/useTheme';
 export type IconButtonVariant = 'primary' | 'neutral' | 'ghost';
 
 /** Props for {@link IconButton}. */
-export interface IconButtonProps {
+export interface IconButtonProps extends Pick<PressableProps, 'testID'> {
   /** Ionicons glyph name, e.g. `chevron-back`, `print`, `share-outline`. */
   icon: React.ComponentProps<typeof Ionicons>['name'];
   /** Required for screen readers (the visible label, if any, may differ). */
@@ -39,7 +47,8 @@ export interface IconButtonProps {
   size?: number;
   /** Disable interaction and dim the control. */
   disabled?: boolean;
-  testID?: string;
+  /** Optional style appended to the outer wrapper (after the base styles). */
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -57,6 +66,7 @@ export function IconButton({
   size = 56,
   disabled = false,
   testID,
+  style,
 }: IconButtonProps): JSX.Element {
   const theme = useTheme();
   // Glass only applies to non-primary controls; primary keeps its brand fill.
@@ -80,7 +90,7 @@ export function IconButton({
   };
 
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, style]}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}

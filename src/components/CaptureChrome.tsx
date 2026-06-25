@@ -6,7 +6,7 @@
  * the status pill. It uses scrim/onPrimary theme tokens so nothing is hand-tinted.
  */
 import type { JSX } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { GlassSurface } from './GlassSurface';
 import { useTheme } from '@/theme/useTheme';
 
