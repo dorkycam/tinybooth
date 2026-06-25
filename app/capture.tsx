@@ -1,24 +1,29 @@
 /**
  * Capture screen: the live booth.
  *
- * Full-screen mirrored front-camera preview. Tap anywhere to begin a 4-shot
- * session. For each shot: a countdown (length from Settings, default 3s) with
- * optional ticking sound and haptics, then capture (shutter sound, haptic, brief
- * white screen-flash), then a ~1.2s passive peek of the just-captured shot, then
- * the next shot. After 4 shots the strip is composed via the Skia bridge and the
- * screen routes to Preview with the composed strip URI.
+ * Full-screen mirrored front-camera preview. Once the camera is ready the screen
+ * shows a short "Get ready!" intro (about 3s) over the live preview, then runs
+ * the session automatically. For each shot: a countdown (length from Settings,
+ * default 3s) with optional ticking sound and haptics, then capture (haptic plus
+ * a brief white screen-flash; the OS supplies the shutter sound), then a ~1.2s
+ * passive peek of the just-captured shot, then the next shot. After the last
+ * shot the strip is composed via the Skia bridge and the screen routes to
+ * Preview with the composed strip URI.
  *
- * No per-shot accept or reject. Settings drive the feedback toggles; the layout
- * is chosen on the previous screen and passed in as a route param.
+ * A top-left cancel control lets the guest abort the session and go back. No
+ * per-shot accept or reject. Settings drive the feedback toggles; the layout is
+ * chosen on the previous screen and passed in as a route param.
  */
 import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraSurface, type CameraSurfaceHandle } from '@/components/CameraSurface';
 import { CaptureChrome } from '@/components/CaptureChrome';
 import { CountdownOverlay } from '@/components/CountdownOverlay';
+import { IconButton } from '@/components/IconButton';
 import { PermissionPrimer } from '@/components/PermissionPrimer';
 import { SafeCropOverlay } from '@/components/SafeCropOverlay';
 import { ScreenFlash } from '@/components/ScreenFlash';
@@ -37,12 +42,7 @@ import {
   requestCameraPermission,
   type PermissionStatus,
 } from '@/lib/permissions';
-import {
-  playCountdownTick,
-  playShutter,
-  preloadBoothSounds,
-  releaseBoothSounds,
-} from '@/lib/sounds';
+import { playCountdownTick, preloadBoothSounds, releaseBoothSounds } from '@/lib/sounds';
 import { useTheme } from '@/theme/useTheme';
 import type { SkiaBridge } from '@/lib/skiaBridge';
 
@@ -50,14 +50,17 @@ import type { SkiaBridge } from '@/lib/skiaBridge';
 const TICK_MS = 1000;
 /** Ms to leave the just-captured peek visible before the next countdown. */
 const PEEK_HOLD_MS = 1200;
+/** Ms to show the "Get ready!" intro before the first countdown begins. */
+const GET_READY_MS = 3000;
 
-type Phase = 'idle' | 'countdown' | 'reveal' | 'composing';
+type Phase = 'get-ready' | 'countdown' | 'reveal' | 'composing';
 type PermStep = 'checking' | 'priming-camera' | 'ready';
 
 /** Capture screen entry point. */
 export default function CaptureScreen(): JSX.Element {
   useKeepAwake();
   const theme = useTheme('dark');
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const params = useLocalSearchParams<{ layout?: string }>();
   const layout: StripLayout = parseStripLayout(params.layout) ?? DEFAULT_STRIP_LAYOUT;
@@ -74,7 +77,7 @@ export default function CaptureScreen(): JSX.Element {
   const hapticsOn = settings.haptics;
   const flashOn = settings.flash;
 
-  const [phase, setPhase] = useState<Phase>('idle');
+  const [phase, setPhase] = useState<Phase>('get-ready');
   const [digit, setDigit] = useState<number | null>(null);
   const [framesCaptured, setFramesCaptured] = useState<number>(0);
   const [peekUri, setPeekUri] = useState<string | null>(null);
@@ -104,6 +107,20 @@ export default function CaptureScreen(): JSX.Element {
       releaseBoothSounds();
     };
   }, [permStep]);
+
+  // Get ready: hold a friendly intro over the live preview, then start the
+  // first countdown. Only runs once the camera is ready so it never races the
+  // permission primer.
+  useEffect(() => {
+    if (permStep !== 'ready' || phase !== 'get-ready') return undefined;
+    captured.current = [];
+    setFramesCaptured(0);
+    setPeekUri(null);
+    const timer = setTimeout(() => {
+      setPhase('countdown');
+    }, GET_READY_MS);
+    return () => clearTimeout(timer);
+  }, [permStep, phase]);
 
   // Drive the countdown for the current shot.
   useEffect(() => {
@@ -181,7 +198,7 @@ export default function CaptureScreen(): JSX.Element {
 
   async function fireShutter(): Promise<void> {
     setFlashActive(flashOn);
-    if (soundOn) void playShutter();
+    // The OS already plays a shutter sound on capture, so we don't play one.
     if (hapticsOn) void captureHaptic();
     let uri = '';
     try {
@@ -198,14 +215,6 @@ export default function CaptureScreen(): JSX.Element {
     } else {
       setPhase('reveal');
     }
-  }
-
-  function startCapture(): void {
-    if (phase !== 'idle') return;
-    captured.current = [];
-    setFramesCaptured(0);
-    setPeekUri(null);
-    setPhase('countdown');
   }
 
   function exitToHome(): void {
@@ -243,8 +252,8 @@ export default function CaptureScreen(): JSX.Element {
 
   let hint: string;
   let subhint: string | null = null;
-  if (phase === 'idle') {
-    hint = 'Tap anywhere to start';
+  if (phase === 'get-ready') {
+    hint = 'Get ready!';
     subhint = `${totalFrames} photos · ${stripLayoutLabel(layout)}`;
   } else if (phase === 'composing') {
     hint = 'Composing your strip...';
@@ -252,15 +261,11 @@ export default function CaptureScreen(): JSX.Element {
     hint = `${framesCaptured} / ${totalFrames}`;
   }
 
+  const getReadyMessage = phase === 'get-ready' ? 'Get ready!' : null;
+
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.bg }]}>
-      <Pressable
-        style={styles.previewTap}
-        onPress={startCapture}
-        accessibilityRole="button"
-        accessibilityLabel="Start the photo countdown"
-        accessibilityHint="Stand inside the rectangle and tap anywhere to begin."
-      >
+      <View style={styles.preview}>
         <CameraSurface
           ref={cameraRef}
           flash={flashOn ? 'on' : 'off'}
@@ -275,18 +280,34 @@ export default function CaptureScreen(): JSX.Element {
             accessibilityLabel="Your last shot"
           />
         ) : null}
-        <CountdownOverlay digit={digit} message={null} />
+        <CountdownOverlay digit={digit} message={getReadyMessage} />
         <ScreenFlash active={flashActive} onDone={() => setFlashActive(false)} />
-      </Pressable>
+      </View>
 
-      <CaptureChrome hint={hint} subhint={subhint} onExit={exitToHome} />
+      <View
+        pointerEvents="box-none"
+        style={[styles.cancel, { top: insets.top + theme.spacing.sm, left: insets.left + theme.spacing.lg }]}
+      >
+        <IconButton
+          icon="close"
+          accessibilityLabel="Cancel and leave the booth"
+          onPress={exitToHome}
+          variant="ghost"
+          size={44}
+        />
+      </View>
+
+      <CaptureChrome hint={hint} subhint={subhint} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  previewTap: { flex: 1 },
+  preview: { flex: 1 },
+  cancel: {
+    position: 'absolute',
+  },
   peek: {
     ...StyleSheet.absoluteFillObject,
   },

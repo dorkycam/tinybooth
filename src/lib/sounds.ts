@@ -1,9 +1,13 @@
 /**
- * Sound effects for the booth: countdown ticks + shutter snap.
+ * Sound effects for the booth: countdown ticks.
  *
- * Sources are the original Swift app's mp3s, copied verbatim into
- * `assets/sounds/`. We preload them once on first use so the camera screen
- * can fire them with no perceptible delay between countdown ticks.
+ * The source is the original Swift app's mp3, copied verbatim into
+ * `assets/sounds/`. We preload it once on first use so the camera screen
+ * can fire ticks with no perceptible delay between them.
+ *
+ * The capture shutter sound is intentionally not played here. iOS and Android
+ * already emit their own shutter sound when a photo is taken, so a second one
+ * would double up.
  *
  * `expo-audio` is lazy-loaded so unit tests + web bundles continue to work
  * without the native module.
@@ -30,7 +34,6 @@ interface SoundPlayer {
 
 let cachedMod: AudioModule | null = null;
 let countdownPlayer: SoundPlayer | null = null;
-let shutterPlayer: SoundPlayer | null = null;
 
 async function loadAudio(): Promise<AudioModule | null> {
   if (cachedMod) return cachedMod;
@@ -49,29 +52,20 @@ async function loadAudio(): Promise<AudioModule | null> {
 }
 
 /**
- * Preload both sound players. Safe to call multiple times; only loads once.
- * Call once when the camera screen mounts so the first tick has no warm-up
- * latency.
+ * Preload the countdown tick player. Safe to call multiple times; only loads
+ * once. Call once when the camera screen mounts so the first tick has no
+ * warm-up latency.
  */
 export async function preloadBoothSounds(): Promise<void> {
   const mod = await loadAudio();
   if (!mod) return;
   if (!countdownPlayer) {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, global-require
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const src = require('../../assets/sounds/countdown.mp3') as number;
       countdownPlayer = mod.createAudioPlayer(src);
     } catch {
       countdownPlayer = null;
-    }
-  }
-  if (!shutterPlayer) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, global-require
-      const src = require('../../assets/sounds/shutter.mp3') as number;
-      shutterPlayer = mod.createAudioPlayer(src);
-    } catch {
-      shutterPlayer = null;
     }
   }
 }
@@ -88,22 +82,8 @@ export async function playCountdownTick(): Promise<void> {
   }
 }
 
-/** Play the shutter snap. */
-export async function playShutter(): Promise<void> {
-  const player = shutterPlayer;
-  if (!player) return;
-  try {
-    await player.seekTo(0);
-    player.play();
-  } catch {
-    // Best-effort.
-  }
-}
-
-/** Free the underlying native players. Optional cleanup on screen unmount. */
+/** Free the underlying native player. Optional cleanup on screen unmount. */
 export function releaseBoothSounds(): void {
   countdownPlayer?.release();
-  shutterPlayer?.release();
   countdownPlayer = null;
-  shutterPlayer = null;
 }

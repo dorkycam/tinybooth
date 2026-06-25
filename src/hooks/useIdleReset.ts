@@ -5,13 +5,18 @@
  * with no taps, the session is discarded and the booth returns to Start. Every
  * tap restarts the timer. Pass `'never'` to disable the timer entirely.
  *
- * The hook owns a one-second ticker so callers can show a countdown, and calls
- * `onTimeout` once the remaining seconds hit zero. Wire the returned `reset` to
- * the screen's `onTouchStart` (or any tap handler) so each interaction extends
- * the session.
+ * The countdown is driven off a single monotonic deadline timestamp rather than
+ * a per-tick decrement. Each render computes the seconds remaining from the
+ * deadline, so settings hydration, re-renders, and rapid resets cannot make the
+ * timer drift or fire early. `reset` simply pushes the deadline forward by the
+ * full timeout; the screen wires it to `onTouchStart` so every interaction
+ * extends the session. `onTimeout` fires exactly once when the deadline passes.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { IdleReset } from '@/lib/sessionSettings';
+
+/** How often the deadline is sampled, in milliseconds. */
+const TICK_MS = 250;
 
 /** Result of {@link useIdleReset}. */
 export interface UseIdleResetResult {
@@ -33,8 +38,14 @@ export interface UseIdleResetResult {
  */
 export function useIdleReset(idleReset: IdleReset, onTimeout: () => void): UseIdleResetResult {
   const enabled = idleReset !== 'never';
-  const total = enabled ? idleReset : 0;
-  const [secondsLeft, setSecondsLeft] = useState<number>(total);
+  const totalMs = enabled ? idleReset * 1000 : 0;
+
+  // The wall-clock time at which the session should reset. Lives in a ref so a
+  // tap can push it forward without re-arming the ticker.
+  const deadlineRef = useRef<number>(Date.now() + totalMs);
+  // Guards onTimeout against firing more than once per countdown.
+  const firedRef = useRef<boolean>(false);
+  const [secondsLeft, setSecondsLeft] = useState<number>(enabled ? idleReset : 0);
 
   // Keep the latest onTimeout without re-arming the interval each render.
   const onTimeoutRef = useRef(onTimeout);
@@ -43,27 +54,33 @@ export function useIdleReset(idleReset: IdleReset, onTimeout: () => void): UseId
   }, [onTimeout]);
 
   const reset = useCallback((): void => {
-    if (enabled) setSecondsLeft(total);
-  }, [enabled, total]);
+    if (!enabled) return;
+    deadlineRef.current = Date.now() + totalMs;
+    firedRef.current = false;
+    setSecondsLeft(Math.ceil(totalMs / 1000));
+  }, [enabled, totalMs]);
 
-  // Re-seed when the configured timeout changes.
+  // Re-seed the deadline whenever the configured timeout changes (e.g. after
+  // settings hydrate from storage), so the countdown always starts full.
   useEffect(() => {
-    setSecondsLeft(total);
-  }, [total]);
+    deadlineRef.current = Date.now() + totalMs;
+    firedRef.current = false;
+    setSecondsLeft(enabled ? Math.ceil(totalMs / 1000) : 0);
+  }, [enabled, totalMs]);
 
-  // Tick down once per second while enabled.
+  // Sample the deadline a few times a second while enabled.
   useEffect(() => {
     if (!enabled) return undefined;
     const interval = setInterval(() => {
-      setSecondsLeft((value) => Math.max(0, value - 1));
-    }, 1000);
+      const remainingMs = Math.max(0, deadlineRef.current - Date.now());
+      setSecondsLeft(Math.ceil(remainingMs / 1000));
+      if (remainingMs <= 0 && !firedRef.current) {
+        firedRef.current = true;
+        onTimeoutRef.current();
+      }
+    }, TICK_MS);
     return () => clearInterval(interval);
   }, [enabled]);
-
-  // Fire once when the countdown elapses.
-  useEffect(() => {
-    if (enabled && secondsLeft <= 0) onTimeoutRef.current();
-  }, [enabled, secondsLeft]);
 
   return { secondsLeft: enabled ? secondsLeft : null, reset };
 }
