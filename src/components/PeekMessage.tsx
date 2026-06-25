@@ -29,15 +29,17 @@ export function PeekMessage({ message }: PeekMessageProps): JSX.Element {
   const theme = useTheme('dark');
   return (
     <View pointerEvents="none" style={styles.root}>
-      <Text
-        style={[styles.text, { color: theme.colors.flash }]}
-        numberOfLines={2}
-        adjustsFontSizeToFit
-        accessibilityRole="text"
-        accessibilityLabel={message}
-      >
-        {message}
-      </Text>
+      <View style={[styles.bubble, { backgroundColor: theme.colors.scrimStrong }]}>
+        <Text
+          style={[styles.text, { color: theme.colors.flash }]}
+          numberOfLines={2}
+          adjustsFontSizeToFit
+          accessibilityRole="text"
+          accessibilityLabel={message}
+        >
+          {message}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -57,14 +59,18 @@ const styles = StyleSheet.create({
     // tall) so the message never overlaps it, even on the smallest phones.
     paddingBottom: 160,
   },
-  text: {
+  bubble: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 22,
     maxWidth: '72%',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  text: {
     fontSize: 30,
     fontWeight: '800',
     lineHeight: 36,
     textAlign: 'center',
-    textShadowColor: 'rgba(0,0,0,0.55)',
-    textShadowRadius: 10,
-    textShadowOffset: { width: 0, height: 2 },
   },
 });
