@@ -4,8 +4,8 @@
  */
 import type { JSX } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { buttonHaptic } from '../lib/haptics';
-import { useTheme } from '../theme/useTheme';
+import { buttonHaptic } from '@/lib/haptics';
+import { useTheme } from '@/theme/useTheme';
 
 interface SecondaryButtonProps {
   label: string;

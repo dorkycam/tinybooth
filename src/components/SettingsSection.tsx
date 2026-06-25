@@ -7,7 +7,7 @@
  */
 import type { JSX, ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 interface SettingsSectionProps {
   /** Uppercase label shown above the grouped rows. */

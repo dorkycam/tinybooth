@@ -13,7 +13,7 @@
  */
 import type { JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { useTheme } from '../theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 interface PeekMessageProps {
   /** The encouraging message to celebrate the shot with. */

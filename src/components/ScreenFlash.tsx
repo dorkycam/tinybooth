@@ -12,7 +12,7 @@
 import type { JSX } from 'react';
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet } from 'react-native';
-import { useTheme } from '../theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 interface ScreenFlashProps {
   /** Flip true to play one flash. Reset to false in `onDone`. */

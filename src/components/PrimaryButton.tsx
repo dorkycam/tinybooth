@@ -7,9 +7,9 @@
  */
 import type { JSX } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { buttonHaptic } from '../lib/haptics';
-import { ON_BRAND_FILL_TEXT } from '../theme/tokens/colors';
-import { useTheme } from '../theme/useTheme';
+import { buttonHaptic } from '@/lib/haptics';
+import { ON_BRAND_FILL_TEXT } from '@/theme/tokens/colors';
+import { useTheme } from '@/theme/useTheme';
 
 interface PrimaryButtonProps {
   label: string;

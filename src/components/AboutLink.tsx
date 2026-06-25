@@ -7,7 +7,7 @@
  */
 import type { JSX } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { useTheme } from '../theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 interface AboutLinkProps {
   /** The link text. */

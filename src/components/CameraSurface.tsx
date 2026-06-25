@@ -12,7 +12,7 @@
 import type { JSX } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
-import { useTheme } from '../theme/useTheme';
+import { useTheme } from '@/theme/useTheme';
 
 interface CameraSurfaceProps {
   isActive: boolean;
