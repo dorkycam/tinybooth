@@ -7,7 +7,6 @@
  */
 import type { JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { GlassSurface } from './GlassSurface';
 import { useTheme } from '../theme/useTheme';
 
 interface CountdownOverlayProps {
@@ -25,18 +24,11 @@ export function CountdownOverlay({ digit, message }: CountdownOverlayProps): JSX
   }
   return (
     <View pointerEvents="none" style={styles.root}>
-      <GlassSurface
-        glassStyle="regular"
-        colorScheme="dark"
-        fallbackColor={theme.colors.scrimStrong}
-        style={styles.bubble}
-      >
-        {digit !== null ? (
-          <Text style={[styles.digit, { color: theme.colors.flash }]}>{digit}</Text>
-        ) : (
-          <Text style={[styles.message, { color: theme.colors.flash }]}>{message}</Text>
-        )}
-      </GlassSurface>
+      {digit !== null ? (
+        <Text style={[styles.digit, { color: theme.colors.flash }]}>{digit}</Text>
+      ) : (
+        <Text style={[styles.message, { color: theme.colors.flash }]}>{message}</Text>
+      )}
     </View>
   );
 }
@@ -51,22 +43,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bubble: {
-    paddingHorizontal: 48,
-    paddingVertical: 24,
-    borderRadius: 32,
-    minWidth: 180,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
   digit: {
     fontSize: 132,
     fontWeight: '800',
     lineHeight: 144,
+    textShadowColor: 'rgba(0,0,0,0.55)',
+    textShadowRadius: 12,
+    textShadowOffset: { width: 0, height: 2 },
   },
   message: {
     fontSize: 56,
     fontWeight: '600',
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.55)',
+    textShadowRadius: 12,
+    textShadowOffset: { width: 0, height: 2 },
   },
 });
