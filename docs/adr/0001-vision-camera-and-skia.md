@@ -12,11 +12,11 @@ TinyBooth is a photobooth app whose headline output is a printed strip (and save
 copies). Capture and composition are the core of the app, and we had to pick the native
 stack for both. Two realistic options:
 
-1. **react-native-vision-camera + @shopify/react-native-skia** — full-resolution stills
+1. **react-native-vision-camera + @shopify/react-native-skia**. Full-resolution stills
    plus a Skia image pipeline that composes the strip at print DPI. This is the stack the
    over-scoped predecessor already used and proved out (`CameraSurface`, `skiaBridge`).
-2. **expo-camera + view capture** (react-native-view-shot / expo-image-manipulator) —
-   simpler, runs in Expo Go so contributors can clone and run in under a minute, but the
+2. **expo-camera + view capture** (react-native-view-shot / expo-image-manipulator).
+   Simpler, runs in Expo Go so contributors can clone and run in under a minute, but the
    strip would be snapshotted from a rendered view at screen resolution.
 
 The app is free and open source, so contributor convenience has real weight. Expo Go
