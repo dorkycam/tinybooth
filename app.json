@@ -46,7 +46,8 @@
         "react-native-vision-camera",
         {
           "cameraPermissionText": "TinyBooth uses your camera to take photostrips.",
-          "enableMicrophonePermission": false
+          "enableMicrophonePermission": false,
+          "enableLocation": false
         }
       ],
       [
