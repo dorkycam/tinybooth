@@ -9,11 +9,8 @@ import { Stack } from 'expo-router';
 export default function CameraGroupLayout(): JSX.Element {
   return (
     <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
-      <Stack.Screen name="setup" />
       <Stack.Screen name="index" />
       <Stack.Screen name="preview" />
-      <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="strip-unlock" options={{ presentation: 'modal' }} />
     </Stack>
   );
 }

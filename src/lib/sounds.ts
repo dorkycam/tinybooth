@@ -49,7 +49,7 @@ async function loadAudio(): Promise<AudioModule | null> {
 }
 
 /**
- * Preload both sound players. Safe to call multiple times — only loads once.
+ * Preload both sound players. Safe to call multiple times; only loads once.
  * Call once when the camera screen mounts so the first tick has no warm-up
  * latency.
  */

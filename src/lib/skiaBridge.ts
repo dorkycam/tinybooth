@@ -1,10 +1,11 @@
 /**
- * Host-side Skia bridge for `@tinybooth/strip-render`.
+ * Skia strip-composition bridge.
  *
- * The shared package leaves the actual pixel pushing to the host so the host
- * can pick the right file system path, image decoder, and base64 codec. We
- * register a function on `globalThis.__TINYBOOTH_SKIA_RENDER__` and the shared
- * `composeStripWithSkia()` calls into it.
+ * Composes the captured frames into a single strip JPEG. The function is
+ * registered on `globalThis.__TINYBOOTH_SKIA_RENDER__` so the capture flow can
+ * call it without a static import of the native Skia module (which is absent in
+ * unit tests). Phase 2 supplies the resolved layout geometry from
+ * `src/lib/layouts.ts`.
  *
  * Implementation:
  *   1. Decode each photo URI via `Skia.Data.fromURI` + `Skia.Image.MakeImageFromEncoded`.
@@ -12,19 +13,53 @@
  *   3. Draw each frame, cropped to the frame's aspect ratio (centered crop).
  *   4. If `printDuplication === 'horizontal'`, draw the same frame again in
  *      the duplicate column so the printed sheet has two identical strips.
- *   5. Draw the watermark text at the bottom of each visible column.
- *   6. Snapshot the surface, encode to JPEG bytes, write to a temp file via
+ *   5. Snapshot the surface, encode to JPEG bytes, write to a temp file via
  *      `expo-file-system`, return the `file://` URI.
  *
  * Both `@shopify/react-native-skia` and `expo-file-system` are lazy-loaded
  * here so unit tests + web bundles continue to work without those native
  * modules.
  */
-import type {
-  SkiaBridge,
-  SkiaBridgePayload,
-  SkiaComposeResult,
-} from '@tinybooth/strip-render/skia';
+/**
+ * A single frame rectangle on the strip canvas, in canvas pixels.
+ */
+interface FrameRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/**
+ * Resolved layout geometry passed to the bridge. Phase 2 produces this from
+ * `src/lib/layouts.ts`; the bridge only needs the canvas size and frame rects.
+ */
+interface ResolvedLayout {
+  canvas: { w: number; h: number };
+  frames: FrameRect[];
+  /** When 'horizontal', each frame is mirrored into the right column. */
+  printDuplication?: 'horizontal' | 'none';
+  /** Left edge of the duplicated right column, in canvas pixels. */
+  rightColumnX?: number;
+}
+
+/** Input to the compose bridge: the resolved layout plus the captured photos. */
+interface SkiaBridgePayload {
+  layout: ResolvedLayout;
+  photos: Array<{ uri: string }>;
+  /** Optional explicit output path; defaults to the cache directory. */
+  outputPath?: string;
+}
+
+/** What the bridge returns: a file URI for the composed JPEG and its size. */
+interface SkiaComposeResult {
+  uri: string;
+  width: number;
+  height: number;
+}
+
+/** The compose function shape installed on `globalThis`. */
+type SkiaBridge = (payload: SkiaBridgePayload) => Promise<SkiaComposeResult>;
 
 interface SkiaImageLike {
   width(): number;
@@ -48,7 +83,6 @@ interface SkiaSurfaceLike {
 interface SkiaCanvasLike {
   drawColor(color: unknown): void;
   drawImageRect(image: SkiaImageLike, src: SkiaRectLike, dst: SkiaRectLike, paint?: unknown): void;
-  drawText(text: string, x: number, y: number, paint: unknown, font: unknown): void;
 }
 
 type SkiaRectLike = { x: number; y: number; width: number; height: number };
@@ -61,7 +95,6 @@ interface SkiaModule {
     XYWHRect(x: number, y: number, w: number, h: number): SkiaRectLike;
     Paint(): { setColor(c: unknown): void };
     Color(value: string): unknown;
-    Font(typeface?: unknown, size?: number): unknown;
   };
   ImageFormat: { JPEG: number };
 }
@@ -159,12 +192,6 @@ async function composeBridge(payload: SkiaBridgePayload): Promise<SkiaComposeRes
     img.dispose?.();
   }
 
-  // Watermark text rendering is intentionally disabled until we wire a real
-  // Skia.Typeface. Skia.Font requires a non-null typeface and there is no
-  // cross-platform default we can lean on without shipping a font binary. For
-  // now, the strip renders without the bottom wordmark — Print, Share, and
-  // Save all use this composition. Tracked in docs/followups.md.
-
   const snapshot = surface.makeImageSnapshot();
   const base64 = snapshot.encodeToBase64
     ? snapshot.encodeToBase64(ImageFormat.JPEG, 90)
@@ -181,32 +208,6 @@ async function composeBridge(payload: SkiaBridgePayload): Promise<SkiaComposeRes
   await fs.writeAsStringAsync(outputPath, base64, { encoding: fs.EncodingType.Base64 });
 
   return { uri: outputPath, width: layout.canvas.w, height: layout.canvas.h };
-}
-
-interface WatermarkRect {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-}
-
-function drawWatermark(
-  Skia: SkiaModule['Skia'],
-  canvas: SkiaCanvasLike,
-  text: string,
-  rect: WatermarkRect,
-  layout: SkiaBridgePayload['layout'],
-): void {
-  const fontSize = Math.max(10, Math.floor(rect.h * 0.6));
-  const paint = Skia.Paint();
-  paint.setColor(Skia.Color('#1F2937'));
-  const font = Skia.Font(undefined, fontSize);
-  const baselineY = rect.y + Math.floor(rect.h * 0.8);
-  const xLeft = rect.x;
-  canvas.drawText(text, xLeft, baselineY, paint, font);
-  if (layout.printDuplication === 'horizontal' && typeof layout.rightColumnX === 'number') {
-    canvas.drawText(text, layout.rightColumnX, baselineY, paint, font);
-  }
 }
 
 function centeredCropRect(
@@ -238,8 +239,7 @@ function encodeFromBytes(bytes: Uint8Array | undefined): string | null {
   for (let i = 0; i < bytes.length; i += 1) {
     binary += String.fromCharCode(bytes[i] ?? 0);
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const g = globalThis as any;
-  if (typeof g.btoa === 'function') return g.btoa(binary) as string;
+  const g = globalThis as { btoa?: (input: string) => string };
+  if (typeof g.btoa === 'function') return g.btoa(binary);
   return Buffer.from(bytes).toString('base64');
 }

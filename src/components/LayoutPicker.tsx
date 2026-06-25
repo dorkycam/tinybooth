@@ -8,15 +8,12 @@
  */
 import type { JSX } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { StripLayout } from '@tinybooth/api-types';
+import type { StripLayout } from '../lib/layouts';
 import { useTheme } from '../theme/useTheme';
 
 const LAYOUTS: Array<{ key: StripLayout; label: string; subtitle: string }> = [
-  { key: '1x4_classic', label: '1x4', subtitle: 'classic strip' },
-  { key: '2x2', label: '2x2', subtitle: 'square grid' },
-  { key: '1x3', label: '1x3', subtitle: 'tall strip' },
-  { key: 'single', label: '1', subtitle: 'postcard' },
-  { key: '1x6_double', label: '1x6', subtitle: 'long strip' },
+  { key: 'classic', label: 'Classic', subtitle: '4 shots, two columns' },
+  { key: 'quad', label: 'Quad', subtitle: '4 shots, 2x2 grid' },
 ];
 
 interface LayoutPickerProps {

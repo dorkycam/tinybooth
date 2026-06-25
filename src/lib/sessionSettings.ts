@@ -3,7 +3,7 @@
  * default layout pick, and the flash preference between launches.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { StripLayout } from '@tinybooth/api-types';
+import { DEFAULT_STRIP_LAYOUT, parseStripLayout, type StripLayout } from './layouts';
 
 /** Keys we read/write. */
 const KEYS = {
@@ -27,7 +27,7 @@ export interface SessionSettings {
 
 /** Default values. */
 export const DEFAULT_SESSION_SETTINGS: SessionSettings = {
-  layout: '1x4_classic',
+  layout: DEFAULT_STRIP_LAYOUT,
   flash: false,
   previewClass: 'auto',
   saveFrames: false,
@@ -42,7 +42,7 @@ export async function loadSessionSettings(): Promise<SessionSettings> {
     KEYS.saveFrames,
   ]);
   return {
-    layout: parseLayout(layout?.[1]) ?? DEFAULT_SESSION_SETTINGS.layout,
+    layout: parseStripLayout(layout?.[1]) ?? DEFAULT_SESSION_SETTINGS.layout,
     flash: flash?.[1] === 'true',
     previewClass:
       parsePreviewClass(previewClass?.[1]) ?? DEFAULT_SESSION_SETTINGS.previewClass,
@@ -59,19 +59,6 @@ export async function saveSessionSettings(patch: Partial<SessionSettings>): Prom
   if (patch.saveFrames !== undefined) writes.push([KEYS.saveFrames, String(patch.saveFrames)]);
   if (writes.length > 0) {
     await AsyncStorage.multiSet(writes);
-  }
-}
-
-function parseLayout(value: string | null | undefined): StripLayout | null {
-  switch (value) {
-    case '1x4_classic':
-    case '2x2':
-    case '1x3':
-    case 'single':
-    case '1x6_double':
-      return value;
-    default:
-      return null;
   }
 }
 

@@ -16,19 +16,12 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.codesquad.tinybooth",
-      "usesAppleSignIn": true,
-      "entitlements": {
-        "com.apple.developer.applesignin": [
-          "Default"
-        ]
-      },
       "privacyManifests": {
         "PrivacyInfoPath": "./ios/TinyBooth/PrivacyInfo.xcprivacy"
       },
       "infoPlist": {
-        "NSCameraUsageDescription": "TinyBooth uses the camera to take photos in the booth. Photos stay on this device unless you connect the booth to an event.",
-        "NSPhotoLibraryAddUsageDescription": "TinyBooth saves every strip to your Photos library so you have a copy you can share or download later.",
-        "NSPhotoLibraryUsageDescription": "TinyBooth needs photo access so it can save the strips it composes for you.",
+        "NSCameraUsageDescription": "TinyBooth uses the camera to take photos in the booth. Photos stay on this device. TinyBooth never uploads anything.",
+        "NSPhotoLibraryAddUsageDescription": "TinyBooth saves the strips you create to your Photos library so you have a copy to share or print later.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -36,12 +29,7 @@
       "package": "com.codesquad.tinybooth",
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.WRITE_EXTERNAL_STORAGE",
-        "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.READ_MEDIA_VISUAL_USER_SELECTED",
-        "android.permission.READ_MEDIA_IMAGES",
-        "android.permission.READ_MEDIA_VIDEO",
-        "android.permission.READ_MEDIA_AUDIO"
+        "android.permission.READ_MEDIA_IMAGES"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -54,7 +42,6 @@
     },
     "plugins": [
       "expo-router",
-      "expo-apple-authentication",
       [
         "react-native-vision-camera",
         {
@@ -65,8 +52,7 @@
       [
         "expo-media-library",
         {
-          "photosPermission": "TinyBooth needs photo access to save your photostrips.",
-          "savePhotosPermission": "TinyBooth saves your photostrips to your camera roll when you tap Save.",
+          "savePhotosPermission": "TinyBooth saves the strips you create to your Photos library.",
           "isAccessMediaLocationEnabled": false
         }
       ],

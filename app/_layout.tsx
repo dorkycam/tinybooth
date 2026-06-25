@@ -20,7 +20,7 @@ export default function RootLayout(): JSX.Element {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="(camera)" />
-          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="settings" />
         </Stack>
         <StatusBar style="auto" />
       </ThemePreferenceProvider>

@@ -2,18 +2,17 @@
  * Booth controls sheet.
  *
  * Bottom sheet hidden behind a gear icon on the live camera screen so guests
- * can't accidentally end the host's session. Contains:
+ * can't accidentally exit the booth. Contains:
  *   - Flash on/off toggle (in-place)
  *   - Inline layout picker (swap strip layouts without leaving the booth)
- *   - "End session" with two-tap confirm -> back to home
- *   - "End event" -> back to home, passcode-protected when one was set
+ *   - "Exit booth" with two-tap confirm -> back to home
  *
  * Library-style: receives current state + callbacks, owns no global state.
  */
 import type { JSX } from 'react';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
-import type { StripLayout } from '@tinybooth/api-types';
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import type { StripLayout } from '../lib/layouts';
 import { LayoutPicker } from './LayoutPicker';
 import { useTheme } from '../theme/useTheme';
 
@@ -26,21 +25,12 @@ interface BoothControlsSheetProps {
   layout: StripLayout;
   /** Swap to a different layout in place. Resets any in-progress capture. */
   onLayoutChange: (next: StripLayout) => void;
-  /** Lighter exit: ends the current session and returns to home. Two-tap confirm. */
-  onEndSession: () => void;
-  /** Heavier exit: ends the whole event and returns to home. Passcode-protected when set. */
-  onEndEvent: () => void;
-  /**
-   * Optional host passcode. When set, ending the event requires the host to
-   * enter this code first so guests can't exit on accident.
-   */
-  passcode?: string | null;
+  /** Exit the booth and return to home. Two-tap confirm. */
+  onExit: () => void;
 }
 
-type PasscodeIntent = 'end-event';
-
 /**
- * Bottom sheet of in-session controls. End Session takes two taps to fire.
+ * Bottom sheet of in-session controls. Exit takes two taps to fire.
  */
 export function BoothControlsSheet({
   visible,
@@ -49,58 +39,24 @@ export function BoothControlsSheet({
   onFlashChange,
   layout,
   onLayoutChange,
-  onEndSession,
-  onEndEvent,
-  passcode,
+  onExit,
 }: BoothControlsSheetProps): JSX.Element {
   const theme = useTheme('dark');
-  const [confirmEnd, setConfirmEnd] = useState(false);
-  const [passcodeIntent, setPasscodeIntent] = useState<PasscodeIntent | null>(null);
-  const [passcodeInput, setPasscodeInput] = useState('');
-  const [passcodeError, setPasscodeError] = useState<string | null>(null);
-  const isLocked = typeof passcode === 'string' && passcode.length > 0;
+  const [confirmExit, setConfirmExit] = useState(false);
 
   function dismiss(): void {
-    setConfirmEnd(false);
-    setPasscodeIntent(null);
-    setPasscodeInput('');
-    setPasscodeError(null);
+    setConfirmExit(false);
     onDismiss();
   }
 
-  function requestEndEvent(): void {
-    if (isLocked) {
-      setPasscodeIntent('end-event');
-      setPasscodeInput('');
-      setPasscodeError(null);
-    } else {
-      // Close the sheet before navigating so iOS does not stall the route
-      // change while the modal animation is still mid-flight.
-      onDismiss();
-      setTimeout(() => onEndEvent(), 50);
-    }
-  }
-
-  function requestEndSession(): void {
+  function requestExit(): void {
     onDismiss();
-    setTimeout(() => onEndSession(), 50);
+    setTimeout(() => onExit(), 50);
   }
 
   function handleLayoutChange(next: StripLayout): void {
     if (next === layout) return;
     onLayoutChange(next);
-  }
-
-  function submitPasscode(): void {
-    if (passcodeInput === passcode) {
-      setPasscodeIntent(null);
-      setPasscodeInput('');
-      setPasscodeError(null);
-      onDismiss();
-      setTimeout(() => onEndEvent(), 50);
-    } else {
-      setPasscodeError('Wrong passcode. Ask the host.');
-    }
   }
 
   return (
@@ -137,89 +93,27 @@ export function BoothControlsSheet({
               <LayoutPicker value={layout} onChange={handleLayoutChange} />
             </View>
 
-            {passcodeIntent ? (
-              <View style={styles.passcodeBlock}>
-                <Text style={[styles.actionText, { color: theme.colors.fg }]}>
-                  Enter the host passcode
-                </Text>
-                <TextInput
-                  value={passcodeInput}
-                  onChangeText={(value) => {
-                    setPasscodeInput(value.replace(/\D/g, '').slice(0, 8));
-                    if (passcodeError) setPasscodeError(null);
-                  }}
-                  placeholder="••••"
-                  placeholderTextColor={theme.colors.subtle}
-                  keyboardType="number-pad"
-                  secureTextEntry
-                  autoFocus
-                  returnKeyType="done"
-                  onSubmitEditing={submitPasscode}
-                  style={[
-                    styles.passcodeInput,
-                    {
-                      color: theme.colors.fg,
-                      backgroundColor: theme.colors.bg,
-                      borderColor: passcodeError ? theme.colors.highlight : theme.colors.hairline,
-                    },
-                  ]}
-                />
-                {passcodeError ? (
-                  <Text style={[styles.passcodeError, { color: theme.colors.highlight }]}>
-                    {passcodeError}
-                  </Text>
-                ) : null}
+            <View style={styles.exitBlock}>
+              {confirmExit ? (
                 <Pressable
-                  onPress={submitPasscode}
+                  onPress={requestExit}
                   accessibilityRole="button"
                   style={[styles.danger, { backgroundColor: theme.colors.highlight }]}
                 >
-                  <Text style={styles.dangerText}>Unlock + end event</Text>
+                  <Text style={styles.dangerText}>Tap again to exit the booth</Text>
                 </Pressable>
+              ) : (
                 <Pressable
-                  onPress={() => {
-                    setPasscodeIntent(null);
-                    setPasscodeInput('');
-                    setPasscodeError(null);
-                  }}
+                  onPress={() => setConfirmExit(true)}
                   accessibilityRole="button"
-                  style={styles.cancel}
+                  style={[styles.dangerOutline, { borderColor: theme.colors.highlight }]}
                 >
-                  <Text style={[styles.cancelText, { color: theme.colors.subtle }]}>Cancel</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <View style={styles.exitBlock}>
-                {confirmEnd ? (
-                  <Pressable
-                    onPress={requestEndSession}
-                    accessibilityRole="button"
-                    style={[styles.danger, { backgroundColor: theme.colors.highlight }]}
-                  >
-                    <Text style={styles.dangerText}>Tap again to end the session</Text>
-                  </Pressable>
-                ) : (
-                  <Pressable
-                    onPress={() => setConfirmEnd(true)}
-                    accessibilityRole="button"
-                    style={[styles.dangerOutline, { borderColor: theme.colors.highlight }]}
-                  >
-                    <Text style={[styles.dangerOutlineText, { color: theme.colors.highlight }]}>
-                      End session
-                    </Text>
-                  </Pressable>
-                )}
-                <Pressable
-                  onPress={requestEndEvent}
-                  accessibilityRole="button"
-                  style={[styles.danger, { backgroundColor: theme.colors.highlight }]}
-                >
-                  <Text style={styles.dangerText}>
-                    {isLocked ? 'End event (passcode)' : 'End event'}
+                  <Text style={[styles.dangerOutlineText, { color: theme.colors.highlight }]}>
+                    Exit booth
                   </Text>
                 </Pressable>
-              </View>
-            )}
+              )}
+            </View>
 
             <Pressable onPress={dismiss} accessibilityRole="button" style={styles.cancel}>
               <Text style={[styles.cancelText, { color: theme.colors.subtle }]}>Close</Text>
@@ -280,10 +174,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '500',
   },
-  actionText: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
   dangerOutline: {
     paddingVertical: 14,
     borderRadius: 999,
@@ -293,6 +183,9 @@ const styles = StyleSheet.create({
   dangerOutlineText: {
     fontSize: 17,
     fontWeight: '700',
+  },
+  exitBlock: {
+    gap: 10,
   },
   danger: {
     paddingVertical: 14,
@@ -311,24 +204,5 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: 15,
     fontWeight: '600',
-  },
-  passcodeBlock: {
-    gap: 12,
-  },
-  exitBlock: {
-    gap: 10,
-  },
-  passcodeInput: {
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 22,
-    letterSpacing: 6,
-    textAlign: 'center',
-  },
-  passcodeError: {
-    fontSize: 13,
-    textAlign: 'center',
   },
 });

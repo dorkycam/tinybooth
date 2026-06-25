@@ -15,7 +15,6 @@ import type { JSX } from 'react';
 import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from './PrimaryButton';
-import { SecondaryButton } from './SecondaryButton';
 import { useTheme } from '../theme/useTheme';
 
 interface PermissionPrimerProps {

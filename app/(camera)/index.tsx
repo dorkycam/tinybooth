@@ -1,30 +1,34 @@
 /**
- * Camera screen — the live booth.
+ * Camera screen - the live booth.
  *
- * Fullscreen front-camera preview. Session name pill in the top-left, gear
- * icon in the top-right (opens BoothControlsSheet for flash / layout / end
- * session). Big tap-anywhere area kicks off the 3-2-1 countdown with audio
- * ticks + a shutter snap on each capture.
+ * Fullscreen front-camera preview. Gear icon in the top-right opens the booth
+ * controls sheet (flash / layout / exit). Big tap-anywhere area kicks off the
+ * 3-2-1 countdown with audio ticks and a shutter snap on each capture.
  *
  * A safe-crop overlay shows guests exactly what part of the frame will end up
- * on the strip (matches the active layout's per-frame aspect).
+ * on the strip.
  *
- * After the last shot, the Skia bridge composes the strip into a JPEG and
- * the preview screen receives the composed file URI (not the raw frames).
+ * After the last shot the screen routes to the preview with the captured frame
+ * URIs. Strip composition (the Skia bridge) is wired in Phase 2; until then the
+ * preview renders the first frame so Print / Share / Save have something to act
+ * on.
  */
 import type { JSX } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { StripLayout } from '@tinybooth/api-types';
-import { computeLayout, frameCountForLayout } from '@tinybooth/strip-render';
-import { composeStripWithSkia } from '@tinybooth/strip-render/skia';
 import { BoothControlsSheet } from '@/components/BoothControlsSheet';
 import { CameraSurface, type CameraSurfaceHandle } from '@/components/CameraSurface';
 import { CountdownOverlay } from '@/components/CountdownOverlay';
 import { PermissionPrimer } from '@/components/PermissionPrimer';
 import { SafeCropOverlay } from '@/components/SafeCropOverlay';
-import { useRandomMessage } from '@/hooks/useRandomMessage';
+import {
+  DEFAULT_STRIP_LAYOUT,
+  parseStripLayout,
+  shotCountForLayout,
+  stripLayoutLabel,
+  type StripLayout,
+} from '@/lib/layouts';
 import {
   getCameraPermissionStatus,
   getMediaLibraryPermissionStatus,
@@ -44,8 +48,8 @@ import { useTheme } from '@/theme/useTheme';
 const TICK_MS = 1000;
 /** Countdown starts at 3. */
 const COUNTDOWN_FROM = 3;
-/** Ms to leave the random message visible before starting the next countdown. */
-const MESSAGE_HOLD_MS = 1200;
+/** Ms to leave the just-captured peek visible before the next countdown. */
+const PEEK_HOLD_MS = 1200;
 
 type Phase = 'idle' | 'countdown' | 'reveal' | 'composing' | 'done';
 type PermStep = 'priming-camera' | 'priming-library' | 'ready';
@@ -55,20 +59,14 @@ export default function CameraScreen(): JSX.Element {
   const theme = useTheme('dark');
   const router = useRouter();
   const params = useLocalSearchParams<{
-    sessionName?: string;
     layout?: string;
     flash?: string;
-    passcode?: string;
   }>();
-  const sessionName = (params.sessionName ?? '').trim();
-  const passcode = (params.passcode ?? '').trim();
-  const initialLayout = parseLayout(params.layout) ?? '1x4_classic';
+  const initialLayout = parseStripLayout(params.layout) ?? DEFAULT_STRIP_LAYOUT;
   const [layout, setLayout] = useState<StripLayout>(initialLayout);
-  const layoutResult = useMemo(() => computeLayout(layout), [layout]);
-  const frameAspect = useMemo<number>(() => {
-    const f = layoutResult.frames[0];
-    return f && f.h > 0 ? f.w / f.h : 1;
-  }, [layoutResult]);
+  // Phase 2 supplies the real per-frame aspect from the layout geometry. The
+  // booth crop overlay defaults to a 4:3 portrait window until then.
+  const frameAspect = 3 / 4;
 
   const [permStep, setPermStep] = useState<PermStep>('priming-camera');
   const [cameraStatus, setCameraStatus] = useState<PermissionStatus>('unknown');
@@ -81,8 +79,7 @@ export default function CameraScreen(): JSX.Element {
   const [controlsOpen, setControlsOpen] = useState<boolean>(false);
   const captured = useRef<string[]>([]);
   const cameraRef = useRef<CameraSurfaceHandle | null>(null);
-  const { message, reveal, hide } = useRandomMessage();
-  const totalFrames = useMemo<number>(() => frameCountForLayout(layout), [layout]);
+  const totalFrames = useMemo<number>(() => shotCountForLayout(layout), [layout]);
 
   // Permission state on mount.
   useEffect(() => {
@@ -137,60 +134,31 @@ export default function CameraScreen(): JSX.Element {
     return () => clearInterval(interval);
   }, [phase]);
 
-  // Reveal phase: hold the random message then loop into another countdown.
+  // Reveal/peek phase: hold the just-captured shot then loop into another
+  // countdown.
   useEffect(() => {
     if (phase !== 'reveal') return undefined;
     const timer = setTimeout(() => {
-      hide();
       setPhase('countdown');
-    }, MESSAGE_HOLD_MS);
+    }, PEEK_HOLD_MS);
     return () => clearTimeout(timer);
-  }, [phase, hide]);
+  }, [phase]);
 
-  // Composition: after the last frame, await Skia and route to preview.
+  // After the last frame, route to preview with the captured URIs. Phase 2
+  // wires the Skia composition; for now the preview composes from the frames.
   useEffect(() => {
     if (phase !== 'composing') return;
-    let cancelled = false;
-    void (async () => {
-      try {
-        const composed = await composeStripWithSkia({
-          layout,
-          photos: captured.current.map((uri) => ({ uri })),
-        });
-        if (cancelled) return;
-        router.push({
-          pathname: '/(camera)/preview',
-          params: {
-            layout,
-            composedUri: composed.uri,
-            uris: captured.current.join('|'),
-            sessionName,
-          },
-        });
-      } catch (err) {
-        if (cancelled) return;
-        // Fall back to passing raw frames so the user can still try Print/Share.
-        router.push({
-          pathname: '/(camera)/preview',
-          params: {
-            layout,
-            uris: captured.current.join('|'),
-            sessionName,
-            composeError: (err as Error).message,
-          },
-        });
-      } finally {
-        if (!cancelled) {
-          captured.current = [];
-          setFramesCaptured(0);
-          setPhase('idle');
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [phase, layout, router, sessionName]);
+    router.push({
+      pathname: '/(camera)/preview',
+      params: {
+        layout,
+        uris: captured.current.join('|'),
+      },
+    });
+    captured.current = [];
+    setFramesCaptured(0);
+    setPhase('idle');
+  }, [phase, layout, router]);
 
   async function fireShutter(): Promise<void> {
     try {
@@ -201,9 +169,8 @@ export default function CameraScreen(): JSX.Element {
     }
     const nextCount = captured.current.length;
     setFramesCaptured(nextCount);
-    reveal();
     if (nextCount >= totalFrames) {
-      setTimeout(() => setPhase('composing'), MESSAGE_HOLD_MS);
+      setTimeout(() => setPhase('composing'), PEEK_HOLD_MS);
     } else {
       setPhase('reveal');
     }
@@ -213,7 +180,6 @@ export default function CameraScreen(): JSX.Element {
     if (phase !== 'idle' || controlsOpen) return;
     captured.current = [];
     setFramesCaptured(0);
-    hide();
     setPhase('countdown');
   }
 
@@ -242,14 +208,6 @@ export default function CameraScreen(): JSX.Element {
     router.replace('/');
   }
 
-  function handleEndSession(): void {
-    exitToHome();
-  }
-
-  function handleEndEvent(): void {
-    exitToHome();
-  }
-
   async function handleCameraContinue(): Promise<void> {
     const next = await requestCameraPermission();
     setCameraStatus(next);
@@ -273,8 +231,8 @@ export default function CameraScreen(): JSX.Element {
       <PermissionPrimer
         title="TinyBooth needs your camera."
         body={
-          'We use the camera to take photos in the booth. Photos stay on this device unless ' +
-          'you connect this booth to an event. We never upload anything in the background.'
+          'We use the camera to take photos in the booth. Photos stay on this device. ' +
+          'TinyBooth never uploads anything.'
         }
         permanentlyDenied={cameraStatus === 'denied'}
         onContinue={() => void handleCameraContinue()}
@@ -286,10 +244,10 @@ export default function CameraScreen(): JSX.Element {
   if (permStep === 'priming-library') {
     return (
       <PermissionPrimer
-        title="Save your strips automatically."
+        title="Save your strips to Photos."
         body={
-          'TinyBooth saves every strip to your Photos library so you have a copy you can ' +
-          'share or download later. We only write strips you create here, nothing else.'
+          'TinyBooth can save every strip to your Photos library so you have a copy to ' +
+          'share or print later. We only write strips you create here, nothing else.'
         }
         permanentlyDenied={libraryStatus === 'denied'}
         onContinue={() => void handleLibraryContinue()}
@@ -309,21 +267,12 @@ export default function CameraScreen(): JSX.Element {
       >
         <CameraSurface ref={cameraRef} flash={flash ? 'on' : 'off'} isActive={phase !== 'composing'} />
         <SafeCropOverlay frameAspect={frameAspect} accent={theme.colors.primary} />
-        <CountdownOverlay digit={digit} message={phase === 'reveal' ? message : null} />
+        <CountdownOverlay digit={digit} message={null} />
       </Pressable>
 
-      {/* Top bar: session pill (when named) + gear icon. */}
+      {/* Top bar: gear icon. */}
       <View pointerEvents="box-none" style={styles.topBar}>
-        {sessionName ? (
-          <View
-            style={[styles.sessionPill, { backgroundColor: 'rgba(15, 18, 22, 0.55)' }]}
-            pointerEvents="none"
-          >
-            <Text style={styles.sessionText}>{sessionName}</Text>
-          </View>
-        ) : (
-          <View />
-        )}
+        <View />
         <Pressable
           onPress={() => setControlsOpen(true)}
           accessibilityRole="button"
@@ -331,7 +280,7 @@ export default function CameraScreen(): JSX.Element {
           hitSlop={16}
           style={[styles.gearButton, { backgroundColor: 'rgba(15, 18, 22, 0.55)' }]}
         >
-          <Text style={styles.gearIcon}>{'\u2699'}</Text>
+          <Text style={styles.gearIcon}>{'⚙'}</Text>
         </Pressable>
       </View>
 
@@ -339,7 +288,7 @@ export default function CameraScreen(): JSX.Element {
       {phase === 'idle' ? (
         <View pointerEvents="none" style={styles.bottomHint}>
           <Text style={styles.bottomHintText}>Tap anywhere to start</Text>
-          <Text style={styles.bottomHintSub}>{totalFrames} photos · {layoutLabel(layout)}</Text>
+          <Text style={styles.bottomHintSub}>{totalFrames} photos · {stripLayoutLabel(layout)}</Text>
         </View>
       ) : phase === 'composing' ? (
         <View pointerEvents="none" style={styles.bottomHint}>
@@ -360,42 +309,10 @@ export default function CameraScreen(): JSX.Element {
         onFlashChange={handleFlashChange}
         layout={layout}
         onLayoutChange={handleLayoutChange}
-        onEndSession={handleEndSession}
-        onEndEvent={handleEndEvent}
-        passcode={passcode || null}
+        onExit={exitToHome}
       />
     </View>
   );
-}
-
-function parseLayout(value: string | undefined): StripLayout | null {
-  switch (value) {
-    case '1x4_classic':
-    case '2x2':
-    case '1x3':
-    case 'single':
-    case '1x6_double':
-      return value;
-    default:
-      return null;
-  }
-}
-
-function layoutLabel(layout: StripLayout): string {
-  switch (layout) {
-    case '1x4_classic':
-      return 'classic strip';
-    case '2x2':
-      return '2x2 grid';
-    case '1x3':
-      return 'tall strip';
-    case 'single':
-      return 'single';
-    case '1x6_double':
-      return 'long strip';
-    default:
-      return '';
-  }
 }
 
 const styles = StyleSheet.create({
@@ -409,17 +326,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  sessionPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    maxWidth: '70%',
-  },
-  sessionText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
   },
   gearButton: {
     width: 44,
