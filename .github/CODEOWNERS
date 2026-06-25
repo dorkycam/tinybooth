@@ -1,0 +1,7 @@
+# Default owner for everything.
+* @dorkycam
+
+# CI and release config: changes here are sensitive (they touch secrets), so they always
+# require the maintainer's review.
+/.github/ @dorkycam
+/eas.json @dorkycam

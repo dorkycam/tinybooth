@@ -1,0 +1,21 @@
+# Git hooks for TinyBooth. Install with `pnpm lefthook install` (runs automatically via the
+# package.json "prepare" script after `pnpm install`).
+#
+# The pre-commit hook scans staged changes for secrets before they can be committed. This is
+# the local safety net that catches keys/credentials (including ones an automated agent might
+# stage) before they ever reach git. Do not bypass with `--no-verify`.
+pre-commit:
+  parallel: true
+  commands:
+    gitleaks:
+      run: gitleaks protect --staged --redact --config .gitleaks.toml
+    typecheck:
+      glob: "*.{ts,tsx}"
+      run: pnpm typecheck
+
+commit-msg:
+  commands:
+    conventional:
+      run: |
+        head -1 "{1}" | grep -qE '^(feat|fix|chore|refactor|docs|test|style|perf|ci|build|revert)(\(.+\))?!?: .+' \
+          || { echo "Commit message must follow Conventional Commits (feat:, fix:, chore:, docs:, ...)"; exit 1; }
