@@ -10,6 +10,7 @@ import {
   DARK_COLORS,
   FONT_FAMILIES,
   LIGHT_COLORS,
+  OVERLAY_COLORS,
   RADIUS,
   SPACING,
   TYPE_SCALE,
@@ -30,6 +31,18 @@ export interface ThemeColors {
   accentDeep: string;
   /** Tertiary highlight (coral). Use sparingly for badges or warnings. */
   highlight: string;
+  /** Text/icon color that sits on top of a `primary` or `accent` fill. */
+  onPrimary: string;
+  /** Translucent carbon scrim for overlay pills/bubbles over the camera. */
+  scrim: string;
+  /** Stronger carbon scrim for the countdown bubble. */
+  scrimStrong: string;
+  /** Translucent black mask for the area outside the safe-crop rectangle. */
+  cropMask: string;
+  /** Translucent white default border for the safe-crop rectangle. */
+  cropBorder: string;
+  /** Pure white used for the capture screen-flash. */
+  flash: string;
 }
 
 const lightColors: ThemeColors = {
@@ -43,6 +56,12 @@ const lightColors: ThemeColors = {
   accent: LIGHT_COLORS.lavender,
   accentDeep: LIGHT_COLORS.lavenderDeep,
   highlight: LIGHT_COLORS.coral,
+  onPrimary: LIGHT_COLORS.white,
+  scrim: OVERLAY_COLORS.scrim,
+  scrimStrong: OVERLAY_COLORS.scrimStrong,
+  cropMask: OVERLAY_COLORS.cropMask,
+  cropBorder: OVERLAY_COLORS.cropBorder,
+  flash: LIGHT_COLORS.white,
 };
 
 const darkColors: ThemeColors = {
@@ -56,6 +75,12 @@ const darkColors: ThemeColors = {
   accent: DARK_COLORS.lavender,
   accentDeep: DARK_COLORS.lavenderDeep,
   highlight: DARK_COLORS.coral,
+  onPrimary: DARK_COLORS.white,
+  scrim: OVERLAY_COLORS.scrim,
+  scrimStrong: OVERLAY_COLORS.scrimStrong,
+  cropMask: OVERLAY_COLORS.cropMask,
+  cropBorder: OVERLAY_COLORS.cropBorder,
+  flash: DARK_COLORS.white,
 };
 
 /** Mode keys. */

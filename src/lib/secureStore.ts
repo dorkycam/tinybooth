@@ -1,11 +1,10 @@
 /**
- * Thin wrapper around `expo-secure-store` so the auth + event connection
- * modules can be tested without the native module being installed.
+ * Thin, testable wrapper around `expo-secure-store`.
  *
- * The module is lazy-imported via a string variable so TypeScript does not
- * insist on the package being present at typecheck time. When `expo-secure-store`
- * is installed (production builds), the real implementation runs. In Vitest /
- * dev where it isn't, we fall back to an in-memory map.
+ * `expo-secure-store` is lazy-loaded with a static import string (per the Metro
+ * lazy-import rule). When it is installed (production builds), the real
+ * implementation runs. In Vitest / dev where the native module is absent, we
+ * fall back to an in-memory map so callers work without it.
  */
 
 interface SecureStoreModule {

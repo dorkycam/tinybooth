@@ -41,7 +41,7 @@ export function PrimaryButton({
         },
       ]}
     >
-      <Text style={[styles.label, { color: '#FFFFFF' }]}>{label}</Text>
+      <Text style={[styles.label, { color: theme.colors.onPrimary }]}>{label}</Text>
     </Pressable>
   );
 }

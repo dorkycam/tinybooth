@@ -12,6 +12,7 @@
 import type { JSX } from 'react';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
+import { useTheme } from '../theme/useTheme';
 
 interface CameraSurfaceProps {
   isActive: boolean;
@@ -47,6 +48,7 @@ interface VisionCameraInstance {
 
 export const CameraSurface = forwardRef<CameraSurfaceHandle, CameraSurfaceProps>(
   function CameraSurface({ isActive, flash, style }, ref): JSX.Element {
+    const theme = useTheme('dark');
     const [mod, setMod] = useState<VisionCameraModule | null>(null);
     const cameraRef = useRef<VisionCameraInstance | null>(null);
 
@@ -82,7 +84,7 @@ export const CameraSurface = forwardRef<CameraSurfaceHandle, CameraSurfaceProps>
     );
 
     if (!mod) {
-      return <View style={[styles.root, style]} />;
+      return <View style={[styles.root, { backgroundColor: theme.colors.bg }, style]} />;
     }
 
     return <CameraInner mod={mod} isActive={isActive} cameraRef={cameraRef} style={style} />;
@@ -97,9 +99,10 @@ interface CameraInnerProps {
 }
 
 function CameraInner({ mod, isActive, cameraRef, style }: CameraInnerProps): JSX.Element {
+  const theme = useTheme('dark');
   const device = mod.useCameraDevice('front');
   if (!device) {
-    return <View style={[styles.root, style]} />;
+    return <View style={[styles.root, { backgroundColor: theme.colors.bg }, style]} />;
   }
   const Camera = mod.Camera;
   const composedStyle: ViewStyle = { ...styles.root, ...(style ?? {}) };
@@ -119,6 +122,5 @@ function CameraInner({ mod, isActive, cameraRef, style }: CameraInnerProps): JSX
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#0F1216',
   },
 });

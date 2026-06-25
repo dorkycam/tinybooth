@@ -22,8 +22,9 @@ submit_for_review(false)
 automatic_release(false)
 
 # Force review precheck so common rejection causes (broken URLs, banned
-# words) surface locally before push.
-precheck_include_in_app_purchases(true)
+# words) surface locally before push. TinyBooth is free with no in-app
+# purchases, so the IAP precheck is off.
+precheck_include_in_app_purchases(false)
 
 # Localized metadata directory (relative to apps/mobile/).
 metadata_path("./fastlane/metadata")

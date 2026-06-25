@@ -24,7 +24,7 @@ export function CountdownOverlay({ digit, message }: CountdownOverlayProps): JSX
   }
   return (
     <View pointerEvents="none" style={styles.root}>
-      <View style={[styles.bubble, { backgroundColor: 'rgba(15, 18, 22, 0.78)' }]}>
+      <View style={[styles.bubble, { backgroundColor: theme.colors.scrimStrong }]}>
         {digit !== null ? (
           <Text style={[styles.digit, { color: theme.colors.bg }]}>{digit}</Text>
         ) : (

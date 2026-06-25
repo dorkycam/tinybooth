@@ -26,6 +26,13 @@
  */
 import { resolveLayout, type ResolvedLayout, type StripLayout } from './layouts';
 
+/**
+ * Print canvas color for the composed strip. This is the physical paper color
+ * behind the photos (a clean white separator between frames), not a UI theme
+ * choice, so it is a fixed output constant rather than a theme token.
+ */
+const STRIP_BACKGROUND = '#FFFFFF';
+
 /** Input to the compose bridge: the layout id plus the captured photos. */
 export interface SkiaBridgePayload {
   /** Which layout to compose. The bridge resolves geometry internally. */
@@ -158,9 +165,9 @@ async function composeBridge(payload: SkiaBridgePayload): Promise<SkiaComposeRes
   const canvas = surface.getCanvas();
   // Skia's drawImageRect requires a Paint argument; reuse one for every frame.
   const paint = Skia.Paint();
-  paint.setColor(Skia.Color('#FFFFFF'));
+  paint.setColor(Skia.Color(STRIP_BACKGROUND));
   // White background so the printed sheet has clean separators between photos.
-  canvas.drawColor(Skia.Color('#FFFFFF'));
+  canvas.drawColor(Skia.Color(STRIP_BACKGROUND));
 
   // Decode each distinct shot once and cache it, then draw it into every frame
   // rect that maps to it. The Classic layout repeats shots across two columns,

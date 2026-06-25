@@ -11,11 +11,12 @@
  */
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useTheme } from '../theme/useTheme';
 
 interface SafeCropOverlayProps {
   /** Width / height of the per-frame rect in the layout. */
   frameAspect: number;
-  /** Optional accent color for the safe-zone border. Defaults to white. */
+  /** Optional accent color for the safe-zone border. Defaults to a translucent white. */
   accent?: string;
 }
 
@@ -24,29 +25,29 @@ interface SafeCropOverlayProps {
  * Uses absolute positioning so it stretches to the full preview surface.
  */
 export function SafeCropOverlay({ frameAspect, accent }: SafeCropOverlayProps): JSX.Element {
-  const borderColor = accent ?? 'rgba(255, 255, 255, 0.85)';
+  const theme = useTheme('dark');
+  const borderColor = accent ?? theme.colors.cropBorder;
+  const maskColor = theme.colors.cropMask;
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      <View style={[styles.mask, styles.maskTop]} />
+      <View style={[styles.mask, styles.maskTop, { backgroundColor: maskColor }]} />
       <View style={styles.middleRow}>
-        <View style={[styles.mask, styles.maskSide]} />
+        <View style={[styles.mask, styles.maskSide, { backgroundColor: maskColor }]} />
         <View
           style={[
             styles.safeBox,
             { aspectRatio: frameAspect, borderColor },
           ]}
         />
-        <View style={[styles.mask, styles.maskSide]} />
+        <View style={[styles.mask, styles.maskSide, { backgroundColor: maskColor }]} />
       </View>
-      <View style={[styles.mask, styles.maskBottom]} />
+      <View style={[styles.mask, styles.maskBottom, { backgroundColor: maskColor }]} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  mask: {
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-  },
+  mask: {},
   maskTop: {
     flex: 1,
   },

@@ -15,8 +15,9 @@ import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
 import { CameraSurface, type CameraSurfaceHandle } from '@/components/CameraSurface';
+import { CaptureChrome } from '@/components/CaptureChrome';
 import { CountdownOverlay } from '@/components/CountdownOverlay';
 import { PermissionPrimer } from '@/components/PermissionPrimer';
 import { SafeCropOverlay } from '@/components/SafeCropOverlay';
@@ -38,6 +39,7 @@ import {
 } from '@/lib/permissions';
 import {
   playCountdownTick,
+  playShutter,
   preloadBoothSounds,
   releaseBoothSounds,
 } from '@/lib/sounds';
@@ -179,6 +181,7 @@ export default function CaptureScreen(): JSX.Element {
 
   async function fireShutter(): Promise<void> {
     setFlashActive(flashOn);
+    if (soundOn) void playShutter();
     if (hapticsOn) void captureHaptic();
     let uri = '';
     try {
@@ -238,6 +241,17 @@ export default function CaptureScreen(): JSX.Element {
 
   const isReveal = phase === 'reveal' && peekUri !== null;
 
+  let hint: string;
+  let subhint: string | null = null;
+  if (phase === 'idle') {
+    hint = 'Tap anywhere to start';
+    subhint = `${totalFrames} photos · ${stripLayoutLabel(layout)}`;
+  } else if (phase === 'composing') {
+    hint = 'Composing your strip...';
+  } else {
+    hint = `${framesCaptured} / ${totalFrames}`;
+  }
+
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.bg }]}>
       <Pressable
@@ -265,35 +279,7 @@ export default function CaptureScreen(): JSX.Element {
         <ScreenFlash active={flashActive} onDone={() => setFlashActive(false)} />
       </Pressable>
 
-      <View pointerEvents="box-none" style={styles.topBar}>
-        <Pressable
-          onPress={exitToHome}
-          accessibilityRole="button"
-          accessibilityLabel="Exit the booth"
-          hitSlop={16}
-          style={styles.exitButton}
-        >
-          <Text style={styles.exitIcon}>{'✕'}</Text>
-        </Pressable>
-        <View />
-      </View>
-
-      <View pointerEvents="none" style={styles.bottomHint}>
-        {phase === 'idle' ? (
-          <>
-            <Text style={styles.bottomHintText}>Tap anywhere to start</Text>
-            <Text style={styles.bottomHintSub}>
-              {totalFrames} photos · {stripLayoutLabel(layout)}
-            </Text>
-          </>
-        ) : phase === 'composing' ? (
-          <Text style={styles.bottomHintText}>Composing your strip...</Text>
-        ) : (
-          <Text style={styles.bottomHintText}>
-            {framesCaptured} / {totalFrames}
-          </Text>
-        )}
-      </View>
+      <CaptureChrome hint={hint} subhint={subhint} onExit={exitToHome} />
     </View>
   );
 }
@@ -303,48 +289,5 @@ const styles = StyleSheet.create({
   previewTap: { flex: 1 },
   peek: {
     ...StyleSheet.absoluteFillObject,
-  },
-  topBar: {
-    position: 'absolute',
-    top: 56,
-    left: 16,
-    right: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  exitButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(15, 18, 22, 0.55)',
-  },
-  exitIcon: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  bottomHint: {
-    position: 'absolute',
-    bottom: 56,
-    alignSelf: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 18, 22, 0.55)',
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 999,
-  },
-  bottomHintText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  bottomHintSub: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    marginTop: 2,
-    opacity: 0.85,
   },
 });

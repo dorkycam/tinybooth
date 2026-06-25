@@ -10,9 +10,6 @@
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
-      "env": {
-        "EXPO_PUBLIC_WEB_BASE_URL": "http://localhost:3000"
-      },
       "ios": {
         "simulator": true,
         "resourceClass": "m-medium"
@@ -25,9 +22,6 @@
       "distribution": "store",
       "channel": "preview",
       "autoIncrement": true,
-      "env": {
-        "EXPO_PUBLIC_WEB_BASE_URL": "https://staging.tinybooth.com"
-      },
       "ios": {
         "resourceClass": "m-medium"
       },
@@ -39,9 +33,6 @@
       "distribution": "store",
       "channel": "production",
       "autoIncrement": true,
-      "env": {
-        "EXPO_PUBLIC_WEB_BASE_URL": "https://tinybooth.com"
-      },
       "ios": {
         "resourceClass": "m-medium"
       },

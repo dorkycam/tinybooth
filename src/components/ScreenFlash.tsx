@@ -12,6 +12,7 @@
 import type { JSX } from 'react';
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet } from 'react-native';
+import { useTheme } from '../theme/useTheme';
 
 interface ScreenFlashProps {
   /** Flip true to play one flash. Reset to false in `onDone`. */
@@ -29,6 +30,7 @@ const FLASH_MS = 320;
  * @param props Whether the flash is active plus the completion callback.
  */
 export function ScreenFlash({ active, onDone }: ScreenFlashProps): JSX.Element | null {
+  const theme = useTheme('dark');
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -53,7 +55,7 @@ export function ScreenFlash({ active, onDone }: ScreenFlashProps): JSX.Element |
   return (
     <Animated.View
       pointerEvents="none"
-      style={[styles.flash, { opacity }]}
+      style={[styles.flash, { opacity, backgroundColor: theme.colors.flash }]}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     />
@@ -63,6 +65,5 @@ export function ScreenFlash({ active, onDone }: ScreenFlashProps): JSX.Element |
 const styles = StyleSheet.create({
   flash: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#FFFFFF',
   },
 });
