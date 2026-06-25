@@ -16,35 +16,30 @@
 import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SecondaryButton } from '@/components/SecondaryButton';
 import { Wordmark } from '@/components/Wordmark';
+import { useIdleReset } from '@/hooks/useIdleReset';
+import { useSettings } from '@/hooks/useSettings';
 import { saveFramesToCameraRoll, saveToCameraRoll } from '@/lib/cameraRoll';
 import { useLayoutClass } from '@/lib/layout';
 import { DEFAULT_STRIP_LAYOUT, parseStripLayout, stripLayoutLabel } from '@/lib/layouts';
 import { printStrip } from '@/lib/print';
-import {
-  DEFAULT_SESSION_SETTINGS,
-  loadSessionSettings,
-  type SessionSettings,
-} from '@/lib/sessionSettings';
 import { shareStrip } from '@/lib/share';
 import { useTheme } from '@/theme/useTheme';
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'permission_denied' | 'error';
 type BusyAction = 'print' | 'save' | 'share';
 
-/** How long the preview waits with no taps before returning to Start. */
-const AUTO_CLOSE_SECONDS = 30;
-
 /** Preview screen entry point. */
 export default function PreviewScreen(): JSX.Element {
   useKeepAwake();
   const theme = useTheme();
   const router = useRouter();
+  const { settings } = useSettings();
   const { layoutClass } = useLayoutClass();
   const params = useLocalSearchParams<{
     layout?: string;
@@ -64,35 +59,16 @@ export default function PreviewScreen(): JSX.Element {
 
   const [busy, setBusy] = useState<BusyAction | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('idle');
-  const [secondsLeft, setSecondsLeft] = useState<number>(AUTO_CLOSE_SECONDS);
-  const [savePreference, setSavePreference] = useState<SessionSettings['saveFrames']>(
-    DEFAULT_SESSION_SETTINGS.saveFrames,
+
+  // Idle reset: after the configured timeout without taps, return to Start.
+  const handleIdleTimeout = useCallback((): void => {
+    handleDone();
+  }, []);
+  const { secondsLeft, reset: resetIdleTimer } = useIdleReset(
+    settings.idleReset,
+    handleIdleTimeout,
   );
-
-  // Hydrate the "save individual frames" preference once.
-  useEffect(() => {
-    let cancelled = false;
-    void loadSessionSettings().then((settings) => {
-      if (!cancelled) setSavePreference(settings.saveFrames);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Idle reset: after AUTO_CLOSE_SECONDS without interaction, return to Start.
-  const resetIdleTimer = useCallback((): void => {
-    setSecondsLeft(AUTO_CLOSE_SECONDS);
-  }, []);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSecondsLeft((current) => Math.max(0, current - 1));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-  useEffect(() => {
-    if (secondsLeft <= 0) handleDone();
-  }, [secondsLeft]);
+  const idleTotal = settings.idleReset === 'never' ? 0 : settings.idleReset;
 
   async function handlePrint(): Promise<void> {
     if (!composedUri) {
@@ -118,7 +94,7 @@ export default function PreviewScreen(): JSX.Element {
       const result = await saveToCameraRoll(composedUri);
       if (result.saved) {
         setSaveState('saved');
-        if (savePreference && uris.length > 1) {
+        if (settings.saveFrames && uris.length > 1) {
           void saveFramesToCameraRoll(uris).catch(() => undefined);
         }
       } else if (result.reason === 'permission_denied') {
@@ -157,22 +133,24 @@ export default function PreviewScreen(): JSX.Element {
       style={[styles.root, { backgroundColor: theme.colors.bg }]}
       onTouchStart={resetIdleTimer}
     >
-      <View style={styles.autoCloseBar}>
-        <Text style={[styles.autoCloseText, { color: theme.colors.subtle }]}>
-          Closing in {secondsLeft}s
-        </Text>
-        <View style={[styles.autoCloseTrack, { backgroundColor: theme.colors.hairline }]}>
-          <View
-            style={[
-              styles.autoCloseFill,
-              {
-                backgroundColor: theme.colors.primary,
-                width: `${Math.round((secondsLeft / AUTO_CLOSE_SECONDS) * 100)}%`,
-              },
-            ]}
-          />
+      {secondsLeft !== null ? (
+        <View style={styles.autoCloseBar}>
+          <Text style={[styles.autoCloseText, { color: theme.colors.subtle }]}>
+            Closing in {secondsLeft}s
+          </Text>
+          <View style={[styles.autoCloseTrack, { backgroundColor: theme.colors.hairline }]}>
+            <View
+              style={[
+                styles.autoCloseFill,
+                {
+                  backgroundColor: theme.colors.primary,
+                  width: `${idleTotal > 0 ? Math.round((secondsLeft / idleTotal) * 100) : 0}%`,
+                },
+              ]}
+            />
+          </View>
         </View>
-      </View>
+      ) : null}
       <ScrollView contentContainerStyle={styles.content}>
         <Wordmark size="md" />
         <Text style={[styles.subtitle, { color: theme.colors.subtle }]}>

@@ -21,6 +21,7 @@ import { CountdownOverlay } from '@/components/CountdownOverlay';
 import { PermissionPrimer } from '@/components/PermissionPrimer';
 import { SafeCropOverlay } from '@/components/SafeCropOverlay';
 import { ScreenFlash } from '@/components/ScreenFlash';
+import { useSettings } from '@/hooks/useSettings';
 import { captureHaptic, tickHaptic } from '@/lib/haptics';
 import {
   DEFAULT_STRIP_LAYOUT,
@@ -35,11 +36,6 @@ import {
   requestCameraPermission,
   type PermissionStatus,
 } from '@/lib/permissions';
-import {
-  DEFAULT_SESSION_SETTINGS,
-  loadSessionSettings,
-  type CountdownLength,
-} from '@/lib/sessionSettings';
 import {
   playCountdownTick,
   preloadBoothSounds,
@@ -69,13 +65,12 @@ export default function CaptureScreen(): JSX.Element {
   const [permStep, setPermStep] = useState<PermStep>('checking');
   const [cameraStatus, setCameraStatus] = useState<PermissionStatus>('unknown');
 
-  // Feedback preferences, hydrated from Settings on mount.
-  const [countdownFrom, setCountdownFrom] = useState<CountdownLength>(
-    DEFAULT_SESSION_SETTINGS.countdown,
-  );
-  const [soundOn, setSoundOn] = useState<boolean>(DEFAULT_SESSION_SETTINGS.sound);
-  const [hapticsOn, setHapticsOn] = useState<boolean>(DEFAULT_SESSION_SETTINGS.haptics);
-  const [flashOn, setFlashOn] = useState<boolean>(DEFAULT_SESSION_SETTINGS.flash);
+  // Feedback preferences from the shared, persisted settings store.
+  const { settings } = useSettings();
+  const countdownFrom = settings.countdown;
+  const soundOn = settings.sound;
+  const hapticsOn = settings.haptics;
+  const flashOn = settings.flash;
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [digit, setDigit] = useState<number | null>(null);
@@ -94,21 +89,6 @@ export default function CaptureScreen(): JSX.Element {
       setCameraStatus(cam);
       setPermStep(cam === 'granted' ? 'ready' : 'priming-camera');
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Hydrate feedback preferences from Settings.
-  useEffect(() => {
-    let cancelled = false;
-    void loadSessionSettings().then((settings) => {
-      if (cancelled) return;
-      setCountdownFrom(settings.countdown);
-      setSoundOn(settings.sound);
-      setHapticsOn(settings.haptics);
-      setFlashOn(settings.flash);
-    });
     return () => {
       cancelled = true;
     };
