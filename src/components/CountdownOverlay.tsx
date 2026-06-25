@@ -7,6 +7,7 @@
  */
 import type { JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { GlassSurface } from './GlassSurface';
 import { useTheme } from '../theme/useTheme';
 
 interface CountdownOverlayProps {
@@ -24,13 +25,18 @@ export function CountdownOverlay({ digit, message }: CountdownOverlayProps): JSX
   }
   return (
     <View pointerEvents="none" style={styles.root}>
-      <View style={[styles.bubble, { backgroundColor: theme.colors.scrimStrong }]}>
+      <GlassSurface
+        glassStyle="regular"
+        colorScheme="dark"
+        fallbackColor={theme.colors.scrimStrong}
+        style={styles.bubble}
+      >
         {digit !== null ? (
-          <Text style={[styles.digit, { color: theme.colors.bg }]}>{digit}</Text>
+          <Text style={[styles.digit, { color: theme.colors.flash }]}>{digit}</Text>
         ) : (
-          <Text style={[styles.message, { color: theme.colors.bg }]}>{message}</Text>
+          <Text style={[styles.message, { color: theme.colors.flash }]}>{message}</Text>
         )}
-      </View>
+      </GlassSurface>
     </View>
   );
 }
@@ -51,6 +57,7 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     minWidth: 180,
     alignItems: 'center',
+    overflow: 'hidden',
   },
   digit: {
     fontSize: 132,

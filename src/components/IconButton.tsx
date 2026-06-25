@@ -15,6 +15,7 @@ import type { JSX } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { GLASS_AVAILABLE, GlassSurface } from './GlassSurface';
+import { buttonHaptic } from '../lib/haptics';
 import { useTheme } from '../theme/useTheme';
 
 /** Visual tone of an {@link IconButton}. */
@@ -73,6 +74,11 @@ export function IconButton({
 
   const glyph = <Ionicons name={icon} size={Math.round(size * 0.44)} color={iconColor} />;
 
+  const handlePress = (): void => {
+    void buttonHaptic();
+    onPress();
+  };
+
   return (
     <View style={styles.wrap}>
       <Pressable
@@ -80,7 +86,7 @@ export function IconButton({
         accessibilityLabel={accessibilityLabel}
         accessibilityState={{ disabled }}
         disabled={disabled}
-        onPress={onPress}
+        onPress={handlePress}
         testID={testID}
         style={({ pressed }) => [
           styles.circle,

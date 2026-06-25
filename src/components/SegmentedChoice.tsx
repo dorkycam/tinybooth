@@ -2,8 +2,8 @@
  * Segmented choice row.
  *
  * A row of pill chips where exactly one is selected. Used in Settings for the
- * countdown length, the appearance mode, and the QA preview-class override, so
- * the chip styling lives in one place instead of being copied per section.
+ * countdown length, the idle-reset time, and the appearance mode, so the chip
+ * styling lives in one place instead of being copied per section.
  *
  * Library-style: it takes the option list, the selected value, a label renderer,
  * and an `onSelect` callback. It is generic over the option type.

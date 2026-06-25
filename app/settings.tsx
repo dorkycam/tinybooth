@@ -3,9 +3,9 @@
  *
  * Capture defaults (flash, countdown length, sound, haptics, default layout,
  * save individual frames), idle reset time, appearance (system / light / dark),
- * a QA preview-class override, and an About section (version, MIT license, repo
- * and legal links). Everything persists locally via the shared settings store;
- * the app has no account and collects nothing.
+ * and an About section (version, MIT license, repo and legal links). Everything
+ * persists locally via the shared settings store; the app has no account and
+ * collects nothing.
  *
  * Thin screen: the section, row, and about-link pieces are extracted components.
  */
@@ -32,12 +32,10 @@ import {
   COUNTDOWN_CHOICES,
   IDLE_RESET_CHOICES,
   type IdleReset,
-  type PreviewClassOverride,
 } from '@/lib/sessionSettings';
 import { useThemePreference, type ThemePreference } from '@/theme/ThemeContext';
 import { useTheme } from '@/theme/useTheme';
 
-const PREVIEW_CHOICES: PreviewClassOverride[] = ['auto', 'phone', 'tablet'];
 const THEME_CHOICES: ThemePreference[] = ['system', 'light', 'dark'];
 
 /** Label an idle-reset choice for its chip. */
@@ -122,14 +120,6 @@ export default function SettingsScreen(): JSX.Element {
             options={THEME_CHOICES}
             value={themePref.preference}
             onSelect={(choice) => void themePref.setPreference(choice)}
-          />
-        </SettingsSection>
-
-        <SettingsSection title="QA preview">
-          <SegmentedChoice
-            options={PREVIEW_CHOICES}
-            value={settings.previewClass}
-            onSelect={(previewClass) => update({ previewClass })}
           />
         </SettingsSection>
 

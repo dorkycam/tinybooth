@@ -43,6 +43,21 @@ export async function tickHaptic(): Promise<void> {
 }
 
 /**
+ * Fire a light tap when a control is pressed (Start, Settings, etc).
+ *
+ * @returns Resolves once the haptic has been requested. Never rejects.
+ */
+export async function buttonHaptic(): Promise<void> {
+  const mod = await loadHaptics();
+  if (!mod) return;
+  try {
+    await mod.impactAsync(mod.ImpactFeedbackStyle.Light);
+  } catch {
+    // Best-effort.
+  }
+}
+
+/**
  * Fire a heavier impact at the moment a shot is captured.
  *
  * @returns Resolves once the haptic has been requested. Never rejects.

@@ -61,20 +61,22 @@ const styles = StyleSheet.create({
     // message never covers the subject's face.
     alignItems: 'center',
     justifyContent: 'flex-end',
-    paddingBottom: '22%',
+    // Fixed clearance above the bottom frame-counter pill (bottom:56, ~56px
+    // tall) so the message never overlaps it, even on the smallest phones.
+    paddingBottom: 160,
   },
   scrim: {
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 22,
-    maxWidth: '80%',
+    maxWidth: '72%',
     alignItems: 'center',
     overflow: 'hidden',
   },
   text: {
-    fontSize: 36,
+    fontSize: 30,
     fontWeight: '800',
-    lineHeight: 42,
+    lineHeight: 36,
     textAlign: 'center',
   },
 });
