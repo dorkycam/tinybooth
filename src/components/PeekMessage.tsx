@@ -13,7 +13,6 @@
  */
 import type { JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { GlassSurface } from './GlassSurface';
 import { useTheme } from '../theme/useTheme';
 
 interface PeekMessageProps {
@@ -30,22 +29,15 @@ export function PeekMessage({ message }: PeekMessageProps): JSX.Element {
   const theme = useTheme('dark');
   return (
     <View pointerEvents="none" style={styles.root}>
-      <GlassSurface
-        glassStyle="regular"
-        colorScheme="dark"
-        fallbackColor={theme.colors.scrimStrong}
-        style={styles.scrim}
+      <Text
+        style={[styles.text, { color: theme.colors.flash }]}
+        numberOfLines={2}
+        adjustsFontSizeToFit
+        accessibilityRole="text"
+        accessibilityLabel={message}
       >
-        <Text
-          style={[styles.text, { color: theme.colors.flash }]}
-          numberOfLines={2}
-          adjustsFontSizeToFit
-          accessibilityRole="text"
-          accessibilityLabel={message}
-        >
-          {message}
-        </Text>
-      </GlassSurface>
+        {message}
+      </Text>
     </View>
   );
 }
@@ -65,18 +57,14 @@ const styles = StyleSheet.create({
     // tall) so the message never overlaps it, even on the smallest phones.
     paddingBottom: 160,
   },
-  scrim: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 22,
-    maxWidth: '72%',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
   text: {
+    maxWidth: '72%',
     fontSize: 30,
     fontWeight: '800',
     lineHeight: 36,
     textAlign: 'center',
+    textShadowColor: 'rgba(0,0,0,0.55)',
+    textShadowRadius: 10,
+    textShadowOffset: { width: 0, height: 2 },
   },
 });

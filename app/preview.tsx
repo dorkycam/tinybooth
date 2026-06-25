@@ -25,7 +25,6 @@ import { Alert, Image, ScrollView, StyleSheet, Text, useWindowDimensions, View }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AutoCloseBar } from '@/components/AutoCloseBar';
 import { DeliveryActions } from '@/components/DeliveryActions';
-import { GlassSurface } from '@/components/GlassSurface';
 import { IconButton } from '@/components/IconButton';
 import { useIdleReset } from '@/hooks/useIdleReset';
 import { useSettings } from '@/hooks/useSettings';
@@ -191,13 +190,11 @@ export default function PreviewScreen(): JSX.Element {
     >
       <AutoCloseBar secondsLeft={secondsLeft} total={idleTotal} />
       <View style={styles.center}>
-        <GlassSurface
-          glassStyle="regular"
-          colorScheme="dark"
-          fallbackColor={theme.colors.surface}
+        <View
           style={[
             styles.card,
             {
+              backgroundColor: theme.colors.surface,
               borderColor: theme.colors.hairline,
               borderRadius: theme.radius.xl,
               padding: theme.spacing.xl,
@@ -239,7 +236,7 @@ export default function PreviewScreen(): JSX.Element {
               {controls}
             </View>
           )}
-        </GlassSurface>
+        </View>
       </View>
     </SafeAreaView>
   );
