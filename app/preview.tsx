@@ -43,7 +43,7 @@ const STRIP_HEIGHT_RATIO = { phone: 0.5, tablet: 0.68 } as const;
 /** Preview screen entry point. */
 export default function PreviewScreen(): JSX.Element {
   useKeepAwake();
-  const theme = useTheme();
+  const theme = useTheme('dark');
   const router = useRouter();
   const { settings } = useSettings();
   const { layoutClass } = useLayoutClass();

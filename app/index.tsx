@@ -54,7 +54,7 @@ export default function HomeScreen(): JSX.Element {
           ]}
         >
           <View style={styles.brand}>
-            <Wordmark size="lg" />
+            <Wordmark size="lg" style={{ color: theme.colors.flash }} />
             <Text style={[styles.tagline, { color: theme.colors.fg }]}>
               Tap below to start then strike a pose.
             </Text>
