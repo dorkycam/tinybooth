@@ -13,6 +13,7 @@
  */
 import type { JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { GlassSurface } from './GlassSurface';
 import { useTheme } from '../theme/useTheme';
 
 interface PeekMessageProps {
@@ -29,7 +30,12 @@ export function PeekMessage({ message }: PeekMessageProps): JSX.Element {
   const theme = useTheme('dark');
   return (
     <View pointerEvents="none" style={styles.root}>
-      <View style={[styles.scrim, { backgroundColor: theme.colors.scrimStrong }]}>
+      <GlassSurface
+        glassStyle="regular"
+        colorScheme="dark"
+        fallbackColor={theme.colors.scrimStrong}
+        style={styles.scrim}
+      >
         <Text
           style={[styles.text, { color: theme.colors.flash }]}
           numberOfLines={2}
@@ -39,7 +45,7 @@ export function PeekMessage({ message }: PeekMessageProps): JSX.Element {
         >
           {message}
         </Text>
-      </View>
+      </GlassSurface>
     </View>
   );
 }
@@ -63,6 +69,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     maxWidth: '80%',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   text: {
     fontSize: 36,

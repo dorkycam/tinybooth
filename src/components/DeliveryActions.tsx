@@ -63,6 +63,7 @@ export function DeliveryActions({
         label={saved ? 'Saved' : 'Save'}
         accessibilityLabel="Save strip to photos"
         size={size}
+        glass
         onPress={onSave}
         disabled={disabled || saved}
         testID="preview-save"
@@ -72,6 +73,7 @@ export function DeliveryActions({
         label="Share"
         accessibilityLabel="Share strip"
         size={size}
+        glass
         onPress={onShare}
         disabled={disabled}
         testID="preview-share"
@@ -81,6 +83,7 @@ export function DeliveryActions({
         label="Redo"
         accessibilityLabel="Reshoot session"
         size={size}
+        glass
         onPress={onRedo}
         disabled={disabled}
         testID="preview-redo"
