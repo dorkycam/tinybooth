@@ -1,0 +1,26 @@
+diff --git a/ios/ExpoPrintWithPrinter.swift b/ios/ExpoPrintWithPrinter.swift
+index 9ef2bd382808a068cbee847c38ccdd2c94114713..5924efa1e933f9eb6276364e595b4b52596bae71 100644
+--- a/ios/ExpoPrintWithPrinter.swift
++++ b/ios/ExpoPrintWithPrinter.swift
+@@ -126,15 +126,18 @@ public class ExpoPrintWithPrinter {
+     printInteractionController.delegate = self.delegate
+ 
+     let printInfo = UIPrintInfo.printInfo()
+-    printInfo.outputType = UIPrintInfo.OutputType.general
++    // TinyBooth prints photo strips, so default the sheet to photo paper (4x6
++    // on a photo printer) like the original PhotoBerry app did.
++    printInfo.outputType = UIPrintInfo.OutputType.photo
+     if let uri = options.uri {
+       printInfo.jobName = uri.components(separatedBy: "/").last ?? uri
+     }
+-    printInfo.duplex = UIPrintInfo.Duplex.longEdge
++    printInfo.duplex = UIPrintInfo.Duplex.none
+     printInfo.orientation = options.toUIPrintInfoOrientation()
+ 
+     printInteractionController.printInfo = printInfo
+-    printInteractionController.showsNumberOfCopies = true
++    // Match PhotoBerry: a guest gets one copy, no copies stepper on the sheet.
++    printInteractionController.showsNumberOfCopies = false
+     printInteractionController.showsPaperSelectionForLoadedPapers = true
+ 
+     return printInteractionController
