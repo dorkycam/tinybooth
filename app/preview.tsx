@@ -1,30 +1,30 @@
 /**
- * Preview screen.
+ * Preview / delivery screen.
  *
- * Shows the finished strip for the captured frames and surfaces the delivery
- * actions: Print, Share, Redo, Done. Strips also auto-save to the photo
- * library on mount.
+ * Shows the composed strip and the delivery actions: Print, Save, Share, Redo,
+ * Done. Save asks for the photo-library permission in context the first time it
+ * is tapped (handled inside `saveToCameraRoll`).
  *
- * The capture screen composes the strip (via the Skia bridge) and passes the
+ * The capture screen composes the strip via the Skia bridge and passes the
  * composed file URI as `composedUri`. If composition failed, the screen falls
  * back to the first captured frame so the buttons still have something to act on
  * and surfaces the error.
+ *
+ * Kiosk behavior: after an idle timeout with no taps, the session is discarded
+ * and the booth returns to Start. Every tap restarts the timer.
  */
 import type { JSX } from 'react';
+import { useKeepAwake } from 'expo-keep-awake';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SecondaryButton } from '@/components/SecondaryButton';
 import { Wordmark } from '@/components/Wordmark';
-import { saveToCameraRoll, saveFramesToCameraRoll } from '@/lib/cameraRoll';
+import { saveFramesToCameraRoll, saveToCameraRoll } from '@/lib/cameraRoll';
 import { useLayoutClass } from '@/lib/layout';
-import {
-  DEFAULT_STRIP_LAYOUT,
-  parseStripLayout,
-  stripLayoutLabel,
-} from '@/lib/layouts';
+import { DEFAULT_STRIP_LAYOUT, parseStripLayout, stripLayoutLabel } from '@/lib/layouts';
 import { printStrip } from '@/lib/print';
 import {
   DEFAULT_SESSION_SETTINGS,
@@ -34,13 +34,15 @@ import {
 import { shareStrip } from '@/lib/share';
 import { useTheme } from '@/theme/useTheme';
 
-type AutoSaveState = 'idle' | 'saving' | 'saved' | 'permission_denied' | 'error';
+type SaveState = 'idle' | 'saving' | 'saved' | 'permission_denied' | 'error';
+type BusyAction = 'print' | 'save' | 'share';
 
-/** How long the preview waits with no taps before closing back to the booth. */
+/** How long the preview waits with no taps before returning to Start. */
 const AUTO_CLOSE_SECONDS = 30;
 
 /** Preview screen entry point. */
 export default function PreviewScreen(): JSX.Element {
+  useKeepAwake();
   const theme = useTheme();
   const router = useRouter();
   const { layoutClass } = useLayoutClass();
@@ -55,19 +57,19 @@ export default function PreviewScreen(): JSX.Element {
   const uris = urisParam.split('|').filter(Boolean);
   const composedUriParam = (params.composedUri ?? '').trim();
   const composeError = (params.composeError ?? '').trim();
-  // The capture screen supplies the composed strip URI. Fall back to the first
-  // frame so the print / share buttons still have something to point at when
-  // composition failed.
+  // Fall back to the first frame so the buttons still have something to point at
+  // when composition failed.
   const composedUri = composedUriParam || uris[0] || '';
-  const [busy, setBusy] = useState<null | 'print' | 'share'>(null);
-  const [autoSave, setAutoSave] = useState<AutoSaveState>('idle');
+  const isTablet = layoutClass === 'tablet';
+
+  const [busy, setBusy] = useState<BusyAction | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>('idle');
   const [secondsLeft, setSecondsLeft] = useState<number>(AUTO_CLOSE_SECONDS);
   const [savePreference, setSavePreference] = useState<SessionSettings['saveFrames']>(
     DEFAULT_SESSION_SETTINGS.saveFrames,
   );
-  const isTablet = layoutClass === 'tablet';
 
-  // Hydrate the per-app "save individual frames" preference once.
+  // Hydrate the "save individual frames" preference once.
   useEffect(() => {
     let cancelled = false;
     void loadSessionSettings().then((settings) => {
@@ -78,56 +80,19 @@ export default function PreviewScreen(): JSX.Element {
     };
   }, []);
 
-  // Auto-close: after AUTO_CLOSE_SECONDS without interaction, navigate back to
-  // the booth so the next group doesn't have to. Any tap resets the timer.
-  const autoCloseRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Idle reset: after AUTO_CLOSE_SECONDS without interaction, return to Start.
   const resetIdleTimer = useCallback((): void => {
     setSecondsLeft(AUTO_CLOSE_SECONDS);
   }, []);
   useEffect(() => {
-    autoCloseRef.current = setInterval(() => {
+    const interval = setInterval(() => {
       setSecondsLeft((current) => Math.max(0, current - 1));
     }, 1000);
-    return () => {
-      if (autoCloseRef.current) clearInterval(autoCloseRef.current);
-    };
+    return () => clearInterval(interval);
   }, []);
   useEffect(() => {
-    if (secondsLeft <= 0) {
-      router.back();
-    }
-  }, [secondsLeft, router]);
-
-  // Auto-save the strip on mount. If the "save individual frames" preference is
-  // on, the raw frames save too. Permission was primed before the booth opened,
-  // so this is usually a no-op prompt-wise.
-  useEffect(() => {
-    if (!composedUri) return;
-    let cancelled = false;
-    setAutoSave('saving');
-    const framesToSave = savePreference ? urisParam.split('|').filter(Boolean) : [];
-    void (async () => {
-      try {
-        const result = await saveToCameraRoll(composedUri);
-        if (cancelled) return;
-        if (result.saved) {
-          setAutoSave('saved');
-          if (framesToSave.length > 1) {
-            void saveFramesToCameraRoll(framesToSave).catch(() => undefined);
-          }
-        } else if (result.reason === 'permission_denied') {
-          setAutoSave('permission_denied');
-        } else {
-          setAutoSave('error');
-        }
-      } catch {
-        if (!cancelled) setAutoSave('error');
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [composedUri, savePreference, urisParam]);
+    if (secondsLeft <= 0) handleDone();
+  }, [secondsLeft]);
 
   async function handlePrint(): Promise<void> {
     if (!composedUri) {
@@ -138,11 +103,31 @@ export default function PreviewScreen(): JSX.Element {
     try {
       const result = await printStrip(composedUri);
       if (!result.success && !result.canceled) {
-        Alert.alert(
-          'Print queue may be stuck',
-          'Tap Print again to restart printing.',
-        );
+        Alert.alert('Print queue may be stuck', 'Tap Print again to restart printing.');
       }
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function handleSave(): Promise<void> {
+    if (!composedUri) return;
+    setBusy('save');
+    setSaveState('saving');
+    try {
+      const result = await saveToCameraRoll(composedUri);
+      if (result.saved) {
+        setSaveState('saved');
+        if (savePreference && uris.length > 1) {
+          void saveFramesToCameraRoll(uris).catch(() => undefined);
+        }
+      } else if (result.reason === 'permission_denied') {
+        setSaveState('permission_denied');
+      } else {
+        setSaveState('error');
+      }
+    } catch {
+      setSaveState('error');
     } finally {
       setBusy(null);
     }
@@ -159,7 +144,7 @@ export default function PreviewScreen(): JSX.Element {
   }
 
   function handleRedo(): void {
-    router.replace({ pathname: '/(camera)', params: { layout } });
+    router.replace({ pathname: '/capture', params: { layout } });
   }
 
   function handleDone(): void {
@@ -193,8 +178,8 @@ export default function PreviewScreen(): JSX.Element {
         <Text style={[styles.subtitle, { color: theme.colors.subtle }]}>
           {stripLayoutLabel(layout)}
         </Text>
-        <Text style={[styles.autoSave, { color: autoSaveColor(autoSave, theme) }]}>
-          {autoSaveLabel(autoSave)}
+        <Text style={[styles.saveLine, { color: saveColor(saveState, theme) }]}>
+          {saveLabel(saveState)}
         </Text>
         <View
           style={[
@@ -226,6 +211,11 @@ export default function PreviewScreen(): JSX.Element {
         ) : null}
         <View style={[styles.actions, isTablet ? styles.actionsTablet : null]}>
           <PrimaryButton label="Print" onPress={handlePrint} disabled={busy !== null} />
+          <SecondaryButton
+            label={saveState === 'saved' ? 'Saved' : 'Save'}
+            onPress={handleSave}
+            disabled={busy !== null || saveState === 'saved'}
+          />
           <SecondaryButton label="Share" onPress={handleShare} disabled={busy !== null} />
           <SecondaryButton label="Redo" onPress={handleRedo} disabled={busy !== null} />
           <SecondaryButton label="Done" onPress={handleDone} disabled={busy !== null} />
@@ -235,7 +225,7 @@ export default function PreviewScreen(): JSX.Element {
   );
 }
 
-function autoSaveLabel(state: AutoSaveState): string {
+function saveLabel(state: SaveState): string {
   switch (state) {
     case 'idle':
       return ' ';
@@ -244,13 +234,13 @@ function autoSaveLabel(state: AutoSaveState): string {
     case 'saved':
       return 'Saved to your photos.';
     case 'permission_denied':
-      return 'Photo permission off. Enable it in Settings to auto-save strips.';
+      return 'Photo permission off. Enable it in Settings to save strips.';
     case 'error':
-      return "Couldn't save automatically. Check your photo library permission.";
+      return "Couldn't save. Check your photo library permission.";
   }
 }
 
-function autoSaveColor(state: AutoSaveState, theme: ReturnType<typeof useTheme>): string {
+function saveColor(state: SaveState, theme: ReturnType<typeof useTheme>): string {
   if (state === 'saved') return theme.colors.primary;
   if (state === 'permission_denied' || state === 'error') return theme.colors.highlight;
   return theme.colors.subtle;
@@ -290,7 +280,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  autoSave: {
+  saveLine: {
     fontSize: 13,
     minHeight: 18,
   },

@@ -1,26 +1,27 @@
 /**
- * Camera screen - the live booth.
+ * Capture screen: the live booth.
  *
- * Fullscreen front-camera preview. Gear icon in the top-right opens the booth
- * controls sheet (flash / layout / exit). Big tap-anywhere area kicks off the
- * 3-2-1 countdown with audio ticks and a shutter snap on each capture.
+ * Full-screen mirrored front-camera preview. Tap anywhere to begin a 4-shot
+ * session. For each shot: a countdown (length from Settings, default 3s) with
+ * optional ticking sound and haptics, then capture (shutter sound, haptic, brief
+ * white screen-flash), then a ~1.2s passive peek of the just-captured shot, then
+ * the next shot. After 4 shots the strip is composed via the Skia bridge and the
+ * screen routes to Preview with the composed strip URI.
  *
- * A safe-crop overlay shows guests exactly what part of the frame will end up
- * on the strip.
- *
- * After the last shot the screen composes the strip via the Skia bridge and
- * routes to the preview with the composed strip URI (plus the raw frame URIs so
- * the optional "save individual frames" preference still works).
+ * No per-shot accept or reject. Settings drive the feedback toggles; the layout
+ * is chosen on the previous screen and passed in as a route param.
  */
 import type { JSX } from 'react';
+import { useKeepAwake } from 'expo-keep-awake';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { BoothControlsSheet } from '@/components/BoothControlsSheet';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { CameraSurface, type CameraSurfaceHandle } from '@/components/CameraSurface';
 import { CountdownOverlay } from '@/components/CountdownOverlay';
 import { PermissionPrimer } from '@/components/PermissionPrimer';
 import { SafeCropOverlay } from '@/components/SafeCropOverlay';
+import { ScreenFlash } from '@/components/ScreenFlash';
+import { captureHaptic, tickHaptic } from '@/lib/haptics';
 import {
   DEFAULT_STRIP_LAYOUT,
   frameAspectForLayout,
@@ -31,12 +32,14 @@ import {
 } from '@/lib/layouts';
 import {
   getCameraPermissionStatus,
-  getMediaLibraryPermissionStatus,
   requestCameraPermission,
-  requestMediaLibraryPermission,
   type PermissionStatus,
 } from '@/lib/permissions';
-import { saveSessionSettings } from '@/lib/sessionSettings';
+import {
+  DEFAULT_SESSION_SETTINGS,
+  loadSessionSettings,
+  type CountdownLength,
+} from '@/lib/sessionSettings';
 import {
   playCountdownTick,
   preloadBoothSounds,
@@ -47,64 +50,71 @@ import type { SkiaBridge } from '@/lib/skiaBridge';
 
 /** Capture loop tick rate. One tick per second of the countdown. */
 const TICK_MS = 1000;
-/** Countdown starts at 3. */
-const COUNTDOWN_FROM = 3;
 /** Ms to leave the just-captured peek visible before the next countdown. */
 const PEEK_HOLD_MS = 1200;
 
-type Phase = 'idle' | 'countdown' | 'reveal' | 'composing' | 'done';
-type PermStep = 'priming-camera' | 'priming-library' | 'ready';
+type Phase = 'idle' | 'countdown' | 'reveal' | 'composing';
+type PermStep = 'checking' | 'priming-camera' | 'ready';
 
-/** Camera screen entry point. */
-export default function CameraScreen(): JSX.Element {
+/** Capture screen entry point. */
+export default function CaptureScreen(): JSX.Element {
+  useKeepAwake();
   const theme = useTheme('dark');
   const router = useRouter();
-  const params = useLocalSearchParams<{
-    layout?: string;
-    flash?: string;
-  }>();
-  const initialLayout = parseStripLayout(params.layout) ?? DEFAULT_STRIP_LAYOUT;
-  const [layout, setLayout] = useState<StripLayout>(initialLayout);
-  // The safe-crop overlay matches the per-cell aspect of the chosen layout so
-  // guests see exactly what lands on the strip.
+  const params = useLocalSearchParams<{ layout?: string }>();
+  const layout: StripLayout = parseStripLayout(params.layout) ?? DEFAULT_STRIP_LAYOUT;
   const frameAspect = useMemo<number>(() => frameAspectForLayout(layout), [layout]);
+  const totalFrames = useMemo<number>(() => shotCountForLayout(layout), [layout]);
 
-  const [permStep, setPermStep] = useState<PermStep>('priming-camera');
+  const [permStep, setPermStep] = useState<PermStep>('checking');
   const [cameraStatus, setCameraStatus] = useState<PermissionStatus>('unknown');
-  const [libraryStatus, setLibraryStatus] = useState<PermissionStatus>('unknown');
 
-  const [flash, setFlash] = useState<boolean>(params.flash === '1');
+  // Feedback preferences, hydrated from Settings on mount.
+  const [countdownFrom, setCountdownFrom] = useState<CountdownLength>(
+    DEFAULT_SESSION_SETTINGS.countdown,
+  );
+  const [soundOn, setSoundOn] = useState<boolean>(DEFAULT_SESSION_SETTINGS.sound);
+  const [hapticsOn, setHapticsOn] = useState<boolean>(DEFAULT_SESSION_SETTINGS.haptics);
+  const [flashOn, setFlashOn] = useState<boolean>(DEFAULT_SESSION_SETTINGS.flash);
+
   const [phase, setPhase] = useState<Phase>('idle');
   const [digit, setDigit] = useState<number | null>(null);
   const [framesCaptured, setFramesCaptured] = useState<number>(0);
-  const [controlsOpen, setControlsOpen] = useState<boolean>(false);
+  const [peekUri, setPeekUri] = useState<string | null>(null);
+  const [flashActive, setFlashActive] = useState<boolean>(false);
   const captured = useRef<string[]>([]);
   const cameraRef = useRef<CameraSurfaceHandle | null>(null);
-  const totalFrames = useMemo<number>(() => shotCountForLayout(layout), [layout]);
 
-  // Permission state on mount.
+  // Resolve camera permission on mount.
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const cam = await getCameraPermissionStatus();
-      const lib = await getMediaLibraryPermissionStatus();
       if (cancelled) return;
       setCameraStatus(cam);
-      setLibraryStatus(lib);
-      if (cam === 'granted' && lib === 'granted') {
-        setPermStep('ready');
-      } else if (cam === 'granted') {
-        setPermStep('priming-library');
-      } else {
-        setPermStep('priming-camera');
-      }
+      setPermStep(cam === 'granted' ? 'ready' : 'priming-camera');
     })();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // Preload sounds once permissions are clear.
+  // Hydrate feedback preferences from Settings.
+  useEffect(() => {
+    let cancelled = false;
+    void loadSessionSettings().then((settings) => {
+      if (cancelled) return;
+      setCountdownFrom(settings.countdown);
+      setSoundOn(settings.sound);
+      setHapticsOn(settings.haptics);
+      setFlashOn(settings.flash);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Preload sounds once the camera is ready.
   useEffect(() => {
     if (permStep !== 'ready') return;
     void preloadBoothSounds();
@@ -113,41 +123,37 @@ export default function CameraScreen(): JSX.Element {
     };
   }, [permStep]);
 
-  // Drive the countdown.
+  // Drive the countdown for the current shot.
   useEffect(() => {
     if (phase !== 'countdown') return undefined;
-    let current = COUNTDOWN_FROM;
+    let current = countdownFrom;
     setDigit(current);
-    void playCountdownTick();
+    fireTick(soundOn, hapticsOn);
     const interval = setInterval(() => {
       current -= 1;
       if (current <= 0) {
         clearInterval(interval);
         setDigit(null);
-        // Camera capture itself triggers the iOS system shutter sound; we
-        // intentionally don't play our own snap on top of it.
         void fireShutter();
         return;
       }
       setDigit(current);
-      void playCountdownTick();
+      fireTick(soundOn, hapticsOn);
     }, TICK_MS);
     return () => clearInterval(interval);
-  }, [phase]);
+  }, [phase, countdownFrom, soundOn, hapticsOn]);
 
-  // Reveal/peek phase: hold the just-captured shot then loop into another
-  // countdown.
+  // Peek: hold the just-captured shot, then loop into the next countdown.
   useEffect(() => {
     if (phase !== 'reveal') return undefined;
     const timer = setTimeout(() => {
+      setPeekUri(null);
       setPhase('countdown');
     }, PEEK_HOLD_MS);
     return () => clearTimeout(timer);
   }, [phase]);
 
-  // After the last frame, compose the strip via the Skia bridge and route to
-  // preview with the composed strip URI. The raw frame URIs ride along so the
-  // optional "save individual frames" preference still works on the preview.
+  // After the last shot, compose the strip and route to Preview.
   useEffect(() => {
     if (phase !== 'composing') return;
     let cancelled = false;
@@ -167,11 +173,12 @@ export default function CameraScreen(): JSX.Element {
         });
         composedUri = result.uri;
       } catch (error) {
-        composeError = error instanceof Error ? error.message : 'Could not compose the strip.';
+        composeError =
+          error instanceof Error ? error.message : 'Could not compose the strip.';
       }
       if (cancelled) return;
-      router.push({
-        pathname: '/(camera)/preview',
+      router.replace({
+        pathname: '/preview',
         params: {
           layout,
           uris: frames.join('|'),
@@ -179,79 +186,59 @@ export default function CameraScreen(): JSX.Element {
           composeError,
         },
       });
-      captured.current = [];
-      setFramesCaptured(0);
-      setPhase('idle');
     })();
     return () => {
       cancelled = true;
     };
   }, [phase, layout, router]);
 
+  function fireTick(sound: boolean, haptics: boolean): void {
+    if (sound) void playCountdownTick();
+    if (haptics) void tickHaptic();
+  }
+
   async function fireShutter(): Promise<void> {
+    setFlashActive(flashOn);
+    if (hapticsOn) void captureHaptic();
+    let uri = '';
     try {
-      const uri = await cameraRef.current!.takePhoto();
-      captured.current.push(uri);
+      uri = await cameraRef.current!.takePhoto();
     } catch {
-      captured.current.push(`tinybooth://capture/${captured.current.length}`);
+      uri = `tinybooth://capture/${captured.current.length}`;
     }
+    captured.current.push(uri);
     const nextCount = captured.current.length;
     setFramesCaptured(nextCount);
+    setPeekUri(uri);
     if (nextCount >= totalFrames) {
-      setTimeout(() => setPhase('composing'), PEEK_HOLD_MS);
+      setPhase('composing');
     } else {
       setPhase('reveal');
     }
   }
 
   function startCapture(): void {
-    if (phase !== 'idle' || controlsOpen) return;
+    if (phase !== 'idle') return;
     captured.current = [];
     setFramesCaptured(0);
+    setPeekUri(null);
     setPhase('countdown');
   }
 
-  function handleFlashChange(next: boolean): void {
-    setFlash(next);
-    void saveSessionSettings({ flash: next });
-  }
-
-  function handleLayoutChange(next: StripLayout): void {
-    if (next === layout) return;
-    captured.current = [];
-    setFramesCaptured(0);
-    setDigit(null);
-    setPhase('idle');
-    setLayout(next);
-    void saveSessionSettings({ layout: next });
-  }
-
   function exitToHome(): void {
-    setControlsOpen(false);
     captured.current = [];
-    setFramesCaptured(0);
-    setDigit(null);
-    setPhase('idle');
-    if (router.canDismiss()) router.dismissAll();
-    router.replace('/');
+    if (router.canGoBack()) router.back();
+    else router.replace('/');
   }
 
   async function handleCameraContinue(): Promise<void> {
     const next = await requestCameraPermission();
     setCameraStatus(next);
-    if (next === 'granted') {
-      if (libraryStatus !== 'granted') {
-        setPermStep('priming-library');
-      } else {
-        setPermStep('ready');
-      }
-    }
+    if (next === 'granted') setPermStep('ready');
   }
 
-  async function handleLibraryContinue(): Promise<void> {
-    const next = await requestMediaLibraryPermission();
-    setLibraryStatus(next);
-    setPermStep('ready');
+  if (permStep === 'checking') {
+    return <View style={[styles.root, { backgroundColor: theme.colors.bg }]} />;
   }
 
   if (permStep === 'priming-camera') {
@@ -264,25 +251,12 @@ export default function CameraScreen(): JSX.Element {
         }
         permanentlyDenied={cameraStatus === 'denied'}
         onContinue={() => void handleCameraContinue()}
-        onCancel={() => router.back()}
+        onCancel={exitToHome}
       />
     );
   }
 
-  if (permStep === 'priming-library') {
-    return (
-      <PermissionPrimer
-        title="Save your strips to Photos."
-        body={
-          'TinyBooth can save every strip to your Photos library so you have a copy to ' +
-          'share or print later. We only write strips you create here, nothing else.'
-        }
-        permanentlyDenied={libraryStatus === 'denied'}
-        onContinue={() => void handleLibraryContinue()}
-        onCancel={() => setPermStep('ready')}
-      />
-    );
-  }
+  const isReveal = phase === 'reveal' && peekUri !== null;
 
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.bg }]}>
@@ -293,52 +267,53 @@ export default function CameraScreen(): JSX.Element {
         accessibilityLabel="Start the photo countdown"
         accessibilityHint="Stand inside the rectangle and tap anywhere to begin."
       >
-        <CameraSurface ref={cameraRef} flash={flash ? 'on' : 'off'} isActive={phase !== 'composing'} />
+        <CameraSurface
+          ref={cameraRef}
+          flash={flashOn ? 'on' : 'off'}
+          isActive={phase !== 'composing'}
+        />
         <SafeCropOverlay frameAspect={frameAspect} accent={theme.colors.primary} />
+        {isReveal && peekUri ? (
+          <Image
+            source={{ uri: peekUri }}
+            style={styles.peek}
+            resizeMode="cover"
+            accessibilityLabel="Your last shot"
+          />
+        ) : null}
         <CountdownOverlay digit={digit} message={null} />
+        <ScreenFlash active={flashActive} onDone={() => setFlashActive(false)} />
       </Pressable>
 
-      {/* Top bar: gear icon. */}
       <View pointerEvents="box-none" style={styles.topBar}>
-        <View />
         <Pressable
-          onPress={() => setControlsOpen(true)}
+          onPress={exitToHome}
           accessibilityRole="button"
-          accessibilityLabel="Booth controls"
+          accessibilityLabel="Exit the booth"
           hitSlop={16}
-          style={[styles.gearButton, { backgroundColor: 'rgba(15, 18, 22, 0.55)' }]}
+          style={styles.exitButton}
         >
-          <Text style={styles.gearIcon}>{'⚙'}</Text>
+          <Text style={styles.exitIcon}>{'✕'}</Text>
         </Pressable>
+        <View />
       </View>
 
-      {/* Bottom hint. */}
-      {phase === 'idle' ? (
-        <View pointerEvents="none" style={styles.bottomHint}>
-          <Text style={styles.bottomHintText}>Tap anywhere to start</Text>
-          <Text style={styles.bottomHintSub}>{totalFrames} photos · {stripLayoutLabel(layout)}</Text>
-        </View>
-      ) : phase === 'composing' ? (
-        <View pointerEvents="none" style={styles.bottomHint}>
+      <View pointerEvents="none" style={styles.bottomHint}>
+        {phase === 'idle' ? (
+          <>
+            <Text style={styles.bottomHintText}>Tap anywhere to start</Text>
+            <Text style={styles.bottomHintSub}>
+              {totalFrames} photos · {stripLayoutLabel(layout)}
+            </Text>
+          </>
+        ) : phase === 'composing' ? (
           <Text style={styles.bottomHintText}>Composing your strip...</Text>
-        </View>
-      ) : (
-        <View pointerEvents="none" style={styles.bottomHint}>
+        ) : (
           <Text style={styles.bottomHintText}>
             {framesCaptured} / {totalFrames}
           </Text>
-        </View>
-      )}
-
-      <BoothControlsSheet
-        visible={controlsOpen}
-        onDismiss={() => setControlsOpen(false)}
-        flash={flash}
-        onFlashChange={handleFlashChange}
-        layout={layout}
-        onLayoutChange={handleLayoutChange}
-        onExit={exitToHome}
-      />
+        )}
+      </View>
     </View>
   );
 }
@@ -346,6 +321,9 @@ export default function CameraScreen(): JSX.Element {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   previewTap: { flex: 1 },
+  peek: {
+    ...StyleSheet.absoluteFillObject,
+  },
   topBar: {
     position: 'absolute',
     top: 56,
@@ -355,16 +333,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  gearButton: {
+  exitButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(15, 18, 22, 0.55)',
   },
-  gearIcon: {
+  exitIcon: {
     color: '#FFFFFF',
-    fontSize: 22,
+    fontSize: 20,
+    fontWeight: '700',
   },
   bottomHint: {
     position: 'absolute',

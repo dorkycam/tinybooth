@@ -49,7 +49,7 @@ export function LayoutPicker({ value, onChange }: LayoutPickerProps): JSX.Elemen
             <Text
               style={[
                 styles.label,
-                { color: selected ? '#FFFFFF' : theme.colors.fg },
+                { color: selected ? theme.colors.bg : theme.colors.fg },
               ]}
             >
               {layout.label}
@@ -57,7 +57,7 @@ export function LayoutPicker({ value, onChange }: LayoutPickerProps): JSX.Elemen
             <Text
               style={[
                 styles.subtitle,
-                { color: selected ? '#FFFFFFAA' : theme.colors.subtle },
+                { color: selected ? theme.colors.bg : theme.colors.subtle },
               ]}
             >
               {layout.subtitle}

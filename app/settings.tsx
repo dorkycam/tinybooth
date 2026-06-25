@@ -1,19 +1,21 @@
 /**
  * Settings screen.
  *
- * Capture defaults (flash, default layout, save individual frames), appearance
- * (system / light / dark), a QA preview-class override, and an About section
- * with the app version. Everything persists locally via AsyncStorage; the app
- * has no account and collects nothing.
+ * Capture defaults (flash, countdown length, sound, haptics, default layout,
+ * save individual frames), appearance (system / light / dark), a QA preview-class
+ * override, and an About section with the app version. Everything persists
+ * locally via AsyncStorage; the app has no account and collects nothing.
  */
 import type { JSX } from 'react';
 import Constants from 'expo-constants';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LayoutPicker } from '@/components/LayoutPicker';
+import { SegmentedChoice } from '@/components/SegmentedChoice';
 import { Wordmark } from '@/components/Wordmark';
 import {
+  COUNTDOWN_CHOICES,
   DEFAULT_SESSION_SETTINGS,
   loadSessionSettings,
   saveSessionSettings,
@@ -43,8 +45,7 @@ export default function SettingsScreen(): JSX.Element {
   }, []);
 
   function update(patch: Partial<SessionSettings>): void {
-    const next = { ...settings, ...patch };
-    setSettings(next);
+    setSettings((current) => ({ ...current, ...patch }));
     void saveSessionSettings(patch);
   }
 
@@ -56,19 +57,28 @@ export default function SettingsScreen(): JSX.Element {
 
         <Section title="Capture defaults" theme={theme}>
           <Row title="Flash on by default" theme={theme}>
+            <Switch value={settings.flash} onValueChange={(value) => update({ flash: value })} />
+          </Row>
+          <Row title="Countdown sound" theme={theme}>
+            <Switch value={settings.sound} onValueChange={(value) => update({ sound: value })} />
+          </Row>
+          <Row title="Haptics" theme={theme}>
             <Switch
-              value={settings.flash}
-              onValueChange={(value) => update({ flash: value })}
+              value={settings.haptics}
+              onValueChange={(value) => update({ haptics: value })}
             />
           </Row>
-          <Row title="Default layout" theme={theme}>
-            <View style={{ alignSelf: 'stretch' }}>
-              <LayoutPicker
-                value={settings.layout}
-                onChange={(layout) => update({ layout })}
-              />
-            </View>
-          </Row>
+          <Stacked title="Countdown length" theme={theme}>
+            <SegmentedChoice
+              options={COUNTDOWN_CHOICES}
+              value={settings.countdown}
+              renderLabel={(seconds) => `${seconds}s`}
+              onSelect={(countdown) => update({ countdown })}
+            />
+          </Stacked>
+          <Stacked title="Default layout" theme={theme}>
+            <LayoutPicker value={settings.layout} onChange={(layout) => update({ layout })} />
+          </Stacked>
           <Row title="Save individual frames" theme={theme}>
             <Switch
               value={settings.saveFrames}
@@ -78,61 +88,19 @@ export default function SettingsScreen(): JSX.Element {
         </Section>
 
         <Section title="Appearance" theme={theme}>
-          <View style={styles.previewRow}>
-            {THEME_CHOICES.map((choice) => {
-              const selected = themePref.preference === choice;
-              return (
-                <Pressable
-                  key={choice}
-                  onPress={() => void themePref.setPreference(choice)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  style={[
-                    styles.previewChip,
-                    {
-                      backgroundColor: selected ? theme.colors.primary : theme.colors.surface,
-                      borderColor: selected ? theme.colors.primary : theme.colors.hairline,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={{ color: selected ? theme.colors.bg : theme.colors.fg, fontWeight: '600' }}
-                  >
-                    {choice}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <SegmentedChoice
+            options={THEME_CHOICES}
+            value={themePref.preference}
+            onSelect={(choice) => void themePref.setPreference(choice)}
+          />
         </Section>
 
         <Section title="QA preview" theme={theme}>
-          <View style={styles.previewRow}>
-            {PREVIEW_CHOICES.map((choice) => {
-              const selected = settings.previewClass === choice;
-              return (
-                <Pressable
-                  key={choice}
-                  onPress={() => update({ previewClass: choice })}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  style={[
-                    styles.previewChip,
-                    {
-                      backgroundColor: selected ? theme.colors.primary : theme.colors.surface,
-                      borderColor: selected ? theme.colors.primary : theme.colors.hairline,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={{ color: selected ? theme.colors.bg : theme.colors.fg, fontWeight: '600' }}
-                  >
-                    {choice}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <SegmentedChoice
+            options={PREVIEW_CHOICES}
+            value={settings.previewClass}
+            onSelect={(previewClass) => update({ previewClass })}
+          />
         </Section>
 
         <Section title="About" theme={theme}>
@@ -183,6 +151,21 @@ function Row({ title, theme, children }: RowProps): JSX.Element {
   );
 }
 
+interface StackedProps {
+  title: string;
+  theme: ReturnType<typeof useTheme>;
+  children: React.ReactNode;
+}
+
+function Stacked({ title, theme, children }: StackedProps): JSX.Element {
+  return (
+    <View style={styles.stacked}>
+      <Text style={[styles.rowTitle, { color: theme.colors.fg }]}>{title}</Text>
+      {children}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1 },
   content: { padding: 24, gap: 16 },
@@ -207,19 +190,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  stacked: {
+    gap: 8,
+  },
   rowTitle: {
     fontSize: 17,
     flex: 1,
-  },
-  previewRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  previewChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
   },
   aboutLine: {
     fontSize: 15,
