@@ -2,7 +2,9 @@
 
 The conventions for this repo live in **[AGENTS.md](./AGENTS.md)** — read it first. It is the
 single source of truth for code style, the Metro `import()` rule, commit format, PR process,
-writing-style rules, and the security rules (never commit secrets).
+writing-style rules, and the security rules (never commit secrets). The deeper rulebook
+(architecture, file organization, component/hook patterns, TypeScript, testing, tooling) is in
+**[CODING_STANDARDS.md](./CODING_STANDARDS.md)**.
 
 Claude-specific notes:
 
