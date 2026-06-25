@@ -55,7 +55,7 @@ export default function HomeScreen(): JSX.Element {
           <View style={styles.brand}>
             <Wordmark size="lg" />
             <Text style={[styles.tagline, { color: theme.colors.fg }]}>
-              Take a photo. Get a strip. That's the whole app.
+              Strike a pose, then tap below to start.
             </Text>
           </View>
           <View style={styles.actions}>

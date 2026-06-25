@@ -21,8 +21,8 @@ interface ScreenFlashProps {
   onDone: () => void;
 }
 
-/** Total flash duration in milliseconds (fade up + hold + fade down). */
-const FLASH_MS = 320;
+/** Total flash duration in milliseconds: one quick pop (fast up, fast down). */
+const FLASH_MS = 150;
 
 /**
  * Animated white flash over the camera preview.

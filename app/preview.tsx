@@ -3,8 +3,11 @@
  *
  * A modal-feel card centered over the booth background shows the composed strip
  * and the delivery actions (Print, Save, Share, Redo) plus a Close control in
- * the card's top-right corner. Save asks for the photo-library permission in
- * context the first time it is tapped (handled inside `saveToCameraRoll`).
+ * the card's top-right corner. The close control and the action row stay pinned
+ * at every screen size: the strip is capped to a fraction of the viewport
+ * (resizeMode="contain") and, on phones, sits in a ScrollView so a tall Classic
+ * strip can never push the actions off the bottom. Save asks for the
+ * photo-library permission in context the first time it is tapped.
  *
  * The capture screen passes the composed file URI as `composedUri`; if
  * composition failed it falls back to the first captured frame so the buttons
@@ -18,7 +21,7 @@ import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AutoCloseBar } from '@/components/AutoCloseBar';
 import { DeliveryActions } from '@/components/DeliveryActions';
@@ -39,6 +42,7 @@ type BusyAction = 'print' | 'save' | 'share';
 const ACTION_SIZE = { phone: 60, tablet: 72 } as const;
 /** Max width of the strip hero, by form factor. */
 const STRIP_MAX_WIDTH = { phone: 320, tablet: 480 } as const;
+const STRIP_HEIGHT_RATIO = { phone: 0.5, tablet: 0.68 } as const;
 
 /** Preview screen entry point. */
 export default function PreviewScreen(): JSX.Element {
@@ -47,6 +51,7 @@ export default function PreviewScreen(): JSX.Element {
   const router = useRouter();
   const { settings } = useSettings();
   const { layoutClass } = useLayoutClass();
+  const { height: windowHeight } = useWindowDimensions();
   const params = useLocalSearchParams<{
     layout?: string;
     uris?: string;
@@ -129,6 +134,54 @@ export default function PreviewScreen(): JSX.Element {
 
   const actionSize = isTablet ? ACTION_SIZE.tablet : ACTION_SIZE.phone;
   const stripMaxWidth = isTablet ? STRIP_MAX_WIDTH.tablet : STRIP_MAX_WIDTH.phone;
+  // Cap the strip to a viewport fraction (letterboxed via contain) so a tall strip never hides the actions.
+  const stripImageHeight = Math.round(windowHeight * STRIP_HEIGHT_RATIO[isTablet ? 'tablet' : 'phone']);
+  const stripFrame = (
+    <View
+      style={[
+        styles.stripFrame,
+        {
+          backgroundColor: theme.colors.bg,
+          borderColor: theme.colors.hairline,
+          borderRadius: theme.radius.lg,
+          maxWidth: stripMaxWidth,
+        },
+      ]}
+    >
+      {composedUri ? (
+        <Image
+          source={{ uri: composedUri }}
+          style={[styles.stripImage, { height: stripImageHeight }]}
+          resizeMode="contain"
+          accessibilityLabel="Composed photostrip"
+        />
+      ) : (
+        <Text style={[styles.placeholder, { color: theme.colors.subtle }]}>
+          {composeError ? 'Could not compose strip.' : 'Loading...'}
+        </Text>
+      )}
+    </View>
+  );
+
+  const controls = (
+    <View style={[styles.controls, { gap: theme.spacing.md }]}>
+      {composeError ? (
+        <Text style={[styles.errorText, { color: theme.colors.highlight }]}>{composeError}</Text>
+      ) : null}
+      <DeliveryActions
+        onPrint={handlePrint}
+        onSave={handleSave}
+        onShare={handleShare}
+        onRedo={handleRedo}
+        saved={saveState === 'saved'}
+        disabled={busy !== null}
+        size={actionSize}
+      />
+      <Text style={[styles.saveLine, { color: saveColor(saveState, theme) }]}>
+        {saveLabel(saveState)}
+      </Text>
+    </View>
+  );
 
   return (
     <SafeAreaView
@@ -165,52 +218,23 @@ export default function PreviewScreen(): JSX.Element {
             />
           </View>
 
-          <View style={[styles.body, isTablet ? styles.bodyTablet : null]}>
-            <View
-              style={[
-                styles.stripFrame,
-                {
-                  backgroundColor: theme.colors.bg,
-                  borderColor: theme.colors.hairline,
-                  borderRadius: theme.radius.lg,
-                  maxWidth: stripMaxWidth,
-                },
-              ]}
-            >
-              {composedUri ? (
-                <Image
-                  source={{ uri: composedUri }}
-                  style={styles.stripImage}
-                  resizeMode="contain"
-                  accessibilityLabel="Composed photostrip"
-                />
-              ) : (
-                <Text style={[styles.placeholder, { color: theme.colors.subtle }]}>
-                  {composeError ? 'Could not compose strip.' : 'Loading...'}
-                </Text>
-              )}
+          {isTablet ? (
+            <View style={[styles.body, styles.bodyTablet]}>
+              {stripFrame}
+              {controls}
             </View>
-
-            <View style={[styles.controls, { gap: theme.spacing.md }]}>
-              {composeError ? (
-                <Text style={[styles.errorText, { color: theme.colors.highlight }]}>
-                  {composeError}
-                </Text>
-              ) : null}
-              <DeliveryActions
-                onPrint={handlePrint}
-                onSave={handleSave}
-                onShare={handleShare}
-                onRedo={handleRedo}
-                saved={saveState === 'saved'}
-                disabled={busy !== null}
-                size={actionSize}
-              />
-              <Text style={[styles.saveLine, { color: saveColor(saveState, theme) }]}>
-                {saveLabel(saveState)}
-              </Text>
+          ) : (
+            <View style={styles.body}>
+              <ScrollView
+                style={styles.stripScroll}
+                contentContainerStyle={styles.stripScrollContent}
+                showsVerticalScrollIndicator={false}
+              >
+                {stripFrame}
+              </ScrollView>
+              {controls}
             </View>
-          </View>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -243,24 +267,34 @@ function saveColor(state: SaveState, theme: ReturnType<typeof useTheme>): string
 const styles = StyleSheet.create({
   root: { flex: 1 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
-  card: { width: '100%', borderWidth: 1, alignItems: 'stretch' },
+  // flexShrink lets the card cap at the available height so the pinned action
+  // row and close control stay on screen even when the strip is very tall.
+  card: { width: '100%', borderWidth: 1, alignItems: 'stretch', flexShrink: 1 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontSize: 13, letterSpacing: 1, textTransform: 'uppercase' },
-  body: { alignItems: 'center', gap: 16 },
-  bodyTablet: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24 },
+  // Phone: column with a shrinkable strip area above pinned controls.
+  body: { width: '100%', alignItems: 'center', gap: 16, flexShrink: 1 },
+  bodyTablet: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 24,
+    flexShrink: 1,
+  },
+  // The strip scrolls if it still overflows; the controls below never do.
+  stripScroll: { alignSelf: 'stretch', flexShrink: 1 },
+  stripScrollContent: { alignItems: 'center', justifyContent: 'center', flexGrow: 1 },
   stripFrame: {
     width: '100%',
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 8,
-    minHeight: 320,
-    flexShrink: 1,
     overflow: 'hidden',
   },
-  stripImage: { width: '100%', height: '100%', minHeight: 300 },
-  controls: { alignItems: 'center', flexShrink: 1 },
+  stripImage: { width: '100%' },
+  controls: { alignItems: 'center', flexShrink: 0 },
   errorText: { fontSize: 13, textAlign: 'center', paddingHorizontal: 8 },
   saveLine: { fontSize: 13, minHeight: 18, textAlign: 'center' },
-  placeholder: { fontSize: 17 },
+  placeholder: { fontSize: 17, paddingVertical: 24 },
 });

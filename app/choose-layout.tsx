@@ -11,10 +11,10 @@ import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { IconButton } from '@/components/IconButton';
 import { LayoutChoiceCard } from '@/components/LayoutChoiceCard';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { useIdleReset } from '@/hooks/useIdleReset';
 import { useSettings } from '@/hooks/useSettings';
 import { useLayoutClass } from '@/lib/layout';
@@ -54,23 +54,11 @@ export default function ChooseLayoutScreen(): JSX.Element {
 
   return (
     <SafeAreaView
+      edges={['left', 'right', 'bottom']}
       style={[styles.root, { backgroundColor: theme.colors.bg }]}
       onTouchStart={resetIdleTimer}
     >
-      <View style={styles.header}>
-        <IconButton
-          icon="chevron-back"
-          accessibilityLabel="Back to Start"
-          onPress={handleBack}
-          variant="ghost"
-          size={44}
-          testID="choose-layout-back"
-        />
-        <Text style={[styles.title, { color: theme.colors.fg }]}>Pick a layout</Text>
-        <Text style={[styles.subtitle, { color: theme.colors.subtle }]}>
-          Both take 4 photos.
-        </Text>
-      </View>
+      <ScreenHeader title="Pick a layout" subtitle="Both take 4 photos." onBack={handleBack} />
       <View style={[styles.cards, isTablet ? styles.cardsTablet : styles.cardsPhone]}>
         {STRIP_LAYOUTS.map((layout) => (
           <LayoutChoiceCard
@@ -89,19 +77,6 @@ export default function ChooseLayoutScreen(): JSX.Element {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    gap: 8,
-    alignItems: 'flex-start',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-  },
-  subtitle: {
-    fontSize: 16,
   },
   cards: {
     flex: 1,
