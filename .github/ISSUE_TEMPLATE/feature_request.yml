@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest an idea for TinyBooth
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: What would you like TinyBooth to do?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: What problem does it solve, or when would you use it?
+    validations:
+      required: false
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Stays offline
+      description: TinyBooth is fully on-device by design.
+      options:
+        - label: This can work without any network, accounts, or backend
+          required: true

@@ -1,0 +1,18 @@
+# gitleaks config for TinyBooth. Extends the built-in ruleset (which already detects Google
+# service-account keys, Apple keys, AWS keys, generic high-entropy secrets, etc).
+title = "TinyBooth gitleaks config"
+
+[extend]
+useDefault = true
+
+# Belt-and-suspenders allowlist: these paths never hold real secrets, only placeholders.
+[allowlist]
+description = "Ignore example/template files and the documented Apple Team ID"
+paths = [
+  '''eas\.json\.example''',
+  '''\.env\.example''',
+]
+# The Apple Team ID is not a secret (it appears on every signed build); ignore it if matched.
+regexes = [
+  '''S4UJ25XGGT''',
+]

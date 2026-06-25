@@ -1,6 +1,6 @@
 {
   "name": "tinybooth",
-  "version": "0.0.0",
+  "version": "2.0.5",
   "private": true,
   "description": "TinyBooth: a free, open-source, offline photobooth app.",
   "license": "MIT",
@@ -18,7 +18,8 @@
     "test": "vitest run",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "prepare": "lefthook install"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -53,6 +54,7 @@
     "@types/node": "^20.11.30",
     "@types/react": "~19.1.17",
     "eslint": "^9.9.0",
+    "lefthook": "^1.7.0",
     "prettier": "^3.2.5",
     "typescript": "^5.4.5",
     "typescript-eslint": "^8.0.0",

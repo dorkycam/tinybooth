@@ -1,0 +1,21 @@
+# release-please: watches Conventional Commits on main and maintains a "Release vX.Y.Z" PR
+# that bumps the version and updates the changelog. Merging that PR creates the git tag and
+# GitHub Release, which triggers build.yml (gated) to build + submit.
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

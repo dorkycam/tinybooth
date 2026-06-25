@@ -66,3 +66,6 @@ fastlane/metadata/review_information/
 fastlane/.env
 fastlane/.env.*
 !fastlane/.env.example
+
+# Internal planning docs (kept local, never published)
+.private/
