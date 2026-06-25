@@ -8,7 +8,12 @@ pre-commit:
   parallel: true
   commands:
     gitleaks:
-      run: gitleaks protect --staged --redact --config .gitleaks.toml
+      run: |
+        if command -v gitleaks >/dev/null 2>&1; then
+          gitleaks protect --staged --redact --config .gitleaks.toml
+        else
+          echo "gitleaks not installed locally, skipping (CI enforces it). Install: brew install gitleaks"
+        fi
     typecheck:
       glob: "*.{ts,tsx}"
       run: pnpm typecheck

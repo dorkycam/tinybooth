@@ -1,0 +1,107 @@
+/**
+ * Round icon button used across the booth for navigation (back / close) and for
+ * the preview delivery actions (print / save / share / redo). Pass a `label` to
+ * render a caption under the circle; omit it for a bare icon button.
+ *
+ * Icons come from `@expo/vector-icons` Ionicons. Colors come from the theme so
+ * nothing is hardcoded.
+ */
+import type { JSX } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useTheme } from '../theme/useTheme';
+
+/** Visual tone of an {@link IconButton}. */
+export type IconButtonVariant = 'primary' | 'neutral' | 'ghost';
+
+/** Props for {@link IconButton}. */
+export interface IconButtonProps {
+  /** Ionicons glyph name, e.g. `chevron-back`, `print`, `share-outline`. */
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  /** Required for screen readers (the visible label, if any, may differ). */
+  accessibilityLabel: string;
+  /** Tap handler. */
+  onPress: () => void;
+  /** Optional caption rendered under the circle. */
+  label?: string;
+  /** Color treatment. Defaults to `neutral`. */
+  variant?: IconButtonVariant;
+  /** Circle diameter in px. Defaults to 56. */
+  size?: number;
+  /** Disable interaction and dim the control. */
+  disabled?: boolean;
+  testID?: string;
+}
+
+/**
+ * A circular icon button with an optional caption.
+ *
+ * @returns The rendered control.
+ */
+export function IconButton({
+  icon,
+  accessibilityLabel,
+  onPress,
+  label,
+  variant = 'neutral',
+  size = 56,
+  disabled = false,
+  testID,
+}: IconButtonProps): JSX.Element {
+  const theme = useTheme();
+  const background =
+    variant === 'primary'
+      ? theme.colors.primary
+      : variant === 'ghost'
+        ? 'transparent'
+        : theme.colors.surface;
+  const iconColor = variant === 'primary' ? theme.colors.bg : theme.colors.fg;
+  const borderColor = variant === 'ghost' ? theme.colors.hairline : 'transparent';
+
+  return (
+    <View style={styles.wrap}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        testID={testID}
+        style={({ pressed }) => [
+          styles.circle,
+          {
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            backgroundColor: background,
+            borderColor,
+            borderWidth: variant === 'ghost' ? 1 : 0,
+            opacity: pressed ? 0.7 : disabled ? 0.4 : 1,
+          },
+        ]}
+      >
+        <Ionicons name={icon} size={Math.round(size * 0.44)} color={iconColor} />
+      </Pressable>
+      {label ? (
+        <Text style={[styles.label, { color: theme.colors.subtle }]} numberOfLines={1}>
+          {label}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrap: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  circle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+});
