@@ -14,8 +14,6 @@ packages/
   config/     Shared eslint, tsconfig, prettier base configs
   messages/   Random message library (migrated from Swift app)
   ui-tokens/  Brand tokens (color, type, spacing)
-infra/
-  terraform/  Staging and production infra
 data/
   backups/    Local-only TinyWall data dumps (gitignored)
 docs/         Plan, research, brand identity, ADRs

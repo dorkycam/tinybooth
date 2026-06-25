@@ -1,0 +1,77 @@
+{
+  "$schema": "https://raw.githubusercontent.com/expo/eas-cli/main/packages/eas-json/schema/eas.schema.json",
+  "cli": {
+    "version": ">= 12.0.0",
+    "appVersionSource": "remote",
+    "promptToConfigurePushNotifications": false
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_WEB_BASE_URL": "http://localhost:3000"
+      },
+      "ios": {
+        "simulator": true,
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview": {
+      "distribution": "store",
+      "channel": "preview",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_WEB_BASE_URL": "https://staging.tinybooth.com"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    },
+    "production": {
+      "distribution": "store",
+      "channel": "production",
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_WEB_BASE_URL": "https://tinybooth.com"
+      },
+      "ios": {
+        "resourceClass": "m-medium"
+      },
+      "android": {
+        "buildType": "app-bundle"
+      }
+    }
+  },
+  "submit": {
+    "preview": {
+      "ios": {
+        "appleId": "dorkycam@gmail.com",
+        "appleTeamId": "S4UJ25XGGT"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./secrets/play-service-account.json",
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    },
+    "production": {
+      "ios": {
+        "appleId": "dorkycam@gmail.com",
+        "appleTeamId": "S4UJ25XGGT"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./secrets/play-service-account.json",
+        "track": "production",
+        "releaseStatus": "draft"
+      }
+    }
+  }
+}

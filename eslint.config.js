@@ -1,5 +1,4 @@
-// Root ESLint flat config (ESLint 9). Per-package configs extend this.
-// Keeps rules conservative; individual packages add framework-specific plugins.
+// ESLint flat config (ESLint 9) for the single TinyBooth Expo app.
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
@@ -9,12 +8,10 @@ export default [
       '**/node_modules/**',
       '**/dist/**',
       '**/build/**',
-      '**/.next/**',
-      '**/.turbo/**',
       '**/.expo/**',
       '**/coverage/**',
-      'tinybooth-old/**',
-      'tinybooth-wall/**',
+      'ios/**',
+      'android/**',
     ],
   },
   js.configs.recommended,
