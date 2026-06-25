@@ -47,6 +47,10 @@ pnpm ios       # or: pnpm android   (requires Xcode / Android Studio once)
 - **No workarounds.** If something's wrong at the source, fix the source. Don't mask it with
   a fallback or disable a test/type error to go green.
 
+For the deeper rulebook (architecture, file organization, component/hook patterns, TypeScript
+conventions, testing, and tooling), see **[CODING_STANDARDS.md](./CODING_STANDARDS.md)**. The
+hard rules above are canonical; CODING_STANDARDS.md expands on them and never contradicts them.
+
 ## Writing style (enforced)
 
 Applies to code, comments, docs, and UI copy.
