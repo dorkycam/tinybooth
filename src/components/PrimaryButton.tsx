@@ -1,11 +1,13 @@
 /**
- * Coral pill button used for primary actions (Start, Print, Save).
+ * Mint pill button used for primary actions (Start, Print, Save).
  *
  * Stays consistent across screens so the QA pass does not have to chase down
- * one-off styles. Disabled state desaturates to graphite.
+ * one-off styles. Disabled state desaturates to graphite. The label uses a dark
+ * carbon token because the mint `primary` fill is light in both themes.
  */
 import type { JSX } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
+import { ON_BRAND_FILL_TEXT } from '../theme/tokens/colors';
 import { useTheme } from '../theme/useTheme';
 
 interface PrimaryButtonProps {
@@ -15,7 +17,7 @@ interface PrimaryButtonProps {
   testID?: string;
 }
 
-/** Brand-coral pill button. */
+/** Brand-mint pill button. */
 export function PrimaryButton({
   label,
   onPress,
@@ -41,7 +43,7 @@ export function PrimaryButton({
         },
       ]}
     >
-      <Text style={[styles.label, { color: theme.colors.onPrimary }]}>{label}</Text>
+      <Text style={[styles.label, { color: ON_BRAND_FILL_TEXT }]}>{label}</Text>
     </Pressable>
   );
 }

@@ -10,13 +10,10 @@
 import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useRouter } from 'expo-router';
-import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LayoutChoiceCard } from '@/components/LayoutChoiceCard';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { useIdleReset } from '@/hooks/useIdleReset';
-import { useSettings } from '@/hooks/useSettings';
 import { useLayoutClass } from '@/lib/layout';
 import { STRIP_LAYOUTS, stripLayoutLabel, type StripLayout } from '@/lib/layouts';
 import { useTheme } from '@/theme/useTheme';
@@ -32,15 +29,8 @@ export default function ChooseLayoutScreen(): JSX.Element {
   useKeepAwake();
   const theme = useTheme();
   const router = useRouter();
-  const { settings } = useSettings();
   const { layoutClass } = useLayoutClass();
   const isTablet = layoutClass === 'tablet';
-
-  // Idle reset: if a guest walks away while deciding, return to Start.
-  const handleIdleTimeout = useCallback((): void => {
-    router.replace('/');
-  }, [router]);
-  const { reset: resetIdleTimer } = useIdleReset(settings.idleReset, handleIdleTimeout);
 
   function handlePick(layout: StripLayout): void {
     router.push({ pathname: '/capture', params: { layout } });
@@ -56,7 +46,6 @@ export default function ChooseLayoutScreen(): JSX.Element {
     <SafeAreaView
       edges={['left', 'right', 'bottom']}
       style={[styles.root, { backgroundColor: theme.colors.bg }]}
-      onTouchStart={resetIdleTimer}
     >
       <ScreenHeader title="Pick a layout" subtitle="Both take 4 photos." onBack={handleBack} />
       <View style={[styles.cards, isTablet ? styles.cardsTablet : styles.cardsPhone]}>

@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { STATIC_MESSAGES, getRandomMessage } from '../src/lib/messages';
 
 describe('STATIC_MESSAGES', () => {
-  it('contains exactly the nine original entries', () => {
-    expect(STATIC_MESSAGES).toHaveLength(9);
+  it('keeps the nine original entries', () => {
+    expect(STATIC_MESSAGES.length).toBeGreaterThanOrEqual(9);
   });
 
-  it('preserves the original order verbatim', () => {
-    expect(STATIC_MESSAGES).toEqual([
+  it('preserves the original nine as a verbatim prefix', () => {
+    expect(STATIC_MESSAGES.slice(0, 9)).toEqual([
       'Smile!',
       'Cheese!',
       'Work it!',

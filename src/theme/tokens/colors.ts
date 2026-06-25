@@ -79,6 +79,17 @@ export const OVERLAY_COLORS = {
   cropBorder: 'rgba(255, 255, 255, 0.85)',
 } as const;
 
+/**
+ * Dark label color for text/icons that sit on a LIGHT brand fill (the mint
+ * `primary` used by PrimaryButton for Start / Print / Save).
+ *
+ * The mint `primary` is light in both light and dark modes, so the label color
+ * must stay a constant dark carbon for contrast. This is intentionally separate
+ * from the `onPrimary` theme token, which renders white because it is also used
+ * for status text layered over the dark camera scrim (see CaptureChrome).
+ */
+export const ON_BRAND_FILL_TEXT = DARK_COLORS.carbon;
+
 /** Combined token object grouped by mode. */
 export const COLORS = {
   light: LIGHT_COLORS,

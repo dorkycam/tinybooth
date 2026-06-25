@@ -7,7 +7,9 @@
  * peek photo.
  *
  * Library-style: purely presentational. The parent owns the photo, decides
- * which message to show, and unmounts this overlay when the peek ends.
+ * which message to show, and unmounts this overlay when the peek ends. The
+ * message renders as a compact pill in the lower third so it celebrates the
+ * shot without covering the subject's face.
  */
 import type { JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -19,7 +21,7 @@ interface PeekMessageProps {
 }
 
 /**
- * Large celebratory message centered over the peek photo.
+ * Compact celebratory message pill shown in the lower third of the peek photo.
  *
  * @param props The message string to display.
  */
@@ -29,7 +31,7 @@ export function PeekMessage({ message }: PeekMessageProps): JSX.Element {
     <View pointerEvents="none" style={styles.root}>
       <View style={[styles.scrim, { backgroundColor: theme.colors.scrimStrong }]}>
         <Text
-          style={[styles.text, { color: theme.colors.bg }]}
+          style={[styles.text, { color: theme.colors.flash }]}
           numberOfLines={2}
           adjustsFontSizeToFit
           accessibilityRole="text"
@@ -49,20 +51,23 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    // Sit in the lower third, above the bottom frame-counter pill, so the
+    // message never covers the subject's face.
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: '22%',
   },
   scrim: {
-    paddingHorizontal: 56,
-    paddingVertical: 28,
-    borderRadius: 36,
-    maxWidth: '88%',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 22,
+    maxWidth: '80%',
     alignItems: 'center',
   },
   text: {
-    fontSize: 72,
+    fontSize: 36,
     fontWeight: '800',
-    lineHeight: 80,
+    lineHeight: 42,
     textAlign: 'center',
   },
 });

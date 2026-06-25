@@ -18,6 +18,16 @@ export const STATIC_MESSAGES: readonly string[] = [
   'Adorable!',
   "That's Great!",
   '\u{1F60E}',
+  // Newer additions, appended after the original nine. Order of the entries
+  // above is part of the brand and must never change; only append here.
+  'Strike a pose!',
+  'Looking good!',
+  'Love it!',
+  'Big smile!',
+  'Gorgeous!',
+  'Fabulous!',
+  'One more!',
+  'Yes!',
 ] as const;
 
 /**
