@@ -8,11 +8,6 @@
     "scheme": "tinybooth",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#FBF7EE"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.codesquad.tinybooth",
@@ -59,7 +54,14 @@
       ],
       "expo-font",
       "expo-secure-store",
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0F1216",
+          "dark": { "backgroundColor": "#0F1216" }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
