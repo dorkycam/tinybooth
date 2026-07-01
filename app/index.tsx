@@ -11,7 +11,8 @@
  */
 import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconButton } from '@/components/IconButton';
@@ -34,8 +35,20 @@ export default function HomeScreen(): JSX.Element {
   const router = useRouter();
   const { presentation } = usePresentation();
 
+  // Run the backdrop camera only while Start is focused. Off-screen (during
+  // capture) the camera is released so vision-camera hands the front device to
+  // the capture screen; on return, focus re-activates it. This keeps manual
+  // Close and idle auto-close on the same path back to a live preview.
+  const [isFocused, setIsFocused] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => setIsFocused(false);
+    }, []),
+  );
+
   return (
-    <StartBackdrop isActive>
+    <StartBackdrop isActive={isFocused}>
       <View style={styles.root}>
         <ScreenScaffold
           presentation={presentation}
