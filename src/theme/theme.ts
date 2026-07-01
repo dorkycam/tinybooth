@@ -31,9 +31,7 @@ export interface ThemeColors {
   scrim: string;
   /** Stronger carbon scrim for the countdown bubble. */
   scrimStrong: string;
-  /** Translucent black mask for the area outside the safe-crop rectangle. */
-  cropMask: string;
-  /** Translucent white default border for the safe-crop rectangle. */
+  /** Translucent white default border for the framed capture viewport. */
   cropBorder: string;
   /** Pure white used for the capture screen-flash. */
   flash: string;
@@ -53,7 +51,6 @@ const lightColors: ThemeColors = {
   onPrimary: LIGHT_COLORS.white,
   scrim: OVERLAY_COLORS.scrim,
   scrimStrong: OVERLAY_COLORS.scrimStrong,
-  cropMask: OVERLAY_COLORS.cropMask,
   cropBorder: OVERLAY_COLORS.cropBorder,
   flash: LIGHT_COLORS.white,
 };
@@ -72,7 +69,6 @@ const darkColors: ThemeColors = {
   onPrimary: DARK_COLORS.white,
   scrim: OVERLAY_COLORS.scrim,
   scrimStrong: OVERLAY_COLORS.scrimStrong,
-  cropMask: OVERLAY_COLORS.cropMask,
   cropBorder: OVERLAY_COLORS.cropBorder,
   flash: DARK_COLORS.white,
 };

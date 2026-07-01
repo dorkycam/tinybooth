@@ -73,9 +73,7 @@ export const OVERLAY_COLORS = {
   scrim: 'rgba(15, 18, 22, 0.55)',
   /** Stronger carbon scrim for the countdown bubble. */
   scrimStrong: 'rgba(15, 18, 22, 0.78)',
-  /** Black mask for the area outside the safe-crop rectangle. */
-  cropMask: 'rgba(0, 0, 0, 0.45)',
-  /** White default border for the safe-crop rectangle. */
+  /** White default border for the framed capture viewport. */
   cropBorder: 'rgba(255, 255, 255, 0.85)',
 } as const;
 
