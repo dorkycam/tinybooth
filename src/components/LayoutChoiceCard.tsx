@@ -2,7 +2,7 @@
  * Layout choice card.
  *
  * A large tappable card shown on the Choose layout screen. It renders a small
- * geometric preview of how the shots are arranged (a single column of stacked
+ * geometric preview of the printed 4x6 sheet (two duplicated columns of four
  * frames for Classic, a 2x2 grid for Quad) plus the label and a one-line
  * description.
  *
@@ -80,12 +80,19 @@ interface LayoutGlyphProps {
   color: string;
 }
 
-/** Stacked-column glyph for the Classic strip. */
+/**
+ * Printed-sheet glyph for the Classic strip: two identical columns of four
+ * frames, matching the 4x6 sheet that gets cut down the middle.
+ */
 function ClassicGlyph({ color }: LayoutGlyphProps): JSX.Element {
   return (
-    <View style={styles.classicColumn}>
-      {[0, 1, 2, 3].map((cell) => (
-        <View key={cell} style={[styles.classicCell, { backgroundColor: color }]} />
+    <View style={styles.classicSheet}>
+      {[0, 1].map((column) => (
+        <View key={column} style={styles.classicColumn}>
+          {[0, 1, 2, 3].map((cell) => (
+            <View key={cell} style={[styles.classicCell, { backgroundColor: color }]} />
+          ))}
+        </View>
       ))}
     </View>
   );
@@ -119,14 +126,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 8,
   },
-  classicColumn: {
+  classicSheet: {
     flex: 1,
-    width: 44,
+    width: '100%',
+    flexDirection: 'row',
     gap: 6,
+    alignItems: 'center',
     justifyContent: 'center',
   },
+  classicColumn: {
+    flex: 1,
+    maxWidth: 34,
+    gap: 6,
+  },
   classicCell: {
-    height: 18,
+    height: 17,
     borderRadius: 3,
   },
   quadGrid: {
