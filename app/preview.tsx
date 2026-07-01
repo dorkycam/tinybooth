@@ -126,6 +126,8 @@ export default function PreviewScreen(): JSX.Element {
     </View>
   );
 
+  // Close is never gated on `busy`: it is the kiosk's escape hatch and must
+  // always dismiss, even while a delivery action is running.
   const closeButton = (
     <IconButton
       icon="close"
@@ -134,7 +136,6 @@ export default function PreviewScreen(): JSX.Element {
       glass
       size={44}
       onPress={handleDone}
-      disabled={busy !== null}
       scheme="dark"
       testID="preview-close"
     />
