@@ -14,11 +14,11 @@
  * per-shot accept or reject. Settings drive the feedback toggles; the layout is
  * chosen on the previous screen and passed in as a route param.
  *
- * Presentation note: this screen intentionally keeps the full-bleed immersive
- * camera and does NOT adopt ScreenScaffold / useLayoutClass. The live preview is
- * the deliberate full-bleed exception; the centered SafeCropOverlay (maxWidth
- * 640) is the real content region. Future responsive passes must not column-wrap
- * the live preview.
+ * Presentation note: this screen does NOT adopt ScreenScaffold / useLayoutClass.
+ * The live preview is locked to the layout's cell aspect ratio via
+ * {@link CaptureViewport} so guests see exactly the region that will land on the
+ * strip (WYSIWYG); the dark area around the frame is genuinely uncaptured. Future
+ * responsive passes must not column-wrap the live preview.
  */
 import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -32,7 +32,7 @@ import { CountdownOverlay } from '@/components/CountdownOverlay';
 import { IconButton } from '@/components/IconButton';
 import { PeekMessage } from '@/components/PeekMessage';
 import { PermissionPrimer } from '@/components/PermissionPrimer';
-import { SafeCropOverlay } from '@/components/SafeCropOverlay';
+import { CaptureViewport } from '@/components/CaptureViewport';
 import { ScreenFlash } from '@/components/ScreenFlash';
 import { useCaptureSession, type CaptureResult } from '@/hooks/useCaptureSession';
 import { useSettings } from '@/hooks/useSettings';
@@ -160,24 +160,25 @@ export default function CaptureScreen(): JSX.Element {
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.bg }]}>
       <View style={styles.preview}>
-        <CameraSurface
-          ref={session.cameraRef}
-          flash="off"
-          isActive={state.kind !== 'composing'}
-        />
-        <SafeCropOverlay frameAspect={frameAspect} accent={theme.colors.primary} />
-        {peek ? (
-          <>
-            <Image
-              source={{ uri: peek.uri }}
-              style={styles.peek}
-              resizeMode="cover"
-              accessibilityLabel="Your last shot"
-            />
-            {peek.message ? <PeekMessage message={peek.message} /> : null}
-          </>
-        ) : null}
-        <CountdownOverlay digit={digit} message={getReadyMessage} />
+        <CaptureViewport frameAspect={frameAspect} accent={theme.colors.primary}>
+          <CameraSurface
+            ref={session.cameraRef}
+            flash="off"
+            isActive={state.kind !== 'composing'}
+          />
+          {peek ? (
+            <>
+              <Image
+                source={{ uri: peek.uri }}
+                style={styles.peek}
+                resizeMode="cover"
+                accessibilityLabel="Your last shot"
+              />
+              {peek.message ? <PeekMessage message={peek.message} /> : null}
+            </>
+          ) : null}
+          <CountdownOverlay digit={digit} message={getReadyMessage} />
+        </CaptureViewport>
         <ScreenFlash active={flashActive} onDone={session.clearFlash} />
       </View>
 
