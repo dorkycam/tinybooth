@@ -14,11 +14,13 @@
  * per-shot accept or reject. Settings drive the feedback toggles; the layout is
  * chosen on the previous screen and passed in as a route param.
  *
- * Presentation note: this screen does NOT adopt ScreenScaffold / useLayoutClass.
- * The live preview is locked to the layout's cell aspect ratio via
- * {@link CaptureViewport} so guests see exactly the region that will land on the
- * strip (WYSIWYG); the dark area around the frame is genuinely uncaptured. Future
- * responsive passes must not column-wrap the live preview.
+ * Presentation note: this screen intentionally keeps the full-bleed immersive
+ * camera and does NOT adopt ScreenScaffold / useLayoutClass. WYSIWYG runs in the
+ * "capture follows the preview" direction: {@link CropFrameOverlay} dims
+ * everything outside a centered cell-aspect box and reports the box geometry,
+ * and composition crops each photo to exactly that region (see
+ * `src/lib/cropGeometry.ts`). Future responsive passes must not column-wrap the
+ * live preview.
  */
 import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -32,10 +34,11 @@ import { CountdownOverlay } from '@/components/CountdownOverlay';
 import { IconButton } from '@/components/IconButton';
 import { PeekMessage } from '@/components/PeekMessage';
 import { PermissionPrimer } from '@/components/PermissionPrimer';
-import { CaptureViewport } from '@/components/CaptureViewport';
+import { CropFrameOverlay } from '@/components/CropFrameOverlay';
 import { ScreenFlash } from '@/components/ScreenFlash';
 import { useCaptureSession, type CaptureResult } from '@/hooks/useCaptureSession';
 import { useSettings } from '@/hooks/useSettings';
+import type { PreviewCrop } from '@/lib/cropGeometry';
 import {
   DEFAULT_STRIP_LAYOUT,
   frameAspectForLayout,
@@ -66,6 +69,8 @@ export default function CaptureScreen(): JSX.Element {
 
   const [permStep, setPermStep] = useState<PermStep>('checking');
   const [cameraStatus, setCameraStatus] = useState<PermissionStatus>('unknown');
+  // Crop-box geometry measured by the overlay; composition crops to this region.
+  const [crop, setCrop] = useState<PreviewCrop | null>(null);
 
   // Feedback preferences from the shared, persisted settings store.
   const { settings } = useSettings();
@@ -98,6 +103,7 @@ export default function CaptureScreen(): JSX.Element {
     soundOn: settings.sound,
     hapticsOn: settings.haptics,
     flashOn: settings.flash,
+    crop,
     onComplete: handleComplete,
     onExit: handleExit,
   });
@@ -160,25 +166,28 @@ export default function CaptureScreen(): JSX.Element {
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.bg }]}>
       <View style={styles.preview}>
-        <CaptureViewport frameAspect={frameAspect} accent={theme.colors.primary}>
-          <CameraSurface
-            ref={session.cameraRef}
-            flash="off"
-            isActive={state.kind !== 'composing'}
+        <CameraSurface
+          ref={session.cameraRef}
+          flash="off"
+          isActive={state.kind !== 'composing'}
+        />
+        {/* The peek renders full-bleed under the overlay so it aligns with the
+            live preview and the box keeps marking the kept region. */}
+        {peek ? (
+          <Image
+            source={{ uri: peek.uri }}
+            style={styles.peek}
+            resizeMode="cover"
+            accessibilityLabel="Your last shot"
           />
-          {peek ? (
-            <>
-              <Image
-                source={{ uri: peek.uri }}
-                style={styles.peek}
-                resizeMode="cover"
-                accessibilityLabel="Your last shot"
-              />
-              {peek.message ? <PeekMessage message={peek.message} /> : null}
-            </>
-          ) : null}
-          <CountdownOverlay digit={digit} message={getReadyMessage} />
-        </CaptureViewport>
+        ) : null}
+        <CropFrameOverlay
+          frameAspect={frameAspect}
+          accent={theme.colors.primary}
+          onCropChange={setCrop}
+        />
+        {peek?.message ? <PeekMessage message={peek.message} /> : null}
+        <CountdownOverlay digit={digit} message={getReadyMessage} />
         <ScreenFlash active={flashActive} onDone={session.clearFlash} />
       </View>
 

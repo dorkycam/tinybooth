@@ -17,6 +17,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { CameraSurfaceHandle } from '@/components/CameraSurface';
+import type { PreviewCrop } from '@/lib/cropGeometry';
 import { captureHaptic, tickHaptic } from '@/lib/haptics';
 import type { StripLayout } from '@/lib/layouts';
 import { getRandomMessage } from '@/lib/messages';
@@ -74,6 +75,11 @@ export interface UseCaptureSessionParams {
   hapticsOn: boolean;
   /** When true, flash the screen white on capture. */
   flashOn: boolean;
+  /**
+   * The capture screen's crop-box geometry, so composition matches what the
+   * guest saw inside the box. Null until the overlay has measured itself.
+   */
+  crop: PreviewCrop | null;
   /** Called once with the composed result after the final shot. */
   onComplete: (result: CaptureResult) => void;
   /** Called when the guest cancels out of the session. */
@@ -122,6 +128,7 @@ export function useCaptureSession(params: UseCaptureSessionParams): UseCaptureSe
     soundOn,
     hapticsOn,
     flashOn,
+    crop,
     onComplete,
     onExit,
   } = params;
@@ -221,7 +228,7 @@ export function useCaptureSession(params: UseCaptureSessionParams): UseCaptureSe
         }
         const result = await compose({
           layout,
-          photos: frames.map((uri) => ({ uri })),
+          photos: frames.map((uri) => ({ uri, ...(crop ? { crop } : {}) })),
         });
         composedUri = result.uri;
       } catch (error) {
@@ -234,7 +241,7 @@ export function useCaptureSession(params: UseCaptureSessionParams): UseCaptureSe
     return () => {
       ignore = true;
     };
-  }, [state.kind, layout, onComplete]);
+  }, [state.kind, layout, crop, onComplete]);
 
   const clearFlash = useCallback((): void => {
     setFlashActive(false);
