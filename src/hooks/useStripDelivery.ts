@@ -5,13 +5,20 @@
  * save status, and the print/save/share handlers. The screen stays a thin route
  * that wires these to buttons and keeps navigation (Redo, Done) for itself.
  *
- * Each action guards on a missing strip, flips `busy` for the duration so the
- * action row can disable, and resets it in `finally`. Save additionally tracks a
+ * Print and Save guard on a missing strip, flip `busy` for the duration so the
+ * action row can disable, and reset it in `finally`. Save additionally tracks a
  * {@link SaveState} for the status line and, when `saveFrames` is on and there is
  * more than one frame, fires the per-frame save in the background without
  * blocking the strip save result.
+ *
+ * Share is deliberately kept OUT of the `busy` gate: presenting the OS share
+ * sheet hands off to a modal the app cannot reliably observe being dismissed (on
+ * iPad, AirDrop can leave `expo-sharing`'s promise pending indefinitely). Gating
+ * on it would leave every delivery button — and Close — disabled until the idle
+ * timeout. The share sheet blocks re-taps on its own, so a ref guard against a
+ * double-presentation is all that is needed.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { saveFramesToCameraRoll, saveToCameraRoll } from '@/lib/cameraRoll';
 import { printStrip } from '@/lib/print';
@@ -19,8 +26,12 @@ import { shareStrip } from '@/lib/share';
 
 /** Save status used to drive the preview status line. */
 export type SaveState = 'idle' | 'saving' | 'saved' | 'permission_denied' | 'error';
-/** Which delivery action is currently in flight, if any. */
-export type BusyAction = 'print' | 'save' | 'share';
+/**
+ * Which delivery action is currently in flight, if any. Share is intentionally
+ * absent: it hands off to a modal OS sheet whose dismissal the app can't reliably
+ * observe, so gating the UI on it risks a permanent stuck state (see file docs).
+ */
+export type BusyAction = 'print' | 'save';
 
 /** Inputs for {@link useStripDelivery}. */
 export interface UseStripDeliveryParams {
@@ -59,6 +70,9 @@ export function useStripDelivery({
 }: UseStripDeliveryParams): UseStripDeliveryResult {
   const [busy, setBusy] = useState<BusyAction | null>(null);
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  // Synchronous guard so a double-tap can't present two share sheets before the
+  // first one covers the screen. Cleared when the sheet's promise settles.
+  const shareInFlight = useRef<boolean>(false);
 
   const print = useCallback(async (): Promise<void> => {
     if (!composedUri) {
@@ -100,12 +114,14 @@ export function useStripDelivery({
   }, [composedUri, saveFrames, uris]);
 
   const share = useCallback(async (): Promise<void> => {
-    if (!composedUri) return;
-    setBusy('share');
+    if (!composedUri || shareInFlight.current) return;
+    shareInFlight.current = true;
+    // No `busy` flip: the modal share sheet already blocks re-taps, and its
+    // dismissal promise is unreliable on iPad, so we never let it gate the UI.
     try {
       await shareStrip(composedUri);
     } finally {
-      setBusy(null);
+      shareInFlight.current = false;
     }
   }, [composedUri]);
 
