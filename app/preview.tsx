@@ -23,7 +23,7 @@ import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback } from 'react';
-import { Image, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { AutoCloseBar } from '@/components/AutoCloseBar';
 import { DeliveryActions } from '@/components/DeliveryActions';
 import { IconButton } from '@/components/IconButton';
@@ -38,10 +38,6 @@ import { useTheme } from '@/theme/useTheme';
 
 /** Circle diameter for the delivery actions, by form factor. */
 const ACTION_SIZE = { phone: 60, tablet: 72 } as const;
-/** Max width of the strip hero. Tablet portrait keeps tablet sizing; `wide` (tablet landscape) widens. */
-const STRIP_MAX_WIDTH = { phone: 320, tablet: 480, wide: 640 } as const;
-/** Strip height cap as a fraction of the viewport, by form factor. */
-const STRIP_HEIGHT_RATIO = { phone: 0.5, tablet: 0.68 } as const;
 
 /** Preview screen entry point. */
 export default function PreviewScreen(): JSX.Element {
@@ -50,7 +46,6 @@ export default function PreviewScreen(): JSX.Element {
   const router = useRouter();
   const { settings } = useSettings();
   const { layoutClass, presentation } = usePresentation();
-  const { height: windowHeight } = useWindowDimensions();
   const params = useLocalSearchParams<{
     layout?: string;
     uris?: string;
@@ -84,40 +79,8 @@ export default function PreviewScreen(): JSX.Element {
     router.replace({ pathname: '/capture', params: { layout } });
   }
 
-  // Sizing keys off the form factor (layoutClass) so tablet portrait keeps tablet
-  // sizing while rendering the stacked presentation; only the width cap widens.
+  // Action circles key off the form factor so tablet portrait keeps tablet sizing.
   const actionSize = ACTION_SIZE[layoutClass];
-  const stripMaxWidth =
-    presentation === 'wide' ? STRIP_MAX_WIDTH.wide : STRIP_MAX_WIDTH[layoutClass];
-  // Cap the strip to a viewport fraction (letterboxed via contain) so a tall strip never hides the actions.
-  const stripImageHeight = Math.round(windowHeight * STRIP_HEIGHT_RATIO[layoutClass]);
-
-  const stripFrame = (
-    <View
-      style={[
-        styles.stripFrame,
-        {
-          backgroundColor: theme.colors.bg,
-          borderColor: theme.colors.hairline,
-          borderRadius: theme.radius.lg,
-          maxWidth: stripMaxWidth,
-        },
-      ]}
-    >
-      {composedUri ? (
-        <Image
-          source={{ uri: composedUri }}
-          style={[styles.stripImage, { height: stripImageHeight }]}
-          resizeMode="contain"
-          accessibilityLabel="Composed photostrip"
-        />
-      ) : (
-        <Text style={[styles.placeholder, { color: theme.colors.subtle }]}>
-          {composeError ? 'Could not compose strip.' : 'Loading...'}
-        </Text>
-      )}
-    </View>
-  );
 
   const content = (
     <View style={styles.content}>
@@ -125,13 +88,20 @@ export default function PreviewScreen(): JSX.Element {
       <Text style={[styles.caption, { color: theme.colors.subtle }]}>
         {stripLayoutLabel(layout)}
       </Text>
-      <ScrollView
-        style={[styles.stripScroll, { maxHeight: stripImageHeight }]}
-        contentContainerStyle={styles.stripScrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {stripFrame}
-      </ScrollView>
+      {composedUri ? (
+        <Image
+          source={{ uri: composedUri }}
+          style={styles.stripImage}
+          resizeMode="contain"
+          accessibilityLabel="Composed photostrip"
+        />
+      ) : (
+        <View style={styles.placeholderWrap}>
+          <Text style={[styles.placeholder, { color: theme.colors.subtle }]}>
+            {composeError ? 'Could not compose strip.' : 'Loading...'}
+          </Text>
+        </View>
+      )}
     </View>
   );
 
@@ -177,6 +147,7 @@ export default function PreviewScreen(): JSX.Element {
         style={{ backgroundColor: theme.colors.bg }}
         topRight={closeButton}
         actionBand={actionBand}
+        contentFill
       >
         {content}
       </ScreenScaffold>
@@ -209,23 +180,14 @@ function saveColor(state: SaveState, theme: ReturnType<typeof useTheme>): string
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  // Centered content column: countdown, layout caption, then the capped strip.
-  content: { width: '100%', alignItems: 'center', gap: 12 },
+  // Fills the scaffold content region: countdown, caption, then the strip image.
+  content: { flex: 1, width: '100%', alignItems: 'center', gap: 12 },
   // Full-width so the countdown text clears the fixed top-right Close.
   autoClose: { alignSelf: 'stretch' },
   caption: { fontSize: 13, letterSpacing: 1, textTransform: 'uppercase', textAlign: 'center' },
-  // The strip scrolls if it still overflows the viewport fraction; the band never does.
-  stripScroll: { alignSelf: 'stretch', flexShrink: 1 },
-  stripScrollContent: { alignItems: 'center', justifyContent: 'center', flexGrow: 1 },
-  stripFrame: {
-    width: '100%',
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 8,
-    overflow: 'hidden',
-  },
-  stripImage: { width: '100%' },
+  // The strip fills the remaining space, letterboxed to its aspect via `contain`.
+  stripImage: { flex: 1, width: '100%' },
+  placeholderWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   actions: { width: '100%', alignItems: 'center', gap: 8 },
   errorText: { fontSize: 13, textAlign: 'center', paddingHorizontal: 8 },
   saveLine: { fontSize: 13, minHeight: 18, textAlign: 'center' },

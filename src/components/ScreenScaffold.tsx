@@ -44,6 +44,8 @@ interface ScreenScaffoldProps {
   topRight?: ReactNode;
   /** Skip the surface background so the scaffold can layer over live camera. */
   transparent?: boolean;
+  /** Let the content region fill its height (for a hero image) instead of centering. */
+  contentFill?: boolean;
   /** Optional per-presentation max-width override. Defaults to {@link CONTENT_MAX_WIDTH}. */
   maxWidth?: MaxWidthByPresentation;
   /** Optional style appended after the base root styles. */
@@ -63,6 +65,7 @@ export function ScreenScaffold({
   topLeft,
   topRight,
   transparent = false,
+  contentFill = false,
   maxWidth = CONTENT_MAX_WIDTH,
   style,
 }: ScreenScaffoldProps): JSX.Element {
@@ -84,7 +87,11 @@ export function ScreenScaffold({
           },
         ]}
       >
-        <ContentColumn presentation={presentation} maxWidth={maxWidth}>
+        <ContentColumn
+          presentation={presentation}
+          maxWidth={maxWidth}
+          style={contentFill ? styles.fillColumn : undefined}
+        >
           {children}
         </ContentColumn>
       </View>
@@ -137,6 +144,9 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'center',
+  },
+  fillColumn: {
+    flex: 1,
   },
   actionBand: {
     paddingTop: SPACING.lg,
