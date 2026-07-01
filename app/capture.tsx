@@ -10,9 +10,15 @@
  * shot the strip is composed via the Skia bridge and the screen routes to
  * Preview with the composed strip URI.
  *
- * A top-left cancel control lets the guest abort the session and go back. No
+ * A top-right Close control lets the guest abort the session and go back. No
  * per-shot accept or reject. Settings drive the feedback toggles; the layout is
  * chosen on the previous screen and passed in as a route param.
+ *
+ * Presentation note: this screen intentionally keeps the full-bleed immersive
+ * camera and does NOT adopt ScreenScaffold / useLayoutClass. The live preview is
+ * the deliberate full-bleed exception; the centered SafeCropOverlay (maxWidth
+ * 640) is the real content region. Future responsive passes must not column-wrap
+ * the live preview.
  */
 import type { JSX } from 'react';
 import { useKeepAwake } from 'expo-keep-awake';
@@ -177,15 +183,16 @@ export default function CaptureScreen(): JSX.Element {
 
       <View
         pointerEvents="box-none"
-        style={[styles.cancel, { top: insets.top + theme.spacing.sm, left: insets.left + theme.spacing.lg }]}
+        style={[styles.closeChrome, { top: insets.top + theme.spacing.sm, right: insets.right + theme.spacing.lg }]}
       >
         <IconButton
           icon="close"
-          accessibilityLabel="Cancel and leave the booth"
+          accessibilityLabel="Close and leave the booth"
           onPress={session.exitToHome}
           variant="ghost"
           glass
           size={44}
+          scheme="dark"
         />
       </View>
 
@@ -197,7 +204,7 @@ export default function CaptureScreen(): JSX.Element {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   preview: { flex: 1 },
-  cancel: {
+  closeChrome: {
     position: 'absolute',
   },
   peek: {

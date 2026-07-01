@@ -12,10 +12,24 @@ export const TABLET_BREAKPOINT = 768;
 /** Possible orientations. */
 export type Orientation = 'portrait' | 'landscape';
 
+/**
+ * Screen arrangement family. `stacked` centers a narrow content column (phone in
+ * either orientation, plus tablet portrait); `wide` is tablet landscape only and
+ * uses the same arrangement with a wider content column.
+ */
+export type Presentation = 'stacked' | 'wide';
+
+/** Max content-column width (in DP) per presentation. */
+export const CONTENT_MAX_WIDTH = {
+  stacked: 480,
+  wide: 640,
+} as const;
+
 /** Combined layout descriptor returned by `useLayoutClass`. */
 export interface LayoutDescriptor {
   layoutClass: LayoutClass;
   orientation: Orientation;
+  presentation: Presentation;
   width: number;
   height: number;
 }
@@ -30,5 +44,7 @@ export function classifyDimensions(width: number, height: number): LayoutDescrip
   const shortEdge = Math.min(width, height);
   const orientation: Orientation = width >= height ? 'landscape' : 'portrait';
   const layoutClass: LayoutClass = shortEdge >= TABLET_BREAKPOINT ? 'tablet' : 'phone';
-  return { layoutClass, orientation, width, height };
+  const presentation: Presentation =
+    layoutClass === 'tablet' && orientation === 'landscape' ? 'wide' : 'stacked';
+  return { layoutClass, orientation, presentation, width, height };
 }

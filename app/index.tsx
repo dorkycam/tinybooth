@@ -16,9 +16,10 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconButton } from '@/components/IconButton';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { StartBackdrop } from '@/components/StartBackdrop';
 import { Wordmark } from '@/components/Wordmark';
-import { useLayoutClass } from '@/lib/layout';
+import { usePresentation } from '@/lib/PresentationContext';
 import { useTheme } from '@/theme/useTheme';
 
 /**
@@ -31,27 +32,20 @@ export default function HomeScreen(): JSX.Element {
   // scrim regardless of the user's theme preference.
   const theme = useTheme('dark');
   const router = useRouter();
-  const { layoutClass } = useLayoutClass();
-  const isTablet = layoutClass === 'tablet';
+  const { presentation } = usePresentation();
 
   return (
     <StartBackdrop isActive>
-      <SafeAreaView style={styles.root}>
-        <View style={styles.topBar}>
-          <View />
-          <IconButton
-            icon="settings-outline"
-            accessibilityLabel="Settings"
-            onPress={() => router.push('/settings')}
-            glass
-            size={44}
-          />
-        </View>
-        <View
-          style={[
-            styles.container,
-            isTablet ? styles.containerTablet : styles.containerPhone,
-          ]}
+      <View style={styles.root}>
+        <ScreenScaffold
+          presentation={presentation}
+          transparent
+          maxWidth={{ stacked: 480, wide: 640 }}
+          actionBand={
+            <View style={styles.actions}>
+              <PrimaryButton label="Start" onPress={() => router.push('/choose-layout')} />
+            </View>
+          }
         >
           <View style={styles.brand}>
             <Wordmark size="lg" style={{ color: theme.colors.flash }} />
@@ -59,11 +53,19 @@ export default function HomeScreen(): JSX.Element {
               Tap below to start then strike a pose.
             </Text>
           </View>
-          <View style={styles.actions}>
-            <PrimaryButton label="Start" onPress={() => router.push('/choose-layout')} />
-          </View>
-        </View>
-      </SafeAreaView>
+        </ScreenScaffold>
+        {/* Operator-only chrome: deliberately outside the guest reach band. */}
+        <SafeAreaView edges={['top', 'right']} pointerEvents="box-none" style={styles.topBar}>
+          <IconButton
+            icon="settings-outline"
+            accessibilityLabel="Settings"
+            onPress={() => router.push('/settings')}
+            glass
+            size={44}
+            scheme="dark"
+          />
+        </SafeAreaView>
+      </View>
     </StartBackdrop>
   );
 }
@@ -73,26 +75,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'flex-end',
     paddingHorizontal: 24,
     paddingTop: 12,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
-  containerPhone: {
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 48,
-    paddingBottom: 48,
-  },
-  containerTablet: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 48,
+    zIndex: 3,
   },
   brand: {
     alignItems: 'center',
@@ -106,6 +96,7 @@ const styles = StyleSheet.create({
   actions: {
     width: '100%',
     maxWidth: 320,
+    alignSelf: 'center',
     gap: 12,
   },
 });

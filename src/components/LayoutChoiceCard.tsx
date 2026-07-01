@@ -10,7 +10,7 @@
  * does not navigate or read settings itself.
  */
 import type { JSX } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, type StyleProp, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import type { StripLayout } from '@/lib/layouts';
 import { useTheme } from '@/theme/useTheme';
 
@@ -23,6 +23,8 @@ interface LayoutChoiceCardProps {
   description: string;
   /** Fired when the guest taps the card. */
   onPress: (layout: StripLayout) => void;
+  /** Optional style appended after the base card styles. */
+  style?: StyleProp<ViewStyle>;
 }
 
 /**
@@ -35,6 +37,7 @@ export function LayoutChoiceCard({
   label,
   description,
   onPress,
+  style,
 }: LayoutChoiceCardProps): JSX.Element {
   const theme = useTheme();
   return (
@@ -50,6 +53,7 @@ export function LayoutChoiceCard({
           borderRadius: theme.radius.lg,
           opacity: pressed ? 0.85 : 1,
         },
+        style,
       ]}
     >
       <View
@@ -100,7 +104,6 @@ function QuadGlyph({ color }: LayoutGlyphProps): JSX.Element {
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
     minWidth: 150,
     borderWidth: 1,
     padding: 20,

@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 import { GLASS_AVAILABLE, GlassSurface } from './GlassSurface';
 import { buttonHaptic } from '@/lib/haptics';
+import type { ThemeMode } from '@/theme/theme';
 import { useTheme } from '@/theme/useTheme';
 
 /** Visual tone of an {@link IconButton}. */
@@ -49,6 +50,8 @@ export interface IconButtonProps extends Pick<PressableProps, 'testID'> {
   disabled?: boolean;
   /** Optional style appended to the outer wrapper (after the base styles). */
   style?: StyleProp<ViewStyle>;
+  /** Force a theme mode (e.g. `'dark'` for controls over a forced-dark screen). */
+  scheme?: ThemeMode;
 }
 
 /**
@@ -67,8 +70,9 @@ export function IconButton({
   disabled = false,
   testID,
   style,
+  scheme,
 }: IconButtonProps): JSX.Element {
-  const theme = useTheme();
+  const theme = useTheme(scheme);
   // Glass only applies to non-primary controls; primary keeps its brand fill.
   const useGlass = glass && variant !== 'primary' && GLASS_AVAILABLE;
 

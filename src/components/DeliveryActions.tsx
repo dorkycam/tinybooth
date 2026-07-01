@@ -11,6 +11,7 @@
 import type { JSX } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { IconButton } from './IconButton';
+import type { ThemeMode } from '@/theme/theme';
 import { useTheme } from '@/theme/useTheme';
 
 /** Props for {@link DeliveryActions}. */
@@ -29,6 +30,8 @@ export interface DeliveryActionsProps {
   disabled: boolean;
   /** Circle diameter in px. Phone ~56, tablet ~72. */
   size: number;
+  /** Force a theme mode so the row matches a forced-dark screen. */
+  scheme?: ThemeMode;
 }
 
 /**
@@ -44,8 +47,9 @@ export function DeliveryActions({
   saved,
   disabled,
   size,
+  scheme,
 }: DeliveryActionsProps): JSX.Element {
-  const theme = useTheme();
+  const theme = useTheme(scheme);
   return (
     <View style={[styles.row, { gap: theme.spacing.lg }]}>
       <IconButton
@@ -56,6 +60,7 @@ export function DeliveryActions({
         size={size}
         onPress={onPrint}
         disabled={disabled}
+        scheme={scheme}
         testID="preview-print"
       />
       <IconButton
@@ -66,6 +71,7 @@ export function DeliveryActions({
         glass
         onPress={onSave}
         disabled={disabled || saved}
+        scheme={scheme}
         testID="preview-save"
       />
       <IconButton
@@ -76,6 +82,7 @@ export function DeliveryActions({
         glass
         onPress={onShare}
         disabled={disabled}
+        scheme={scheme}
         testID="preview-share"
       />
       <IconButton
@@ -86,6 +93,7 @@ export function DeliveryActions({
         glass
         onPress={onRedo}
         disabled={disabled}
+        scheme={scheme}
         testID="preview-redo"
       />
     </View>
