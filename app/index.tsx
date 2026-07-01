@@ -3,9 +3,9 @@
  *
  * The resting state of a booth on a stand. The background is the live front
  * camera preview, dimmed by a scrim, so the booth reads as already on. A big
- * Start button opens the layout picker, and a gear icon in the corner opens
- * Settings. The screen is kept awake here so a propped-up tablet does not dim
- * between guests.
+ * Start button sits right under the brand block, and a gear icon in the corner
+ * opens Settings. The screen is kept awake here so a propped-up tablet does not
+ * dim between guests.
  *
  * Tablet layout centers the brand with roomy spacing; phone stacks tight.
  */
@@ -54,17 +54,17 @@ export default function HomeScreen(): JSX.Element {
           presentation={presentation}
           transparent
           maxWidth={{ stacked: 480, wide: 640 }}
-          actionBand={
-            <View style={styles.actions}>
-              <PrimaryButton label="Start" onPress={() => router.push('/choose-layout')} />
-            </View>
-          }
         >
           <View style={styles.brand}>
             <Wordmark size="lg" style={{ color: theme.colors.flash }} />
             <Text style={[styles.tagline, { color: theme.colors.fg }]}>
               Tap below to start then strike a pose.
             </Text>
+            <PrimaryButton
+              label="Start"
+              onPress={() => router.push('/choose-layout')}
+              style={styles.startButton}
+            />
           </View>
         </ScreenScaffold>
         {/* Operator-only chrome: deliberately outside the guest reach band. */}
@@ -106,10 +106,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 360,
   },
-  actions: {
+  startButton: {
+    marginTop: 28,
     width: '100%',
     maxWidth: 320,
-    alignSelf: 'center',
-    gap: 12,
   },
 });
