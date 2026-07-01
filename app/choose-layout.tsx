@@ -85,9 +85,11 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
+  // Cards sit centered in the space under the header; the bottom padding nudges
+  // them slightly above true center, toward the optical center.
   band: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     paddingHorizontal: SPACING.xl,
     paddingBottom: SPACING.xl3,
   },
