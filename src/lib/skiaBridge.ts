@@ -9,13 +9,15 @@
  * Geometry comes from `src/lib/layouts.ts`. The resolved layout's `frames` array
  * already includes the duplicated right-column rects for the Classic strip, so
  * this bridge has no layout-specific branching: it draws each shot into each
- * frame rect in order, cropping the shot to the rect's aspect ratio.
+ * frame rect in order. Each shot is cropped via its `PreviewCrop` (the region
+ * the guest saw inside the capture screen's crop box) when provided, falling
+ * back to a plain center-crop to the rect's aspect ratio.
  *
  * Implementation:
  *   1. Resolve the layout geometry from `layouts.ts`.
  *   2. Decode each photo URI via `Skia.Data.fromURI` + `MakeImageFromEncoded`.
  *   3. Build an offscreen surface at the canvas size with a white background.
- *   4. Draw each shot center-cropped into its frame rect (Classic duplicates the
+ *   4. Draw each shot cropped into its frame rect (Classic duplicates the
  *      shot into both columns because the rect list contains both).
  *   5. Snapshot the surface, encode to JPEG, write to a temp file via
  *      `expo-file-system`, return the `file://` URI.
@@ -24,6 +26,7 @@
  * static import strings (per the Metro lazy-import rule) so unit tests and web
  * bundles continue to load without those native modules.
  */
+import { centeredCropRect, previewCropRect, type PreviewCrop } from './cropGeometry';
 import { resolveLayout, type ResolvedLayout, type StripLayout } from './layouts';
 
 /**
@@ -37,8 +40,12 @@ const STRIP_BACKGROUND = '#FFFFFF';
 export interface SkiaBridgePayload {
   /** Which layout to compose. The bridge resolves geometry internally. */
   layout: StripLayout;
-  /** Captured shot URIs, in capture order. */
-  photos: Array<{ uri: string }>;
+  /**
+   * Captured shot URIs, in capture order. `crop` carries the capture screen's
+   * crop-box geometry so the composition matches what the guest saw; when
+   * absent the shot is center-cropped to the frame aspect.
+   */
+  photos: Array<{ uri: string; crop?: PreviewCrop }>;
   /** Optional explicit output path; defaults to the cache directory. */
   outputPath?: string;
 }
@@ -192,7 +199,10 @@ async function composeBridge(payload: SkiaBridgePayload): Promise<SkiaComposeRes
       if (!img) continue;
       decoded.set(shotIndex, img);
     }
-    const srcRect = centeredCropRect(img.width(), img.height(), frame.w, frame.h);
+    const shotCrop = payload.photos[shotIndex]?.crop;
+    const srcRect = shotCrop
+      ? previewCropRect(img.width(), img.height(), shotCrop)
+      : centeredCropRect(img.width(), img.height(), frame.w, frame.h);
     const dstRect = Skia.XYWHRect(frame.x, frame.y, frame.w, frame.h);
     canvas.drawImageRect(img, srcRect, dstRect, paint);
   }
@@ -216,38 +226,6 @@ async function composeBridge(payload: SkiaBridgePayload): Promise<SkiaComposeRes
   await fs.writeAsStringAsync(outputPath, base64, { encoding: fs.EncodingType.Base64 });
 
   return { uri: outputPath, width: layout.canvas.width, height: layout.canvas.height };
-}
-
-/**
- * Compute the source rectangle that center-crops a shot to the destination
- * frame's aspect ratio, so the shot fills the frame without distortion.
- *
- * @param srcW Source image width in pixels.
- * @param srcH Source image height in pixels.
- * @param dstW Destination frame width in pixels.
- * @param dstH Destination frame height in pixels.
- * @returns The crop rectangle in source-image pixels.
- */
-export function centeredCropRect(
-  srcW: number,
-  srcH: number,
-  dstW: number,
-  dstH: number,
-): SkiaRectLike {
-  const targetAspect = dstW / dstH;
-  const srcAspect = srcW / srcH;
-  let cropW: number;
-  let cropH: number;
-  if (srcAspect > targetAspect) {
-    cropH = srcH;
-    cropW = Math.floor(srcH * targetAspect);
-  } else {
-    cropW = srcW;
-    cropH = Math.floor(srcW / targetAspect);
-  }
-  const x = Math.floor((srcW - cropW) / 2);
-  const y = Math.floor((srcH - cropH) / 2);
-  return { x, y, width: cropW, height: cropH };
 }
 
 /**
