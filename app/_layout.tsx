@@ -16,6 +16,7 @@ import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppSplash } from '@/components/AppSplash';
 import { useSettings } from '@/hooks/useSettings';
+import { PresentationProvider } from '@/lib/PresentationContext';
 import { installSkiaBridge } from '@/lib/skiaBridge';
 import { ThemePreferenceProvider } from '@/theme/ThemeContext';
 
@@ -42,20 +43,22 @@ export default function RootLayout(): JSX.Element {
   return (
     <SafeAreaProvider>
       <ThemePreferenceProvider>
-        <View style={{ flex: 1 }} onLayout={onLayoutRoot}>
-          {appReady ? (
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="choose-layout" />
-              <Stack.Screen name="capture" options={{ animation: 'fade' }} />
-              <Stack.Screen name="preview" options={{ animation: 'fade' }} />
-              <Stack.Screen name="settings" />
-            </Stack>
-          ) : (
-            <AppSplash />
-          )}
-          <StatusBar style="auto" />
-        </View>
+        <PresentationProvider>
+          <View style={{ flex: 1 }} onLayout={onLayoutRoot}>
+            {appReady ? (
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="choose-layout" />
+                <Stack.Screen name="capture" options={{ animation: 'fade' }} />
+                <Stack.Screen name="preview" options={{ animation: 'fade' }} />
+                <Stack.Screen name="settings" />
+              </Stack>
+            ) : (
+              <AppSplash />
+            )}
+            <StatusBar style="auto" />
+          </View>
+        </PresentationProvider>
       </ThemePreferenceProvider>
     </SafeAreaProvider>
   );

@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AboutLink } from '@/components/AboutLink';
+import { ContentColumn } from '@/components/ContentColumn';
 import { LayoutPicker } from '@/components/LayoutPicker';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SegmentedChoice } from '@/components/SegmentedChoice';
@@ -22,6 +23,7 @@ import { SettingsRow } from '@/components/SettingsRow';
 import { SettingsSection } from '@/components/SettingsSection';
 import { Wordmark } from '@/components/Wordmark';
 import { useSettings } from '@/hooks/useSettings';
+import { usePresentation } from '@/lib/PresentationContext';
 import {
   GITHUB_ISSUES_URL,
   GITHUB_REPO_URL,
@@ -34,6 +36,7 @@ import {
   type IdleReset,
 } from '@/lib/sessionSettings';
 import { useThemePreference, type ThemePreference } from '@/theme/ThemeContext';
+import { SPACING } from '@/theme/tokens/spacing';
 import { useTheme } from '@/theme/useTheme';
 
 const THEME_CHOICES: ThemePreference[] = ['system', 'light', 'dark'];
@@ -53,6 +56,7 @@ export default function SettingsScreen(): JSX.Element {
   const theme = useTheme();
   const themePref = useThemePreference();
   const router = useRouter();
+  const { presentation } = usePresentation();
   const { settings, update } = useSettings();
   const version = Constants.expoConfig?.version ?? '0.0.0';
 
@@ -70,9 +74,14 @@ export default function SettingsScreen(): JSX.Element {
     >
       <ScreenHeader title="Settings" onBack={handleClose} />
       <ScrollView contentContainerStyle={styles.content}>
-        <Wordmark size="md" />
+        <ContentColumn
+          presentation={presentation}
+          maxWidth={{ stacked: 520, wide: 640 }}
+          style={styles.column}
+        >
+          <Wordmark size="md" />
 
-        <SettingsSection title="Capture defaults">
+          <SettingsSection title="Capture defaults">
           <SettingsRow title="Flash on by default">
             <Switch value={settings.flash} onValueChange={(value) => update({ flash: value })} />
           </SettingsRow>
@@ -140,6 +149,7 @@ export default function SettingsScreen(): JSX.Element {
             <AboutLink label="Terms" onPress={() => openLink(TERMS_URL)} />
           </View>
         </SettingsSection>
+        </ContentColumn>
       </ScrollView>
     </SafeAreaView>
   );
@@ -147,7 +157,8 @@ export default function SettingsScreen(): JSX.Element {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  content: { padding: 24, paddingTop: 8, gap: 16 },
+  content: { paddingTop: SPACING.sm, paddingBottom: SPACING.xl3 },
+  column: { paddingHorizontal: SPACING.xl, gap: SPACING.lg },
   aboutLine: {
     fontSize: 15,
   },

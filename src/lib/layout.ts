@@ -13,8 +13,10 @@ import {
 export {
   classifyDimensions,
   TABLET_BREAKPOINT,
+  CONTENT_MAX_WIDTH,
   type LayoutClass,
   type Orientation,
+  type Presentation,
   type LayoutDescriptor,
 } from './layoutClass';
 
