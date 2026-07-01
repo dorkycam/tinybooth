@@ -10,6 +10,7 @@
  * Thin screen: the section, row, and about-link pieces are extracted components.
  */
 import type { JSX } from 'react';
+import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
@@ -58,7 +59,13 @@ export default function SettingsScreen(): JSX.Element {
   const router = useRouter();
   const { presentation } = usePresentation();
   const { settings, update } = useSettings();
-  const version = Constants.expoConfig?.version ?? '0.0.0';
+  // Read the real installed version + build number from the native binary so it
+  // always matches the actual iOS build number / Android version code without
+  // hardcoding (EAS manages the build number remotely). Falls back to the JS
+  // config version where the native value is unavailable (e.g. tests).
+  const version = Application.nativeApplicationVersion ?? Constants.expoConfig?.version ?? '0.0.0';
+  const build = Application.nativeBuildVersion;
+  const versionLabel = build ? `Version ${version} (${build})` : `Version ${version}`;
 
   // Always give the guest a way out of Settings. Fall back to Start when there
   // is no screen to go back to (e.g. opened as the first route in dev).
@@ -134,7 +141,7 @@ export default function SettingsScreen(): JSX.Element {
 
         <SettingsSection title="About">
           <Text style={[styles.aboutLine, { color: theme.colors.subtle }]}>
-            Version {version}
+            {versionLabel}
           </Text>
           <Text style={[styles.aboutLine, { color: theme.colors.subtle }]}>
             TinyBooth runs fully on your device. No account, no network, nothing collected.
