@@ -116,3 +116,45 @@ export function previewCropRect(srcW: number, srcH: number, crop: PreviewCrop): 
   const y = Math.floor((srcH - height) / 2);
   return { x, y, width, height };
 }
+
+/** Layout constants for {@link counterBottomOffset}. */
+export interface CounterOffsetOptions {
+  /** Default `bottom` offset when the pill sits inside the bottom dim band. */
+  inBandOffset: number;
+  /** Clearance kept between the pill's top edge and the box border, in pixels. */
+  margin: number;
+  /** Crop-box border thickness, in pixels. */
+  boxBorder: number;
+  /** Gap tucked between the pill and the box border when anchored inside it. */
+  gap: number;
+}
+
+/**
+ * Where to pin the bottom frame-counter pill so it never straddles the crop
+ * box's bottom border.
+ *
+ * The crop box is centered, so the bottom dim band is exactly as tall as the
+ * box's distance from the container bottom (`bandHeight`). When that band is
+ * tall enough to seat the whole pill above its default offset plus a clearance
+ * margin, the pill keeps its in-band offset (the intended phone-portrait look).
+ * When the band is too short (height-constrained boxes: iPad landscape, plus the
+ * iPad-portrait quad), the pill tucks just inside the box's bottom edge, over the
+ * live preview, so it clears the border rather than crossing it.
+ *
+ * @param bandHeight Height of the bottom dim band, in pixels (the box's distance
+ *   from the container bottom).
+ * @param pillHeight Measured height of the pill, in pixels.
+ * @param options Layout constants controlling the in-band vs tucked placement.
+ * @returns The pill's `bottom` offset, in pixels.
+ */
+export function counterBottomOffset(
+  bandHeight: number,
+  pillHeight: number,
+  options: CounterOffsetOptions,
+): number {
+  const { inBandOffset, margin, boxBorder, gap } = options;
+  if (bandHeight >= inBandOffset + pillHeight + margin) {
+    return inBandOffset;
+  }
+  return bandHeight + boxBorder + gap;
+}

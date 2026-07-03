@@ -46,7 +46,7 @@ export function StartBackdrop({ isActive, children }: StartBackdropProps): JSX.E
   return (
     <View style={[styles.root, { backgroundColor: theme.colors.bg }]}>
       {cameraReady ? (
-        <CameraSurface isActive={isActive} flash="off" style={StyleSheet.absoluteFillObject} />
+        <CameraSurface isActive={isActive} style={StyleSheet.absoluteFillObject} />
       ) : null}
       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: theme.colors.scrimStrong }]} />
       <View style={styles.content}>{children}</View>

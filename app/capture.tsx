@@ -4,9 +4,10 @@
  * Full-screen mirrored front-camera preview. Once the camera is ready the screen
  * shows a short "Get ready!" intro (about 3s) over the live preview, then runs
  * the session automatically. For each shot: a countdown (length from Settings,
- * default 3s) with optional ticking sound and haptics, then capture (haptic plus
- * a brief white screen-flash; the OS supplies the shutter sound), then a ~1.2s
- * passive peek of the just-captured shot, then the next shot. After the last
+ * default 3s) with optional ticking sound and haptics, then capture (haptic, the
+ * booth's own shutter snap, and either a real camera flash or a held white
+ * screen-flash fill light), then a ~1.2s passive peek of the just-captured shot,
+ * then the next shot. After the last
  * shot the strip is composed via the Skia bridge and the screen routes to
  * Preview with the composed strip URI.
  *
@@ -34,11 +35,11 @@ import { CountdownOverlay } from '@/components/CountdownOverlay';
 import { IconButton } from '@/components/IconButton';
 import { PeekMessage } from '@/components/PeekMessage';
 import { PermissionPrimer } from '@/components/PermissionPrimer';
-import { CropFrameOverlay } from '@/components/CropFrameOverlay';
+import { BOX_BORDER, CropFrameOverlay } from '@/components/CropFrameOverlay';
 import { ScreenFlash } from '@/components/ScreenFlash';
 import { useCaptureSession, type CaptureResult } from '@/hooks/useCaptureSession';
 import { useSettings } from '@/hooks/useSettings';
-import type { PreviewCrop } from '@/lib/cropGeometry';
+import { counterBottomOffset, type CropRect, type PreviewCrop } from '@/lib/cropGeometry';
 import {
   DEFAULT_STRIP_LAYOUT,
   frameAspectForLayout,
@@ -56,6 +57,15 @@ import { useTheme } from '@/theme/useTheme';
 
 type PermStep = 'checking' | 'priming-camera' | 'ready';
 
+/** Default `bottom` offset for the frame-counter pill when it sits in the band. */
+const COUNTER_BASE_OFFSET = 56;
+/** Clearance kept between the pill and the crop box border, in pixels. */
+const COUNTER_MARGIN = 12;
+/** Gap tucked between the pill and the box border when anchored inside it. */
+const COUNTER_TUCK_GAP = 12;
+/** Extra space above the pill kept clear for the celebratory peek message. */
+const PEEK_MESSAGE_GAP = 16;
+
 /** Capture screen entry point. */
 export default function CaptureScreen(): JSX.Element {
   useKeepAwake();
@@ -71,6 +81,12 @@ export default function CaptureScreen(): JSX.Element {
   const [cameraStatus, setCameraStatus] = useState<PermissionStatus>('unknown');
   // Crop-box geometry measured by the overlay; composition crops to this region.
   const [crop, setCrop] = useState<PreviewCrop | null>(null);
+  // Pixel box rect (container coordinates) used to anchor the frame-counter pill.
+  const [boxRect, setBoxRect] = useState<CropRect | null>(null);
+  // Measured height of the frame-counter pill, so its tuck math is exact.
+  const [pillHeight, setPillHeight] = useState<number>(0);
+  // Whether the front device has a real flash (reported by the camera surface).
+  const [hasFlash, setHasFlash] = useState<boolean>(false);
 
   // Feedback preferences from the shared, persisted settings store.
   const { settings } = useSettings();
@@ -103,10 +119,29 @@ export default function CaptureScreen(): JSX.Element {
     soundOn: settings.sound,
     hapticsOn: settings.haptics,
     flashOn: settings.flash,
+    hasFlash,
     crop,
     onComplete: handleComplete,
     onExit: handleExit,
   });
+
+  // Anchor the frame-counter pill to the measured crop box so it never straddles
+  // the box border on height-constrained layouts (iPad landscape, iPad quad),
+  // while keeping the intended in-band placement on phone portrait. The safe-area
+  // inset keeps the in-band pill clear of the home indicator.
+  const bottomOffset = useMemo<number>(() => {
+    const inBandOffset = COUNTER_BASE_OFFSET + insets.bottom;
+    if (!boxRect || pillHeight <= 0) return inBandOffset;
+    return counterBottomOffset(boxRect.y, pillHeight, {
+      inBandOffset,
+      margin: COUNTER_MARGIN,
+      boxBorder: BOX_BORDER,
+      gap: COUNTER_TUCK_GAP,
+    });
+  }, [boxRect, pillHeight, insets.bottom]);
+
+  // Reserve room above the pill so the celebratory peek message never collides.
+  const peekClearance = bottomOffset + pillHeight + PEEK_MESSAGE_GAP;
 
   // Resolve camera permission on mount.
   useEffect(() => {
@@ -168,8 +203,8 @@ export default function CaptureScreen(): JSX.Element {
       <View style={styles.preview}>
         <CameraSurface
           ref={session.cameraRef}
-          flash="off"
           isActive={state.kind !== 'composing'}
+          onFlashAvailabilityChange={setHasFlash}
         />
         {/* The peek renders full-bleed under the overlay so it aligns with the
             live preview and the box keeps marking the kept region. */}
@@ -185,8 +220,11 @@ export default function CaptureScreen(): JSX.Element {
           frameAspect={frameAspect}
           accent={theme.colors.primary}
           onCropChange={setCrop}
+          onBoxRectChange={setBoxRect}
         />
-        {peek?.message ? <PeekMessage message={peek.message} /> : null}
+        {peek?.message ? (
+          <PeekMessage message={peek.message} bottomClearance={peekClearance} />
+        ) : null}
         <CountdownOverlay digit={digit} message={getReadyMessage} />
         <ScreenFlash active={flashActive} onDone={session.clearFlash} />
       </View>
@@ -206,7 +244,12 @@ export default function CaptureScreen(): JSX.Element {
         />
       </View>
 
-      <CaptureChrome hint={hint} subhint={subhint} />
+      <CaptureChrome
+        hint={hint}
+        subhint={subhint}
+        bottomOffset={bottomOffset}
+        onHeightChange={setPillHeight}
+      />
     </View>
   );
 }

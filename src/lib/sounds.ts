@@ -1,22 +1,22 @@
 /**
- * Sound effects for the booth: countdown ticks.
+ * Sound effects for the booth: countdown ticks and the capture snap.
  *
- * The source is the original Swift app's mp3, copied verbatim into
- * `assets/sounds/`. We preload it once on first use so the camera screen
- * can fire ticks with no perceptible delay between them.
+ * The sources are the original Swift app's mp3s, copied verbatim into
+ * `assets/sounds/`. We preload them once on first use so the camera screen can
+ * fire ticks with no perceptible delay and the shutter snaps in sync with the
+ * capture.
  *
- * The capture shutter sound is intentionally not played here. iOS and Android
- * already emit their own shutter sound when a photo is taken, so a second one
- * would double up.
+ * Both players ride the `.playback` audio session (`playsInSilentMode: true`),
+ * so they sound even when the device is in silent mode. The native camera
+ * shutter sound is suppressed at the capture call (`enableShutterSound: false`),
+ * so only our own snap plays and the two never double up.
  *
  * `expo-audio` is lazy-loaded so unit tests + web bundles continue to work
  * without the native module.
  */
 
 interface AudioModule {
-  AudioModule: {
-    setAudioModeAsync(mode: { playsInSilentMode?: boolean }): Promise<void>;
-  };
+  setAudioModeAsync(mode: { playsInSilentMode?: boolean }): Promise<void>;
   createAudioPlayer(source: number): {
     play(): void;
     seekTo(seconds: number): Promise<void>;
@@ -34,6 +34,7 @@ interface SoundPlayer {
 
 let cachedMod: AudioModule | null = null;
 let countdownPlayer: SoundPlayer | null = null;
+let shutterPlayer: SoundPlayer | null = null;
 
 async function loadAudio(): Promise<AudioModule | null> {
   if (cachedMod) return cachedMod;
@@ -41,7 +42,7 @@ async function loadAudio(): Promise<AudioModule | null> {
     const mod = (await import('expo-audio')) as unknown as AudioModule;
     cachedMod = mod;
     try {
-      await mod.AudioModule.setAudioModeAsync({ playsInSilentMode: true });
+      await mod.setAudioModeAsync({ playsInSilentMode: true });
     } catch {
       // Best-effort.
     }
@@ -52,9 +53,9 @@ async function loadAudio(): Promise<AudioModule | null> {
 }
 
 /**
- * Preload the countdown tick player. Safe to call multiple times; only loads
- * once. Call once when the camera screen mounts so the first tick has no
- * warm-up latency.
+ * Preload the countdown-tick and capture-snap players. Safe to call multiple
+ * times; each player loads once. Call when the camera screen mounts so the first
+ * tick and the first snap have no warm-up latency.
  */
 export async function preloadBoothSounds(): Promise<void> {
   const mod = await loadAudio();
@@ -66,6 +67,15 @@ export async function preloadBoothSounds(): Promise<void> {
       countdownPlayer = mod.createAudioPlayer(src);
     } catch {
       countdownPlayer = null;
+    }
+  }
+  if (!shutterPlayer) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const src = require('../../assets/sounds/shutter.mp3') as number;
+      shutterPlayer = mod.createAudioPlayer(src);
+    } catch {
+      shutterPlayer = null;
     }
   }
 }
@@ -82,8 +92,22 @@ export async function playCountdownTick(): Promise<void> {
   }
 }
 
-/** Free the underlying native player. Optional cleanup on screen unmount. */
+/** Play the capture snap. Restarts from zero if it's already playing. */
+export async function playShutterSnap(): Promise<void> {
+  const player = shutterPlayer;
+  if (!player) return;
+  try {
+    await player.seekTo(0);
+    player.play();
+  } catch {
+    // Best-effort.
+  }
+}
+
+/** Free the underlying native players. Optional cleanup on screen unmount. */
 export function releaseBoothSounds(): void {
   countdownPlayer?.release();
   countdownPlayer = null;
+  shutterPlayer?.release();
+  shutterPlayer = null;
 }
