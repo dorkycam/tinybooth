@@ -130,7 +130,9 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     flexDirection: 'row',
-    gap: 6,
+    // Double the column gap (vs the 6px row gap) so the preview honestly shows
+    // the wider middle border where the printed sheet is cut in half.
+    gap: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },

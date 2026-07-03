@@ -20,12 +20,14 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { StartBackdrop } from '@/components/StartBackdrop';
 import { Wordmark } from '@/components/Wordmark';
+import { useSettings } from '@/hooks/useSettings';
 import { usePresentation } from '@/lib/PresentationContext';
 import { useTheme } from '@/theme/useTheme';
 
 /**
- * Home screen. The live preview fills the background; Start opens the layout
- * picker and the gear opens Settings.
+ * Home screen. The live preview fills the background; Start honors the
+ * default-layout preference (opens the picker when set to User's choice,
+ * otherwise jumps straight to capture) and the gear opens Settings.
  */
 export default function HomeScreen(): JSX.Element {
   useKeepAwake();
@@ -34,6 +36,18 @@ export default function HomeScreen(): JSX.Element {
   const theme = useTheme('dark');
   const router = useRouter();
   const { presentation } = usePresentation();
+  const { settings } = useSettings();
+
+  // Honor the default-layout preference: a concrete layout skips the picker and
+  // opens capture directly (Back lands on Home since the picker never mounts);
+  // 'ask' (User's choice) shows the picker each session.
+  function handleStart(): void {
+    if (settings.layout === 'ask') {
+      router.push('/choose-layout');
+    } else {
+      router.push({ pathname: '/capture', params: { layout: settings.layout } });
+    }
+  }
 
   // Run the backdrop camera only while Start is focused. Off-screen (during
   // capture) the camera is released so vision-camera hands the front device to
@@ -60,11 +74,7 @@ export default function HomeScreen(): JSX.Element {
             <Text style={[styles.tagline, { color: theme.colors.fg }]}>
               Tap below to start then strike a pose.
             </Text>
-            <PrimaryButton
-              label="Start"
-              onPress={() => router.push('/choose-layout')}
-              style={styles.startButton}
-            />
+            <PrimaryButton label="Start" onPress={handleStart} style={styles.startButton} />
           </View>
         </ScreenScaffold>
         {/* Operator-only chrome: deliberately outside the guest reach band. */}

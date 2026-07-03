@@ -8,13 +8,13 @@
  */
 import type { JSX } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import type { StripLayout } from '@/lib/layouts';
+import type { LayoutPreference } from '@/lib/layouts';
 import { useTheme } from '@/theme/useTheme';
 
-/** One selectable strip-layout option. */
+/** One selectable layout-preference option. */
 export interface LayoutOption {
-  /** The layout this pill selects. */
-  key: StripLayout;
+  /** The layout preference this pill selects. */
+  key: LayoutPreference;
   /** Title shown on the pill. */
   label: string;
   /** One-line description under the title. */
@@ -28,11 +28,11 @@ const DEFAULT_LAYOUTS: readonly LayoutOption[] = [
 ];
 
 interface LayoutPickerProps {
-  /** Currently selected layout. */
-  value: StripLayout;
-  /** Fired with the tapped layout. */
-  onChange: (next: StripLayout) => void;
-  /** Selectable layouts, in display order. Defaults to the built-in Classic/Quad set. */
+  /** Currently selected layout preference. */
+  value: LayoutPreference;
+  /** Fired with the tapped layout preference. */
+  onChange: (next: LayoutPreference) => void;
+  /** Selectable options, in display order. Defaults to the built-in Classic/Quad set. */
   options?: readonly LayoutOption[];
 }
 

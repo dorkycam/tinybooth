@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   CANVAS_HEIGHT,
+  CANVAS_MARGIN,
   CANVAS_WIDTH,
+  CLASSIC_MIDDLE_GUTTER,
+  DEFAULT_LAYOUT_PREFERENCE,
   DEFAULT_STRIP_LAYOUT,
   SHOTS_PER_LAYOUT,
   STRIP_LAYOUTS,
   frameAspectForLayout,
+  parseLayoutPreference,
   parseStripLayout,
   resolveClassicLayout,
   resolveLayout,
@@ -95,6 +99,40 @@ describe('classic strip geometry', () => {
     expect(layout.frameAspect).toBeCloseTo(cell.w / cell.h);
     expect(frameAspectForLayout('classic')).toBeCloseTo(layout.frameAspect);
   });
+
+  it('sizes the middle gutter at twice the outer margin', () => {
+    // CANVAS_MARGIN = 36 -> gutter = 72.
+    expect(CLASSIC_MIDDLE_GUTTER).toBe(2 * CANVAS_MARGIN);
+    const left = frameAt(layout.frames, 0);
+    const right = frameAt(layout.frames, 4);
+    // Gutter is the space between the right edge of the left column and the left
+    // edge of the right column: 636 - (36 + 528) = 72.
+    const gutter = right.x - (left.x + left.w);
+    expect(gutter).toBe(2 * CANVAS_MARGIN);
+    expect(gutter).toBe(72);
+  });
+
+  it('leaves an even 36px border on every side of each cut half', () => {
+    // The sheet is cut in half down the middle at x = 600.
+    const cutX = CANVAS_WIDTH / 2;
+    expect(cutX).toBe(600);
+    const left = frameAt(layout.frames, 0);
+    const right = frameAt(layout.frames, 4);
+
+    // Left half: outer margin (left.x) equals the inner border to the cut line.
+    const leftOuter = left.x;
+    const leftInner = cutX - (left.x + left.w);
+    expect(leftOuter).toBe(CANVAS_MARGIN);
+    expect(leftInner).toBe(CANVAS_MARGIN);
+    expect(leftInner).toBe(leftOuter);
+
+    // Right half: inner border from the cut line equals the outer margin.
+    const rightInner = right.x - cutX;
+    const rightOuter = CANVAS_WIDTH - (right.x + right.w);
+    expect(rightInner).toBe(CANVAS_MARGIN);
+    expect(rightOuter).toBe(CANVAS_MARGIN);
+    expect(rightInner).toBe(rightOuter);
+  });
 });
 
 describe('quad grid geometry', () => {
@@ -134,5 +172,24 @@ describe('resolveLayout dispatch', () => {
     expect(resolveLayout('quad').id).toBe('quad');
     expect(resolveLayout('classic').frames).toHaveLength(8);
     expect(resolveLayout('quad').frames).toHaveLength(4);
+  });
+});
+
+describe('layout preference', () => {
+  it("defaults to 'ask' (User's choice)", () => {
+    expect(DEFAULT_LAYOUT_PREFERENCE).toBe('ask');
+  });
+
+  it("accepts the two concrete layouts and the 'ask' sentinel", () => {
+    expect(parseLayoutPreference('classic')).toBe('classic');
+    expect(parseLayoutPreference('quad')).toBe('quad');
+    expect(parseLayoutPreference('ask')).toBe('ask');
+  });
+
+  it("falls back to 'ask' for junk, null, and non-string values", () => {
+    expect(parseLayoutPreference('grid')).toBe('ask');
+    expect(parseLayoutPreference(null)).toBe('ask');
+    expect(parseLayoutPreference(undefined)).toBe('ask');
+    expect(parseLayoutPreference(42)).toBe('ask');
   });
 });
