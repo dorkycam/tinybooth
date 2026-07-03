@@ -13,6 +13,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
+import { SystemBars } from 'react-native-edge-to-edge';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppSplash } from '@/components/AppSplash';
 import { useSettings } from '@/hooks/useSettings';
@@ -46,7 +47,7 @@ export default function RootLayout(): JSX.Element {
         <PresentationProvider>
           <View style={{ flex: 1 }} onLayout={onLayoutRoot}>
             {appReady ? (
-              <Stack screenOptions={{ headerShown: false }}>
+              <Stack screenOptions={{ headerShown: false, autoHideHomeIndicator: true }}>
                 <Stack.Screen name="index" />
                 <Stack.Screen name="choose-layout" />
                 <Stack.Screen name="capture" options={{ animation: 'fade' }} />
@@ -57,6 +58,7 @@ export default function RootLayout(): JSX.Element {
               <AppSplash />
             )}
             <StatusBar style="auto" />
+            <SystemBars hidden={{ navigationBar: true }} />
           </View>
         </PresentationProvider>
       </ThemePreferenceProvider>
