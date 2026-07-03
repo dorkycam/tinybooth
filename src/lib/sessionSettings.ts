@@ -3,7 +3,11 @@
  * default layout pick, and the flash preference between launches.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DEFAULT_STRIP_LAYOUT, parseStripLayout, type StripLayout } from './layouts';
+import {
+  DEFAULT_LAYOUT_PREFERENCE,
+  type LayoutPreference,
+  parseLayoutPreference,
+} from './layouts';
 
 /** Keys we read/write. */
 const KEYS = {
@@ -33,7 +37,11 @@ export type IdleReset = (typeof IDLE_RESET_CHOICES)[number];
 
 /** Shape of all settings combined. */
 export interface SessionSettings {
-  layout: StripLayout;
+  /**
+   * Default layout preference. A concrete layout skips the picker and opens
+   * capture directly; `'ask'` (User's choice) shows the picker each session.
+   */
+  layout: LayoutPreference;
   flash: boolean;
   /** When true, every captured frame is also saved to the camera roll alongside the composed strip. */
   saveFrames: boolean;
@@ -49,7 +57,7 @@ export interface SessionSettings {
 
 /** Default values. */
 export const DEFAULT_SESSION_SETTINGS: SessionSettings = {
-  layout: DEFAULT_STRIP_LAYOUT,
+  layout: DEFAULT_LAYOUT_PREFERENCE,
   flash: false,
   saveFrames: false,
   countdown: 3,
@@ -71,7 +79,7 @@ export async function loadSessionSettings(): Promise<SessionSettings> {
       KEYS.idleReset,
     ]);
   return {
-    layout: parseStripLayout(layout?.[1]) ?? DEFAULT_SESSION_SETTINGS.layout,
+    layout: parseLayoutPreference(layout?.[1]),
     flash: flash?.[1] === 'true',
     saveFrames: saveFrames?.[1] === 'true',
     countdown: parseCountdown(countdown?.[1]) ?? DEFAULT_SESSION_SETTINGS.countdown,

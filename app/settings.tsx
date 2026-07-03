@@ -17,7 +17,7 @@ import { Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-nativ
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AboutLink } from '@/components/AboutLink';
 import { ContentColumn } from '@/components/ContentColumn';
-import { LayoutPicker } from '@/components/LayoutPicker';
+import { LayoutPicker, type LayoutOption } from '@/components/LayoutPicker';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SegmentedChoice } from '@/components/SegmentedChoice';
 import { SettingsRow } from '@/components/SettingsRow';
@@ -41,6 +41,17 @@ import { SPACING } from '@/theme/tokens/spacing';
 import { useTheme } from '@/theme/useTheme';
 
 const THEME_CHOICES: ThemePreference[] = ['system', 'light', 'dark'];
+
+/**
+ * Default-layout options for the settings picker. Leads with "User's choice"
+ * (`'ask'`, show the picker each session), then the two concrete layouts that
+ * skip it. Composed here so `LayoutPicker` stays a generic, library-style pill row.
+ */
+const DEFAULT_LAYOUT_OPTIONS: readonly LayoutOption[] = [
+  { key: 'ask', label: "User's choice", subtitle: 'Pick each session' },
+  { key: 'classic', label: 'Classic', subtitle: '4 shots, two columns' },
+  { key: 'quad', label: 'Quad', subtitle: '4 shots, 2x2 grid' },
+];
 
 /** Label an idle-reset choice for its chip. */
 function idleResetLabel(value: IdleReset): string {
@@ -110,7 +121,11 @@ export default function SettingsScreen(): JSX.Element {
             />
           </SettingsRow>
           <SettingsRow title="Default layout" stacked>
-            <LayoutPicker value={settings.layout} onChange={(layout) => update({ layout })} />
+            <LayoutPicker
+              value={settings.layout}
+              options={DEFAULT_LAYOUT_OPTIONS}
+              onChange={(layout) => update({ layout })}
+            />
           </SettingsRow>
           <SettingsRow title="Save individual frames">
             <Switch

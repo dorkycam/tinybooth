@@ -58,3 +58,45 @@ describe('session settings idle reset', () => {
     expect(loaded.idleReset).toBe(DEFAULT_SESSION_SETTINGS.idleReset);
   });
 });
+
+describe('session settings layout preference', () => {
+  beforeEach(() => {
+    store.clear();
+  });
+
+  it("defaults layout to 'ask' (User's choice)", async () => {
+    expect(DEFAULT_SESSION_SETTINGS.layout).toBe('ask');
+    const loaded = await loadSessionSettings();
+    expect(loaded.layout).toBe('ask');
+  });
+
+  it("round-trips the 'ask' preference", async () => {
+    await saveSessionSettings({ layout: 'ask' });
+    const loaded = await loadSessionSettings();
+    expect(loaded.layout).toBe('ask');
+  });
+
+  it('round-trips a concrete classic layout', async () => {
+    await saveSessionSettings({ layout: 'classic' });
+    const loaded = await loadSessionSettings();
+    expect(loaded.layout).toBe('classic');
+  });
+
+  it('round-trips a concrete quad layout', async () => {
+    await saveSessionSettings({ layout: 'quad' });
+    const loaded = await loadSessionSettings();
+    expect(loaded.layout).toBe('quad');
+  });
+
+  it("keeps a legacy stored concrete value valid without migration", async () => {
+    store.set('@tinybooth/settings/layout', 'quad');
+    const loaded = await loadSessionSettings();
+    expect(loaded.layout).toBe('quad');
+  });
+
+  it("falls back to 'ask' for a junk stored value", async () => {
+    store.set('@tinybooth/settings/layout', 'triptych');
+    const loaded = await loadSessionSettings();
+    expect(loaded.layout).toBe('ask');
+  });
+});

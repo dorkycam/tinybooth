@@ -14,11 +14,20 @@
 /** The strip layouts TinyBooth can produce. v1: Classic and Quad. */
 export type StripLayout = 'classic' | 'quad';
 
+/**
+ * A stored default-layout preference. Either a concrete {@link StripLayout} that
+ * skips the picker, or `'ask'` (User's choice) to show the picker every session.
+ */
+export type LayoutPreference = StripLayout | 'ask';
+
 /** Every shipped layout, in display order. */
 export const STRIP_LAYOUTS: readonly StripLayout[] = ['classic', 'quad'] as const;
 
 /** Default layout when none is set. */
 export const DEFAULT_STRIP_LAYOUT: StripLayout = 'classic';
+
+/** Default layout preference when none is set: ask the guest each session. */
+export const DEFAULT_LAYOUT_PREFERENCE: LayoutPreference = 'ask';
 
 /** Both v1 layouts capture four shots. */
 export const SHOTS_PER_LAYOUT = 4;
@@ -33,6 +42,13 @@ export const CANVAS_HEIGHT = 1800;
 export const CANVAS_MARGIN = 36;
 
 /**
+ * Middle gutter between the two Classic columns, in canvas pixels. Twice the
+ * outer margin so that cutting the sheet down the centre leaves each half an
+ * even border on all four sides, restoring the PhotoBerry 2018 proportion.
+ */
+export const CLASSIC_MIDDLE_GUTTER = CANVAS_MARGIN * 2;
+
+/**
  * Narrow an arbitrary string to a `StripLayout`, or return null.
  *
  * @param value Candidate string (route param, stored setting, etc.).
@@ -40,6 +56,21 @@ export const CANVAS_MARGIN = 36;
  */
 export function parseStripLayout(value: string | null | undefined): StripLayout | null {
   return value === 'classic' || value === 'quad' ? value : null;
+}
+
+/**
+ * Narrow an arbitrary value to a `LayoutPreference`, falling back to `'ask'`.
+ *
+ * Accepts the two concrete layouts plus the `'ask'` (User's choice) sentinel.
+ * Any unrecognised value, including legacy or corrupt stored strings, resolves
+ * to `'ask'` so the picker is shown rather than a wrong layout forced.
+ *
+ * @param value Candidate value (stored setting, route param, etc.).
+ * @returns The matching `LayoutPreference`, or `'ask'` when unrecognised.
+ */
+export function parseLayoutPreference(value: unknown): LayoutPreference {
+  if (value === 'ask') return 'ask';
+  return parseStripLayout(typeof value === 'string' ? value : null) ?? 'ask';
 }
 
 /**
@@ -99,16 +130,18 @@ export interface ResolvedLayout {
  *
  * Four shots stacked in a column down the left half of the sheet, then the same
  * four duplicated into a matching right-half column. The result is two identical
- * strips on one 4x6 sheet, cut down the middle. White background, even margins
- * between every frame and the sheet edges.
+ * strips on one 4x6 sheet, cut down the middle. White background, even outer
+ * margins and row gaps, with a double-wide middle gutter so each cut half keeps
+ * an even border on all four sides.
  *
  * @returns The resolved Classic layout (8 draw rects from 4 shots).
  */
 export function resolveClassicLayout(): ResolvedLayout {
   const columns = 2;
-  // Width available for the two columns after the outer margins and the single
-  // gutter between them.
-  const usableWidth = CANVAS_WIDTH - CANVAS_MARGIN * (columns + 1);
+  // Width available for the two columns after the two outer margins and the
+  // wide middle gutter between them. The middle gutter is double the outer
+  // margin so each cut half keeps an even border on all four sides.
+  const usableWidth = CANVAS_WIDTH - CANVAS_MARGIN * 2 - CLASSIC_MIDDLE_GUTTER;
   const cellWidth = usableWidth / columns;
   // Four rows of shots in a column, with a margin above, below, and between each.
   const rows = SHOTS_PER_LAYOUT;
@@ -116,7 +149,7 @@ export function resolveClassicLayout(): ResolvedLayout {
   const cellHeight = usableHeight / rows;
 
   const leftX = CANVAS_MARGIN;
-  const rightX = CANVAS_MARGIN * 2 + cellWidth;
+  const rightX = CANVAS_MARGIN + cellWidth + CLASSIC_MIDDLE_GUTTER;
 
   const frames: FrameRect[] = [];
   // Left column, top to bottom.
