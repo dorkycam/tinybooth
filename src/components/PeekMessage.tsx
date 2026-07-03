@@ -15,20 +15,36 @@ import type { JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/theme/useTheme';
 
+/**
+ * Fallback clearance above the bottom of the screen, in pixels, used when the
+ * screen does not pass an exact value. Roughly clears the in-band counter pill.
+ */
+const DEFAULT_BOTTOM_CLEARANCE = 160;
+
 interface PeekMessageProps {
   /** The encouraging message to celebrate the shot with. */
   message: string;
+  /**
+   * Space reserved at the bottom for the frame-counter pill, in pixels, so the
+   * message never collides with it. Defaults to a value that clears the in-band
+   * pill on the smallest phones.
+   */
+  bottomClearance?: number;
 }
 
 /**
  * Compact celebratory message pill shown in the lower third of the peek photo.
  *
- * @param props The message string to display.
+ * @param props The message string and the bottom clearance to keep above the
+ *   frame-counter pill.
  */
-export function PeekMessage({ message }: PeekMessageProps): JSX.Element {
+export function PeekMessage({
+  message,
+  bottomClearance = DEFAULT_BOTTOM_CLEARANCE,
+}: PeekMessageProps): JSX.Element {
   const theme = useTheme('dark');
   return (
-    <View pointerEvents="none" style={styles.root}>
+    <View pointerEvents="none" style={[styles.root, { paddingBottom: bottomClearance }]}>
       <View style={[styles.bubble, { backgroundColor: theme.colors.scrimStrong }]}>
         <Text
           style={[styles.text, { color: theme.colors.flash }]}
@@ -52,12 +68,11 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     // Sit in the lower third, above the bottom frame-counter pill, so the
-    // message never covers the subject's face.
+    // message never covers the subject's face. The bottom clearance that keeps
+    // it clear of the pill comes from `bottomClearance` (the screen tracks the
+    // pill's measured position).
     alignItems: 'center',
     justifyContent: 'flex-end',
-    // Fixed clearance above the bottom frame-counter pill (bottom:56, ~56px
-    // tall) so the message never overlaps it, even on the smallest phones.
-    paddingBottom: 160,
   },
   bubble: {
     paddingHorizontal: 24,

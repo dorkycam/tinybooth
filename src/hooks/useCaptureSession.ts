@@ -3,9 +3,10 @@
  *
  * Owns the per-session loop that the Capture screen renders: a short "Get
  * ready!" intro over the live preview, then for each shot a countdown (with
- * optional ticking sound and haptics), a capture (haptic plus a brief white
- * screen-flash; the OS supplies the shutter sound), and a passive peek of the
- * just-captured shot, looping until every frame is taken. After the last shot it
+ * optional ticking sound and haptics), a capture (haptic, the booth's own
+ * shutter snap, and either a real camera flash or a held white screen-flash fill
+ * light), and a passive peek of the just-captured shot, looping until every frame
+ * is taken. After the last shot it
  * composes the strip via the Skia bridge and hands the result back through
  * `onComplete` so the screen owns navigation.
  *
@@ -18,12 +19,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { CameraSurfaceHandle } from '@/components/CameraSurface';
 import type { PreviewCrop } from '@/lib/cropGeometry';
+import { decideFlashMode } from '@/lib/flashMode';
 import { captureHaptic, tickHaptic } from '@/lib/haptics';
 import type { StripLayout } from '@/lib/layouts';
 import { getRandomMessage } from '@/lib/messages';
 import type { CountdownLength } from '@/lib/sessionSettings';
 import type { SkiaBridge } from '@/lib/skiaBridge';
-import { playCountdownTick, preloadBoothSounds, releaseBoothSounds } from '@/lib/sounds';
+import {
+  playCountdownTick,
+  playShutterSnap,
+  preloadBoothSounds,
+  releaseBoothSounds,
+} from '@/lib/sounds';
 
 /** Capture loop tick rate. One tick per second of the countdown. */
 const TICK_MS = 1000;
@@ -31,6 +38,41 @@ const TICK_MS = 1000;
 const PEEK_HOLD_MS = 1200;
 /** Ms to show the "Get ready!" intro before the first countdown begins. */
 const GET_READY_MS = 3000;
+/**
+ * Ms to let the screen-flash fill light reach full opacity before the exposure.
+ * Kept at or above `ScreenFlash`'s ramp so the overlay is bright when the shutter
+ * fires instead of racing it.
+ */
+const FLASH_LEAD_MS = 90;
+
+/** Lazily-loaded slice of expo-brightness used to boost the fill light. */
+interface BrightnessModule {
+  getBrightnessAsync(): Promise<number>;
+  setBrightnessAsync(value: number): Promise<void>;
+}
+
+let cachedBrightness: BrightnessModule | null = null;
+
+/**
+ * Lazy-load expo-brightness with a static import string (per the Metro
+ * lazy-import rule) so unit tests and web bundles load without the native module.
+ * Best-effort: returns null when the module is unavailable.
+ */
+async function loadBrightness(): Promise<BrightnessModule | null> {
+  if (cachedBrightness) return cachedBrightness;
+  try {
+    const mod = (await import('expo-brightness')) as unknown as BrightnessModule;
+    cachedBrightness = mod;
+    return mod;
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve after `ms` milliseconds. */
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 /**
  * The current step of the capture loop and its associated data.
@@ -73,8 +115,10 @@ export interface UseCaptureSessionParams {
   soundOn: boolean;
   /** When true, fire a haptic on each tick and on capture. */
   hapticsOn: boolean;
-  /** When true, flash the screen white on capture. */
+  /** When true, light the shot: real camera flash where available, else fill light. */
   flashOn: boolean;
+  /** Whether the resolved front device has a real flash (reported by the camera). */
+  hasFlash: boolean;
   /**
    * The capture screen's crop-box geometry, so composition matches what the
    * guest saw inside the box. Null until the overlay has measured itself.
@@ -128,6 +172,7 @@ export function useCaptureSession(params: UseCaptureSessionParams): UseCaptureSe
     soundOn,
     hapticsOn,
     flashOn,
+    hasFlash,
     crop,
     onComplete,
     onExit,
@@ -141,15 +186,50 @@ export function useCaptureSession(params: UseCaptureSessionParams): UseCaptureSe
 
   // Capture a single shot, then advance to the peek (or compose after the last).
   async function fireShutter(): Promise<void> {
-    setFlashActive(flashOn);
-    // The OS already plays a shutter sound on capture, so we don't play one.
+    // Real camera flash where the device has one, otherwise a held screen-flash
+    // fill light. Only ever request camera flash when the device supports it, or
+    // `takePhoto` rejects with capture/flash-not-available.
+    const decision = decideFlashMode(hasFlash, flashOn);
     if (hapticsOn) void captureHaptic();
+    if (soundOn) void playShutterSnap();
+
+    // For the fill-light path, push per-app brightness to max and hold the white
+    // overlay at full opacity before the exposure so it actually lights the face.
+    let brightnessMod: BrightnessModule | null = null;
+    let previousBrightness: number | null = null;
+    if (decision.useScreenFlash) {
+      brightnessMod = await loadBrightness();
+      if (brightnessMod) {
+        try {
+          previousBrightness = await brightnessMod.getBrightnessAsync();
+          await brightnessMod.setBrightnessAsync(1);
+        } catch {
+          previousBrightness = null;
+        }
+      }
+      setFlashActive(true);
+      await delay(FLASH_LEAD_MS);
+    }
+
     let uri = '';
     try {
-      uri = await cameraRef.current!.takePhoto();
+      uri = await cameraRef.current!.takePhoto({ flash: decision.cameraFlash });
     } catch {
       uri = `tinybooth://capture/${captured.current.length}`;
+    } finally {
+      if (decision.useScreenFlash) {
+        // Fade the overlay out and restore the pre-capture brightness.
+        setFlashActive(false);
+        if (brightnessMod && previousBrightness !== null) {
+          try {
+            await brightnessMod.setBrightnessAsync(previousBrightness);
+          } catch {
+            // Best-effort restore.
+          }
+        }
+      }
     }
+
     captured.current.push(uri);
     const nextCount = captured.current.length;
     setFramesCaptured(nextCount);

@@ -15,7 +15,7 @@
 import type { JSX } from 'react';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import { fitAspectRect, type PreviewCrop, type Size } from '@/lib/cropGeometry';
+import { fitAspectRect, type CropRect, type PreviewCrop, type Size } from '@/lib/cropGeometry';
 import { useTheme } from '@/theme/useTheme';
 
 interface CropFrameOverlayProps {
@@ -25,6 +25,11 @@ interface CropFrameOverlayProps {
   accent?: string;
   /** Reports the measured box geometry whenever it changes. */
   onCropChange: (crop: PreviewCrop) => void;
+  /**
+   * Reports the measured box as a pixel rect in container coordinates whenever it
+   * changes, so the screen can anchor chrome (the frame-counter pill) to it.
+   */
+  onBoxRectChange?: (rect: CropRect) => void;
 }
 
 /** Corner radius of the crop-box border. Kept small so the square-cornered dim
@@ -32,7 +37,7 @@ interface CropFrameOverlayProps {
 const BOX_RADIUS = 12;
 
 /** Border thickness of the crop box. */
-const BOX_BORDER = 2;
+export const BOX_BORDER = 2;
 
 /**
  * Fraction of the largest fitting rectangle the box occupies, leaving a ring of
@@ -51,6 +56,7 @@ export function CropFrameOverlay({
   frameAspect,
   accent,
   onCropChange,
+  onBoxRectChange,
 }: CropFrameOverlayProps): JSX.Element {
   const theme = useTheme('dark');
   const [container, setContainer] = useState<Size | null>(null);
@@ -74,12 +80,20 @@ export function CropFrameOverlay({
     if (!container) return;
     const fit = fitAspectRect(container, frameAspect);
     if (!fit) return;
+    const boxW = fit.width * BOX_INSET_FRACTION;
+    const boxH = fit.height * BOX_INSET_FRACTION;
     onCropChange({
       previewAspect: container.width / container.height,
-      boxFracW: (fit.width * BOX_INSET_FRACTION) / container.width,
-      boxFracH: (fit.height * BOX_INSET_FRACTION) / container.height,
+      boxFracW: boxW / container.width,
+      boxFracH: boxH / container.height,
     });
-  }, [container, frameAspect, onCropChange]);
+    onBoxRectChange?.({
+      x: (container.width - boxW) / 2,
+      y: (container.height - boxH) / 2,
+      width: boxW,
+      height: boxH,
+    });
+  }, [container, frameAspect, onCropChange, onBoxRectChange]);
 
   if (!container || !box) {
     return <View pointerEvents="none" style={StyleSheet.absoluteFill} onLayout={handleLayout} />;
