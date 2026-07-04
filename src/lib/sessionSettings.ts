@@ -18,6 +18,8 @@ const KEYS = {
   sound: '@tinybooth/settings/sound',
   haptics: '@tinybooth/settings/haptics',
   idleReset: '@tinybooth/settings/idleReset',
+  showSave: '@tinybooth/settings/showSave',
+  showShare: '@tinybooth/settings/showShare',
 } as const;
 
 /** Countdown length choices, in seconds, offered in Settings. */
@@ -53,6 +55,10 @@ export interface SessionSettings {
   haptics: boolean;
   /** Idle timeout before a non-capture screen returns to Start. `'never'` disables it. */
   idleReset: IdleReset;
+  /** When true, the Preview screen shows the Save delivery action. */
+  showSave: boolean;
+  /** When true, the Preview screen shows the Share delivery action. */
+  showShare: boolean;
 }
 
 /** Default values. */
@@ -64,11 +70,13 @@ export const DEFAULT_SESSION_SETTINGS: SessionSettings = {
   sound: true,
   haptics: true,
   idleReset: 30,
+  showSave: true,
+  showShare: true,
 };
 
 /** Read everything in one round trip. */
 export async function loadSessionSettings(): Promise<SessionSettings> {
-  const [layout, flash, saveFrames, countdown, sound, haptics, idleReset] =
+  const [layout, flash, saveFrames, countdown, sound, haptics, idleReset, showSave, showShare] =
     await AsyncStorage.multiGet([
       KEYS.layout,
       KEYS.flash,
@@ -77,6 +85,8 @@ export async function loadSessionSettings(): Promise<SessionSettings> {
       KEYS.sound,
       KEYS.haptics,
       KEYS.idleReset,
+      KEYS.showSave,
+      KEYS.showShare,
     ]);
   return {
     layout: parseLayoutPreference(layout?.[1]),
@@ -90,6 +100,15 @@ export async function loadSessionSettings(): Promise<SessionSettings> {
         ? DEFAULT_SESSION_SETTINGS.haptics
         : haptics[1] === 'true',
     idleReset: parseIdleReset(idleReset?.[1]) ?? DEFAULT_SESSION_SETTINGS.idleReset,
+    // Delivery buttons default on; only an explicit "false" hides them.
+    showSave:
+      showSave?.[1] === null || showSave?.[1] === undefined
+        ? DEFAULT_SESSION_SETTINGS.showSave
+        : showSave[1] === 'true',
+    showShare:
+      showShare?.[1] === null || showShare?.[1] === undefined
+        ? DEFAULT_SESSION_SETTINGS.showShare
+        : showShare[1] === 'true',
   };
 }
 
@@ -103,6 +122,8 @@ export async function saveSessionSettings(patch: Partial<SessionSettings>): Prom
   if (patch.sound !== undefined) writes.push([KEYS.sound, String(patch.sound)]);
   if (patch.haptics !== undefined) writes.push([KEYS.haptics, String(patch.haptics)]);
   if (patch.idleReset !== undefined) writes.push([KEYS.idleReset, String(patch.idleReset)]);
+  if (patch.showSave !== undefined) writes.push([KEYS.showSave, String(patch.showSave)]);
+  if (patch.showShare !== undefined) writes.push([KEYS.showShare, String(patch.showShare)]);
   if (writes.length > 0) {
     await AsyncStorage.multiSet(writes);
   }

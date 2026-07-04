@@ -100,3 +100,38 @@ describe('session settings layout preference', () => {
     expect(loaded.layout).toBe('ask');
   });
 });
+
+describe('session settings delivery buttons', () => {
+  beforeEach(() => {
+    store.clear();
+  });
+
+  it('defaults showSave and showShare to true', async () => {
+    expect(DEFAULT_SESSION_SETTINGS.showSave).toBe(true);
+    expect(DEFAULT_SESSION_SETTINGS.showShare).toBe(true);
+    const loaded = await loadSessionSettings();
+    expect(loaded.showSave).toBe(true);
+    expect(loaded.showShare).toBe(true);
+  });
+
+  it('round-trips hiding the Save button', async () => {
+    await saveSessionSettings({ showSave: false });
+    const loaded = await loadSessionSettings();
+    expect(loaded.showSave).toBe(false);
+    // Share is untouched and stays on.
+    expect(loaded.showShare).toBe(true);
+  });
+
+  it('round-trips hiding the Share button', async () => {
+    await saveSessionSettings({ showShare: false });
+    const loaded = await loadSessionSettings();
+    expect(loaded.showShare).toBe(false);
+    expect(loaded.showSave).toBe(true);
+  });
+
+  it('treats a stored "false" as hidden (only an absent key defaults to shown)', async () => {
+    store.set('@tinybooth/settings/showSave', 'false');
+    const loaded = await loadSessionSettings();
+    expect(loaded.showSave).toBe(false);
+  });
+});
