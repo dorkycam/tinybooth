@@ -2,10 +2,11 @@
  * Preview / delivery screen.
  *
  * A single presentation for every form factor: the composed strip sits centered
- * in the content column with its layout name captioned above it, and the four
- * delivery actions (Print, Save, Share, Redo) live in the one lower-center
- * reachable band via {@link ScreenScaffold}. Close is promoted to fixed screen
- * chrome in the top-right corner. The strip is width-capped (STRIP_MAX_WIDTH,
+ * in the content column with its layout name captioned above it, and the delivery
+ * actions (Print, then optionally Save and Share, then Redo and Done) live in the
+ * one lower-center reachable band via {@link ScreenScaffold}. Done discards the
+ * session and returns to Start; it replaces the old top-right Close. Save and
+ * Share can each be hidden via Settings. The strip is width-capped (STRIP_MAX_WIDTH,
  * widened only for the `wide` presentation) and height-capped to a viewport
  * fraction (STRIP_HEIGHT_RATIO, resizeMode "contain") inside a ScrollView, so a
  * tall Classic strip can never push the action band off-screen. Save asks for
@@ -26,7 +27,6 @@ import { useCallback } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { AutoCloseBar } from '@/components/AutoCloseBar';
 import { DeliveryActions } from '@/components/DeliveryActions';
-import { IconButton } from '@/components/IconButton';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { useIdleReset } from '@/hooks/useIdleReset';
 import { useSettings } from '@/hooks/useSettings';
@@ -115,8 +115,11 @@ export default function PreviewScreen(): JSX.Element {
         onSave={save}
         onShare={share}
         onRedo={handleRedo}
+        onDone={handleDone}
         saved={saveState === 'saved'}
         disabled={busy !== null}
+        showSave={settings.showSave}
+        showShare={settings.showShare}
         size={actionSize}
         scheme="dark"
       />
@@ -126,27 +129,11 @@ export default function PreviewScreen(): JSX.Element {
     </View>
   );
 
-  // Close is never gated on `busy`: it is the kiosk's escape hatch and must
-  // always dismiss, even while a delivery action is running.
-  const closeButton = (
-    <IconButton
-      icon="close"
-      accessibilityLabel="Done"
-      variant="ghost"
-      glass
-      size={44}
-      onPress={handleDone}
-      scheme="dark"
-      testID="preview-close"
-    />
-  );
-
   return (
     <View style={styles.root} onTouchStart={resetIdleTimer}>
       <ScreenScaffold
         presentation={presentation}
         style={{ backgroundColor: theme.colors.bg }}
-        topRight={closeButton}
         actionBand={actionBand}
         contentFill
       >

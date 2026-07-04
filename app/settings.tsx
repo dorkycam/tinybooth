@@ -2,10 +2,11 @@
  * Settings screen.
  *
  * Capture defaults (flash, countdown length, sound, haptics, default layout,
- * save individual frames), idle reset time, appearance (system / light / dark),
- * and an About section (version, MIT license, repo and legal links). Everything
- * persists locally via the shared settings store; the app has no account and
- * collects nothing.
+ * save individual frames), delivery options (show the Save and Share buttons on
+ * Preview), idle reset time, appearance (system / light / dark), and an About
+ * section (version, MIT license, repo and legal links). Everything persists
+ * locally via the shared settings store; the app has no account and collects
+ * nothing.
  *
  * Thin screen: the section, row, and about-link pieces are extracted components.
  */
@@ -131,6 +132,21 @@ export default function SettingsScreen(): JSX.Element {
             <Switch
               value={settings.saveFrames}
               onValueChange={(value) => update({ saveFrames: value })}
+            />
+          </SettingsRow>
+        </SettingsSection>
+
+        <SettingsSection title="Delivery">
+          <SettingsRow title="Show Save button">
+            <Switch
+              value={settings.showSave}
+              onValueChange={(value) => update({ showSave: value })}
+            />
+          </SettingsRow>
+          <SettingsRow title="Show Share button">
+            <Switch
+              value={settings.showShare}
+              onValueChange={(value) => update({ showShare: value })}
             />
           </SettingsRow>
         </SettingsSection>
