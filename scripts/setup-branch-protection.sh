@@ -6,12 +6,17 @@
 # Resulting flow:
 #   feature branch -> PR -> develop -> PR -> main -> release-please -> tag + Release
 #
-# Requires an authenticated gh with `repo` + `admin:repo_hook` scope:
-#   gh auth login
+# Requires gh authenticated with the `repo` scope (`gh auth login`).
 #
 # Safe to re-run. Every call is idempotent.
 
 set -euo pipefail
+
+# gh prefers GITHUB_TOKEN/GH_TOKEN over the credential it stored at login, so a
+# stale token in the environment makes every call fail with "Bad credentials"
+# even when `gh auth login` succeeded. Blank them for this script and let gh
+# fall back to the keyring.
+unset GITHUB_TOKEN GH_TOKEN
 
 REPO="${REPO:-dorkycam/tinybooth}"
 
@@ -25,10 +30,29 @@ echo "==> Repo: $REPO"
 
 if ! gh auth status >/dev/null 2>&1; then
   echo "gh is not authenticated. Run: gh auth login" >&2
-  echo "(If GITHUB_TOKEN is set in your shell, unset it first - gh prefers it and" >&2
-  echo " an expired token will keep failing even after you log in.)" >&2
   exit 1
 fi
+
+# ---------------------------------------------------------------------------
+# 0. Let Actions open pull requests.
+#
+# release-please works by opening a "Release vX.Y.Z" PR. With this off it can
+# create its release branch and then dies with "GitHub Actions is not permitted
+# to create or approve pull requests", leaving an orphaned branch behind and no
+# release. This is the single setting that makes the release chain work.
+#
+# default_workflow_permissions stays `read`: every workflow here declares the
+# scopes it needs, so the repo-wide default should stay minimal.
+# ---------------------------------------------------------------------------
+echo "==> Allowing Actions to open pull requests (required by release-please)"
+gh api -X PUT "repos/$REPO/actions/permissions/workflow" \
+  -f default_workflow_permissions=read \
+  -F can_approve_pull_request_reviews=true >/dev/null
+
+# Housekeeping for a PR-only flow: delete the head branch once a PR merges, so
+# merged feature branches do not pile up on the remote.
+echo "==> Enabling delete-branch-on-merge"
+gh api -X PATCH "repos/$REPO" -F delete_branch_on_merge=true >/dev/null
 
 # ---------------------------------------------------------------------------
 # 1. Create `develop` from `main` if it does not exist yet.
