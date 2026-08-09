@@ -19,13 +19,36 @@ run in Expo Go. You'll need Xcode (iOS) or Android Studio (Android) for the firs
 - **`develop`** is the default branch and the one you target. Branch off it, PR back into it.
 - **`main`** is release-only. It receives merges from `develop`, and nothing else.
 
-Both branches are protected: no direct pushes, PR required, CI must pass. Name your branch
-for what it does, e.g. `feat/layout-picker`, `fix/countdown-drift`, `docs/readme-links`.
+Both branches are protected: no direct pushes, PR required, CI must pass.
+
+### Branch naming
+
+```
+<type>/<issue-number>-<short-descriptor>
+```
+
+Same types as Conventional Commits: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`. The
+issue number is the ticket the branch closes. The descriptor is a few lowercase words joined
+by hyphens.
 
 ```bash
 git checkout develop && git pull
-git checkout -b feat/my-change
+git checkout -b feat/123-layout-picker
 ```
+
+| Branch | Verdict |
+|---|---|
+| `feat/123-layout-picker` | Good |
+| `fix/88-countdown-drift` | Good |
+| `chore/210-bump-expo-audio` | Good |
+| `docs/readme-links` | Allowed only when there is genuinely no issue |
+| `layout-picker` | Rejected, no type |
+| `feature/123-layout-picker` | Rejected, use `feat` |
+| `feat/123_Layout_Picker` | Rejected, lowercase and hyphens only |
+
+A `pre-push` hook checks this locally. If you have no issue number, the `<type>/<descriptor>`
+form is accepted, same as the "No issue" escape in the PR template — but prefer filing the
+issue first.
 
 ## Before you open a PR
 

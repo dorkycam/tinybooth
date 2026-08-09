@@ -72,6 +72,12 @@ Applies to code, comments, docs, and UI copy.
 - Keep commits focused. Run `pnpm typecheck`, `pnpm lint`, and `pnpm test` before committing.
 - **Branch off `develop` and open the PR against `develop`.** `main` is release-only and
   receives merges from `develop` alone. Both are protected: no direct pushes, ever.
+- **Branch names are `<type>/<issue-number>-<short-descriptor>`.** Same types as the commit
+  prefixes (`feat`, `fix`, `chore`, `docs`, `refactor`, `test`), then the issue the branch
+  closes, then a few lowercase hyphenated words: `feat/123-layout-picker`,
+  `fix/88-countdown-drift`, `chore/210-bump-expo-audio`. A `pre-push` hook enforces this.
+  Drop the number only when there is genuinely no issue (`docs/readme-links`).
+- **Every PR links its issue.** Put `Closes #123` in the PR body, or say why there isn't one.
 - Fill in the PR template. CI (typecheck, lint, test, secret scan) must pass. A maintainer
   reviews and merges.
 - Merges to `main` drive release-please, which tags `vX.Y.Z`, publishes a GitHub Release, and

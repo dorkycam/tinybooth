@@ -87,8 +87,14 @@ Contributions are welcome. A few notes:
 - Mobile colors come from `useTheme()` in `src/theme/`. Do not hardcode hex values
   in component code.
 - Run `pnpm typecheck`, `pnpm test`, and `pnpm lint` before opening a pull request.
+- Branch off `develop` and open the PR against `develop`. `main` is release-only.
+- Name branches `<type>/<issue-number>-<short-descriptor>`, e.g.
+  `feat/123-layout-picker`. A `pre-push` hook enforces it.
+- Link the issue in the PR body (`Closes #123`).
 - Found a bug or have a request? Open an issue:
   https://github.com/dorkycam/tinybooth/issues
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full branch and release flow.
 
 The roadmap (post-v1 ideas like filters, captions, more layouts, and a front/back
 camera toggle) is tracked in
