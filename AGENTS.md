@@ -25,7 +25,10 @@ pnpm ios       # or: pnpm android   (requires Xcode / Android Studio once)
 - `react-native-vision-camera` for capture, `@shopify/react-native-skia` for composing the
   strip at print DPI. See the architecture note in the project docs.
 - `expo-print` (print), `expo-media-library` (save), the OS share sheet (share),
-  `expo-audio` (sounds), `expo-haptics`, `expo-keep-awake`, `expo-secure-store` (settings).
+  `expo-audio` (sounds), `expo-haptics`, `expo-keep-awake`, `expo-brightness` (screen flash).
+- Persistence: `@react-native-async-storage/async-storage` holds the booth/session settings
+  (`src/lib/sessionSettings.ts`); `expo-secure-store` holds only the theme preference
+  (`src/theme/ThemeContext.tsx`).
 - No network of any kind. No auth, no payments, no events, no web/wall. Don't add any of
   these without opening an issue first.
 

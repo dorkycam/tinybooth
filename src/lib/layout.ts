@@ -22,7 +22,8 @@ export {
 
 /**
  * Returns the active layout class and orientation. Tablet is the default form
- * factor for TinyBooth (per the brand identity doc); phone is the fallback.
+ * factor for TinyBooth (see ADR 0002, tablet-first responsive presentation);
+ * phone is the fallback.
  *
  * @returns `LayoutDescriptor` keyed off the current window dimensions.
  */
