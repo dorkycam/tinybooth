@@ -57,6 +57,8 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       PROFILE: ${{ github.event.inputs.profile || 'production' }}
       COMMIT_SHA: ${{ github.sha }}
+      # True for a v* tag (a real release) or when a manual run opts in.
+      SUBMIT: ${{ github.event.inputs.submit == 'true' || startsWith(github.ref, 'refs/tags/v') }}
     steps:
       - uses: actions/checkout@v4
 
@@ -76,11 +78,21 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Build (both platforms)
-        run: eas build --platform all --profile "$PROFILE" --non-interactive --message "ci $COMMIT_SHA"
-
-      # Store credentials come from EAS, not from this runner, so there is nothing
-      # to materialize beforehand and nothing to clean up afterwards.
-      - name: Submit (both platforms)
-        if: ${{ github.event.inputs.submit == 'true' || startsWith(github.ref, 'refs/tags/v') }}
-        run: eas submit --platform all --profile "$PROFILE" --non-interactive
+      # Submission happens via --auto-submit on the build, not as a separate
+      # `eas submit` step. A standalone `eas submit --non-interactive` has no way to
+      # know which archive to send and fails with "You need to specify the archive
+      # source when running in non-interactive mode". --auto-submit ties the
+      # submission to the exact build this invocation produced, rather than to
+      # whatever happens to be the latest build on EAS.
+      #
+      # Store credentials come from EAS, so there is nothing to materialize on this
+      # runner beforehand and nothing to clean up afterwards.
+      - name: Build${{ github.event.inputs.submit == 'true' && ' and submit' || '' }} (both platforms)
+        run: |
+          if [ "$SUBMIT" = "true" ]; then
+            eas build --platform all --profile "$PROFILE" --non-interactive \
+              --message "ci $COMMIT_SHA" --auto-submit
+          else
+            eas build --platform all --profile "$PROFILE" --non-interactive \
+              --message "ci $COMMIT_SHA"
+          fi
