@@ -119,6 +119,34 @@ JSON
 protect main
 protect develop
 
+# ---------------------------------------------------------------------------
+# 4. Deployment environments.
+#
+# build.yml picks its environment from the build profile: `preview` builds run
+# in `develop` (TestFlight + Play internal), and `production` builds plus `v*`
+# tags run in `production` (public store release). The job cannot start if the
+# environment does not exist.
+#
+# The maintainer is added as a required reviewer on `production` only, so a tag
+# cannot reach a public store unattended, while TestFlight builds stay one
+# click. Add a reviewer to `develop` too if you would rather approve every
+# build.
+# ---------------------------------------------------------------------------
+OWNER_ID="$(gh api "repos/$REPO" --jq .owner.id)"
+
+echo "==> Creating environment: develop (no reviewer)"
+gh api -X PUT "repos/$REPO/environments/develop" >/dev/null
+
+echo "==> Creating environment: production (reviewer required)"
+gh api -X PUT "repos/$REPO/environments/production" --input - >/dev/null <<JSON
+{
+  "wait_timer": 0,
+  "prevent_self_review": false,
+  "reviewers": [{ "type": "User", "id": $OWNER_ID }],
+  "deployment_branch_policy": null
+}
+JSON
+
 echo
 echo "==> Done."
 gh api "repos/$REPO" --jq '"default branch: " + .default_branch'
@@ -129,3 +157,5 @@ for b in main develop; do
           + ", admins enforced=" + (.enforce_admins.enabled|tostring)
           + ", checks=" + ([.required_status_checks.contexts[]]|join(", "))'
 done
+gh api "repos/$REPO/environments" \
+  --jq '"environments: " + ([.environments[].name]|join(", "))'
