@@ -13,12 +13,12 @@
 #   4. Pauses for confirmation before `eas submit`.
 #   5. Runs `eas submit --platform all --profile <profile> --non-interactive`.
 #
-# Required env (set via EAS secrets, not committed):
-#   APPLE_ID, ASC_APP_ID, APPLE_TEAM_ID, ASC_API_KEY_ID, ASC_API_KEY_ISSUER_ID
-#   plus ./secrets/asc-api-key.p8 and ./secrets/play-service-account.json on disk.
+# Credentials: none needed on disk or in your shell. The App Store Connect API key and
+# the Play service account are stored in EAS itself, so `eas submit` fetches them
+# server-side. Set them up once with `eas credentials`. See docs/release-setup.md.
 #
 # Hard rules:
-#   - Never commits real credentials. The `./secrets/` directory is gitignored.
+#   - Never commits real credentials. Nothing sensitive is written to the working tree.
 #   - Never auto-promotes a build. Reviewer always confirms before submit.
 #   - Aborts if working tree is dirty (uncommitted changes break the audit trail).
 

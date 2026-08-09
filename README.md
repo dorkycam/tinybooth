@@ -110,3 +110,4 @@ MIT. See [LICENSE](./LICENSE).
 - [Security Policy](./SECURITY.md)
 - [Store listing copy](./docs/store-listing.md)
 - [Capturing store screenshots](./docs/capture-screenshots.md)
+- [Release credentials setup](./docs/release-setup.md)

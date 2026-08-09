@@ -43,23 +43,13 @@
   },
   "submit": {
     "preview": {
-      "ios": {
-        "appleId": "dorkycam@gmail.com",
-        "appleTeamId": "S4UJ25XGGT"
-      },
       "android": {
-        "serviceAccountKeyPath": "./secrets/play-service-account.json",
         "track": "internal",
         "releaseStatus": "draft"
       }
     },
     "production": {
-      "ios": {
-        "appleId": "dorkycam@gmail.com",
-        "appleTeamId": "S4UJ25XGGT"
-      },
       "android": {
-        "serviceAccountKeyPath": "./secrets/play-service-account.json",
         "track": "production",
         "releaseStatus": "draft"
       }
