@@ -24,3 +24,32 @@ commit-msg:
       run: |
         head -1 "{1}" | grep -qE '^(feat|fix|chore|refactor|docs|test|style|perf|ci|build|revert)(\(.+\))?!?: .+' \
           || { echo "Commit message must follow Conventional Commits (feat:, fix:, chore:, docs:, ...)"; exit 1; }
+
+# Blocks a push to a branch that does not follow
+# `<type>/<issue-number>-<short-descriptor>`, e.g. `feat/123-layout-picker`.
+# `main` and `develop` are exempt so a maintainer can still fetch/pull normally;
+# GitHub branch protection is what actually stops a direct push to those.
+pre-push:
+  commands:
+    branch-name:
+      run: |
+        branch="$(git rev-parse --abbrev-ref HEAD)"
+        case "$branch" in
+          main|develop|HEAD) exit 0 ;;
+          release-please--*) exit 0 ;;
+        esac
+        if echo "$branch" | grep -qE '^(feat|fix|chore|refactor|docs|test|style|perf|ci|build|revert)/([0-9]+-)?[a-z0-9]+(-[a-z0-9]+)*$'; then
+          exit 0
+        fi
+        echo "Branch name \"$branch\" does not match the required pattern."
+        echo
+        echo "  <type>/<issue-number>-<short-descriptor>"
+        echo
+        echo "  type:        feat, fix, chore, refactor, docs, test, style, perf, ci, build, revert"
+        echo "  issue:       the ticket this closes (omit only when there is genuinely no issue)"
+        echo "  descriptor:  lowercase words joined by hyphens"
+        echo
+        echo "  e.g. feat/123-layout-picker, fix/88-countdown-drift, chore/210-bump-expo-audio"
+        echo
+        echo "Rename with: git branch -m <new-name>"
+        exit 1

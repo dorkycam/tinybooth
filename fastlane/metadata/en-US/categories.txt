@@ -1,2 +1,0 @@
-primary: PHOTO_AND_VIDEO
-secondary: ENTERTAINMENT

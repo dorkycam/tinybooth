@@ -1,0 +1,10 @@
+# Every issue should come in through one of the three templates, so the blank
+# option is off. Security reports must never be a public issue.
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/dorkycam/tinybooth/security/advisories/new
+    about: Private disclosure. Do not open a public issue for a vulnerability.
+  - name: Question or setup help
+    url: https://github.com/dorkycam/tinybooth/issues
+    about: Search the existing issues first, then open a bug report if something is broken.

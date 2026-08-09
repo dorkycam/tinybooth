@@ -25,7 +25,10 @@ pnpm ios       # or: pnpm android   (requires Xcode / Android Studio once)
 - `react-native-vision-camera` for capture, `@shopify/react-native-skia` for composing the
   strip at print DPI. See the architecture note in the project docs.
 - `expo-print` (print), `expo-media-library` (save), the OS share sheet (share),
-  `expo-audio` (sounds), `expo-haptics`, `expo-keep-awake`, `expo-secure-store` (settings).
+  `expo-audio` (sounds), `expo-haptics`, `expo-keep-awake`, `expo-brightness` (screen flash).
+- Persistence: `@react-native-async-storage/async-storage` holds the booth/session settings
+  (`src/lib/sessionSettings.ts`); `expo-secure-store` holds only the theme preference
+  (`src/theme/ThemeContext.tsx`).
 - No network of any kind. No auth, no payments, no events, no web/wall. Don't add any of
   these without opening an issue first.
 
@@ -66,9 +69,20 @@ Applies to code, comments, docs, and UI copy.
 
 - **Conventional Commits:** `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`. Include
   a scope when useful (`feat(capture): ...`). Releases are automated from these messages.
-- Keep commits focused. Run `pnpm typecheck` and `pnpm test` before committing.
-- Open a PR against `main`. Fill in the PR template. CI (lint, typecheck, test, secret scan)
-  must pass. A maintainer reviews and merges.
+- Keep commits focused. Run `pnpm typecheck`, `pnpm lint`, and `pnpm test` before committing.
+- **Branch off `develop` and open the PR against `develop`.** `main` is release-only and
+  receives merges from `develop` alone. Both are protected: no direct pushes, ever.
+- **Branch names are `<type>/<issue-number>-<short-descriptor>`.** Same types as the commit
+  prefixes (`feat`, `fix`, `chore`, `docs`, `refactor`, `test`), then the issue the branch
+  closes, then a few lowercase hyphenated words: `feat/123-layout-picker`,
+  `fix/88-countdown-drift`, `chore/210-bump-expo-audio`. A `pre-push` hook enforces this.
+  Drop the number only when there is genuinely no issue (`docs/readme-links`).
+- **Every PR links its issue.** Put `Closes #123` in the PR body, or say why there isn't one.
+- Fill in the PR template. CI (typecheck, lint, test, secret scan) must pass, and the PR needs
+  an approving review from the code owner (`@dorkycam`) before it can merge. Never merge your
+  own PR without that review.
+- Merges to `main` drive release-please, which tags `vX.Y.Z`, publishes a GitHub Release, and
+  triggers the gated store build. See `CONTRIBUTING.md` for the full chain.
 
 ## Security (read before committing)
 
