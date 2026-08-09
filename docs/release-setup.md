@@ -71,16 +71,29 @@ Replace the `ios` block in **both** submit profiles in `eas.json`:
 
 Drop `appleId` and `appleTeamId` — the API key carries that context.
 
-## 3. The `release` environment
+## 3. Environments
 
-`build.yml` declares `environment: release`, and the repo has no environments, so the job
-cannot start.
+`build.yml` runs inside a GitHub Environment picked from the build profile:
 
-**Settings > Environments > New environment**, name it exactly `release`.
+| Trigger | Profile | Environment | Goes to |
+|---|---|---|---|
+| Manual run, profile `preview` | `preview` | `develop` | TestFlight + Play internal |
+| Manual run, profile `production` | `production` | `production` | Public store release |
+| `v*` tag (release-please, from `main`) | `production` | `production` | Public store release |
 
-While you are there, add yourself under **Required reviewers**. That is the gate that stops a
-tag from shipping to the stores without your approval — the workflow is written assuming it
-exists.
+Production only ever happens from `main`: the tag is created when you merge the release PR
+that release-please opens against `main`.
+
+Create both at **Settings > Environments > New environment**, named exactly `develop` and
+`production`. `scripts/setup-branch-protection.sh` creates them for you.
+
+Add yourself as a **required reviewer on `production`**. That is the gate that stops a tag from
+reaching a public store without your approval. Leaving `develop` ungated keeps TestFlight
+builds a single click; add a reviewer there too if you would rather approve everything.
+
+Environments can also hold their own secrets. If you ever want a separate Expo account or a
+separate Play track for testing, that is where the values would diverge — for now both
+environments read the same repo-level secrets from section 1.
 
 ## 4. Check it before trusting it
 

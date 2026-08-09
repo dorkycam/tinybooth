@@ -6,16 +6,21 @@
 # It never runs on a normal branch push or a PR, so a stray commit or a fork can't
 # trigger a build or a submission.
 #
-# Gate it further with a GitHub Environment named "release" that requires your review
-# (Settings > Environments > release > required reviewers). Then nothing builds until
-# you approve, even on a tag.
+# Runs in a GitHub Environment chosen from the profile:
+#   profile preview     -> `develop`     (TestFlight + Play internal)
+#   profile production  -> `production`  (public store release)
+#   tag push            -> `production`  (no inputs, so PROFILE defaults to production)
+#
+# Put required reviewers on `production` (Settings > Environments) so nothing reaches a
+# public store without your approval, even on a tag.
 #
 # Required repo secrets (Settings > Secrets and variables > Actions):
 #   EXPO_TOKEN                     EAS access token (expo.dev account settings)
-#   ASC_API_KEY_ID                App Store Connect API key id
-#   ASC_API_KEY_ISSUER_ID         App Store Connect API key issuer id
 #   ASC_API_KEY_BASE64            base64 of the .p8 App Store Connect API key
 #   ANDROID_SERVICE_ACCOUNT_JSON  contents of the Play service-account JSON
+#
+# The App Store Connect key id and issuer id are identifiers, not secrets. They belong in
+# eas.json. See docs/release-setup.md.
 name: build
 
 on:
@@ -48,7 +53,7 @@ jobs:
     name: build + submit
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    environment: release
+    environment: ${{ github.event.inputs.profile == 'preview' && 'develop' || 'production' }}
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       PROFILE: ${{ github.event.inputs.profile || 'production' }}
