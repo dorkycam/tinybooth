@@ -1,77 +1,63 @@
 # Release credentials setup
 
-One-time setup so `build.yml` can build and submit without anyone typing a password. Until
-this is done, a `v*` tag will fail at the `eas build` step.
+One-time setup so `build.yml` can build and submit without anyone typing a password.
 
-Nothing here is committed. Secrets live in GitHub Actions and in EAS, never in git — see
-`SECURITY.md`.
+Store credentials live in **EAS**, not in GitHub. `eas submit` reads them server-side, so no
+private key is ever written to a CI runner's disk and GitHub holds exactly one secret.
 
-## 1. GitHub Actions secrets
+Nothing here is committed. See `SECURITY.md`.
 
-Add these at **Settings > Secrets and variables > Actions > New repository secret**.
+## 1. The one GitHub secret
+
+**Settings > Secrets and variables > Actions > New repository secret**
 
 | Secret | What it is | Where to get it |
 |---|---|---|
 | `EXPO_TOKEN` | EAS access token, so CI can run `eas build` / `eas submit` as you | expo.dev > your account > **Access tokens** > Create token. Copy it immediately, it is shown once. |
-| `ASC_API_KEY_BASE64` | The App Store Connect API private key (`.p8`), base64-encoded | See below |
-| `ANDROID_SERVICE_ACCOUNT_JSON` | Google Play service-account JSON, whole file contents | See below |
 
-### App Store Connect API key
+That is the complete list.
+
+## 2. App Store Connect API key, stored in EAS
 
 This replaces Apple ID + password + 2FA. CI cannot do 2FA, so this is the only workable path.
 
-1. [App Store Connect](https://appstoreconnect.apple.com) > **Users and Access** > **Integrations**
-   tab > **App Store Connect API** > **Team Keys**.
-2. Click **+**, give it a name, and set Access to **App Manager**.
-3. **Download the `.p8`.** Apple lets you download it exactly once. If you lose it, revoke and
-   make a new one.
-4. On that same page, note the **Key ID** and the **Issuer ID** — you need both in step 2 below.
+1. [App Store Connect](https://appstoreconnect.apple.com) > **Users and Access** >
+   **Integrations** tab > **App Store Connect API** > **Team Keys**.
+2. Click **+**, name it, set Access to **App Manager**.
+3. **Download the `.p8`.** Apple allows exactly one download. Lose it and you revoke and
+   reissue.
+4. Note the **Key ID** and **Issuer ID** shown on that page.
+5. Hand it to EAS:
 
-Encode the key for GitHub:
+   ```sh
+   eas credentials --platform ios
+   ```
 
-```sh
-base64 -i AuthKey_XXXXXXXXXX.p8 | tr -d '\n' | pbcopy
-```
+   Choose the production profile, then **App Store Connect API Key** > **Set up a new key**,
+   and give it the `.p8`, the Key ID, and the Issuer ID when prompted.
 
-Paste that as `ASC_API_KEY_BASE64`. The `tr -d '\n'` matters — a wrapped value will not decode
-cleanly in CI.
+Delete the local `.p8` afterwards. EAS has it now.
 
-### Google Play service account
+## 3. Play service account, stored in EAS
 
 1. [Play Console](https://play.google.com/console) > **Setup** > **API access**.
 2. Link a Google Cloud project if you have not already.
 3. Create a service account (this bounces you to Google Cloud IAM), then create a **JSON key**
-   for it and download that file.
-4. Back in Play Console, grant the service account access: **Users and permissions** > invite
-   the service-account email > give it **Release** permissions for this app.
-5. Paste the entire contents of the JSON file as `ANDROID_SERVICE_ACCOUNT_JSON`.
+   for it and download the file.
+4. Back in Play Console, grant that service-account email **Release** permission for this app
+   under **Users and permissions**.
+5. Hand it to EAS:
 
-The Play Console UI moves these around periodically. If "API access" is not under Setup, look
-under Users and permissions.
+   ```sh
+   eas credentials --platform android
+   ```
 
-## 2. Two values that are NOT secrets
+   Choose **Google Service Account Key** and point it at the JSON file.
 
-The App Store Connect **Key ID** and **Issuer ID** are identifiers, not credentials — only the
-`.p8` is sensitive. They belong in `eas.json`, committed.
+The Play Console UI moves these around. If "API access" is not under Setup, look under Users
+and permissions.
 
-**This is currently unwired.** `eas.json` submits with `appleId` + `appleTeamId`, which needs
-interactive Apple 2FA and will fail under `--non-interactive`. Meanwhile `build.yml` writes
-`secrets/asc-api-key.p8` and nothing reads it. `eas.json.example` already shows the correct
-shape.
-
-Replace the `ios` block in **both** submit profiles in `eas.json`:
-
-```json
-"ios": {
-  "ascApiKeyPath": "./secrets/asc-api-key.p8",
-  "ascApiKeyIssuerId": "<your Issuer ID>",
-  "ascApiKeyId": "<your Key ID>"
-}
-```
-
-Drop `appleId` and `appleTeamId` — the API key carries that context.
-
-## 3. Environments
+## 4. Environments
 
 `build.yml` runs inside a GitHub Environment picked from the build profile:
 
@@ -81,40 +67,42 @@ Drop `appleId` and `appleTeamId` — the API key carries that context.
 | Manual run, profile `production` | `production` | `production` | Public store release |
 | `v*` tag (release-please, from `main`) | `production` | `production` | Public store release |
 
-Production only ever happens from `main`: the tag is created when you merge the release PR
-that release-please opens against `main`.
+Production only ever happens from `main`: the tag is created when you merge the release PR that
+release-please opens against `main`.
 
-Create both at **Settings > Environments > New environment**, named exactly `develop` and
-`production`. `scripts/setup-branch-protection.sh` creates them for you.
+`scripts/setup-branch-protection.sh` creates both environments and adds you as a required
+reviewer on `production`, so a tag cannot reach a public store unattended. `develop` is left
+ungated so TestFlight builds stay one click.
 
-Add yourself as a **required reviewer on `production`**. That is the gate that stops a tag from
-reaching a public store without your approval. Leaving `develop` ungated keeps TestFlight
-builds a single click; add a reviewer there too if you would rather approve everything.
+## 5. Check it before trusting it
 
-Environments can also hold their own secrets. If you ever want a separate Expo account or a
-separate Play track for testing, that is where the values would diverge — for now both
-environments read the same repo-level secrets from section 1.
+Do not let the first real run be a release tag.
 
-## 4. Check it before trusting it
-
-Do not let the first real run be a release tag. Use the manual trigger:
-
-**Actions > build > Run workflow**, profile `preview`, submit `false`.
-
-That exercises credentials and the build without touching a store. Once it is green, run it
-again with submit `true` to check the submit path against TestFlight and Play internal.
+**Actions > build > Run workflow**, profile `preview`, submit `false`. That exercises
+credentials and the build without touching a store. Once green, run it again with submit
+`true` to check the submit path against TestFlight and Play internal.
 
 ## Order of operations
 
-1. Add the three secrets (section 1)
-2. Wire the ASC key IDs into `eas.json` (section 2)
-3. Create the `release` environment (section 3)
-4. Manual `preview` build, no submit (section 4)
-5. Manual `preview` build with submit
-6. Only then rely on tags
+1. Add `EXPO_TOKEN` (section 1)
+2. Upload the ASC API key to EAS (section 2)
+3. Upload the Play service account to EAS (section 3)
+4. Create the environments (section 4, or run the setup script)
+5. Manual `preview` build, no submit
+6. Manual `preview` build with submit
+7. Only then rely on tags
+
+## Troubleshooting
+
+**`eas submit` cannot find the app on iOS.** Add `ascAppId` (the numeric App Store Connect app
+ID, from the app's URL in App Store Connect) to the `ios` block of the submit profile in
+`eas.json`.
+
+**"You must be logged in" in CI.** `EXPO_TOKEN` is missing or expired. It is the only GitHub
+secret this workflow needs.
 
 ## What triggers a real release
 
 Covered in [CONTRIBUTING.md](../CONTRIBUTING.md). Short version: merging to `main` makes
 release-please open a Release PR; merging that PR tags `vX.Y.Z` and publishes a GitHub Release;
-the tag triggers `build.yml`, which waits on your `release` environment approval.
+the tag triggers `build.yml`, which waits on your `production` environment approval.
