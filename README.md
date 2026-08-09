@@ -5,7 +5,7 @@ Start, take a 4-shot countdown sequence, and get a classic printed strip. It run
 fully on-device: no accounts, no backend, no network, no payments.
 
 TinyBooth is a modern, cross-platform rebuild of the original 2018 PhotoBerry iOS
-app (a ~520-line Swift app: front camera, 4-shot countdown, classic strip,
+app (~900 lines of Swift: front camera, 4-shot countdown, classic strip,
 AirPrint). This version keeps that core and brings it to Android and tablets.
 
 ## What it does
@@ -43,9 +43,7 @@ The capture and composition pipeline uses
 for full-resolution stills and
 [@shopify/react-native-skia](https://github.com/Shopify/react-native-skia) to
 compose the strip at print resolution. Both are native modules that Expo Go does
-not include, so you build the app once with the native toolchain. See
-[docs/adr/0001-vision-camera-and-skia.md](./docs/adr/0001-vision-camera-and-skia.md)
-for why.
+not include, so you build the app once with the native toolchain.
 
 ### Prerequisites
 
@@ -93,7 +91,8 @@ Contributions are welcome. A few notes:
   https://github.com/dorkycam/tinybooth/issues
 
 The roadmap (post-v1 ideas like filters, captions, more layouts, and a front/back
-camera toggle) lives in [docs/prd.md](./docs/prd.md) section 12.
+camera toggle) is tracked in
+[GitHub Issues](https://github.com/dorkycam/tinybooth/issues).
 
 ## License
 
@@ -101,5 +100,5 @@ MIT. See [LICENSE](./LICENSE).
 
 - [Privacy Policy](./PRIVACY.md)
 - [Terms of Use](./TERMS.md)
-- [PRD (v1)](./docs/prd.md)
-- [Rebuild plan](./docs/plan.md)
+- [Contributing](./CONTRIBUTING.md)
+- [Security Policy](./SECURITY.md)

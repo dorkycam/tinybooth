@@ -19,8 +19,13 @@ experience, background, or identity.
 
 ## Enforcement
 
-Report unacceptable behavior to the maintainer (privately via the repo's contact channels).
+Report unacceptable behavior to the maintainer, [@dorkycam](https://github.com/dorkycam).
+If the report does not involve anyone's private information, you can also open an issue:
+https://github.com/dorkycam/tinybooth/issues
+
 Maintainers may remove comments, commits, issues, and PRs that violate this code, and may
 ban repeat offenders.
 
-This Code of Conduct is adapted from the Contributor Covenant, version 2.1.
+This Code of Conduct is loosely adapted from the
+[Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/),
+version 2.1. It is a short summary, not the full text.

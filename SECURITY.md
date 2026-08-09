@@ -4,9 +4,12 @@
 
 Please report security issues privately. Do **not** open a public issue for a vulnerability.
 
-Use GitHub's private vulnerability reporting (the "Report a vulnerability" button under the
-repo's **Security** tab), or email the maintainer. We'll acknowledge within a few days and
-keep you updated on a fix.
+Use GitHub's private vulnerability reporting — the "Report a vulnerability" button under the
+repo's [Security tab](https://github.com/dorkycam/tinybooth/security). We'll acknowledge
+within a few days and keep you updated on a fix.
+
+For anything that is **not** a vulnerability (bugs, crashes, feature requests), open a normal
+issue instead: https://github.com/dorkycam/tinybooth/issues
 
 ## Scope
 
