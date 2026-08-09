@@ -76,14 +76,20 @@ gh api -X PATCH "repos/$REPO" -f default_branch=develop >/dev/null
 # ---------------------------------------------------------------------------
 # 3. Protect both branches.
 #
-# required_approving_review_count is 0 on purpose: this is a solo-maintainer
-# repo and GitHub does not let you approve your own PR, so requiring 1 would
-# lock the maintainer out of their own project. The PR itself is still
-# mandatory, so `git push origin main` is refused either way. Raise this to 1
-# the moment a second maintainer joins.
+# Review policy: every PR needs one approving review from the code owner
+# (.github/CODEOWNERS -> @dorkycam), so no contributor can merge unreviewed
+# work.
 #
-# enforce_admins=true is what makes "no one, including me" true. Turn it off
-# temporarily if you ever need to force-push a fix.
+# enforce_admins is deliberately FALSE, and that is load-bearing. GitHub does
+# not let anyone approve their own pull request, so with admins enforced the
+# solo maintainer could never merge their own PRs - there is no second reviewer
+# to unblock them. With it false, the maintainer keeps an admin override on the
+# merge button for their own work, while every other contributor is still hard
+# blocked until they approve.
+#
+# The trade-off this buys: an admin can also push straight to a protected
+# branch. The no-direct-push rule therefore binds everyone except the owner.
+# Flip enforce_admins to true the moment a second maintainer exists to review.
 # ---------------------------------------------------------------------------
 protect() {
   local branch="$1"
@@ -95,11 +101,11 @@ protect() {
     "strict": true,
     "contexts": ["$CHECK_BUILD", "$CHECK_SECRETS"]
   },
-  "enforce_admins": true,
+  "enforce_admins": false,
   "required_pull_request_reviews": {
-    "required_approving_review_count": 0,
+    "required_approving_review_count": 1,
     "dismiss_stale_reviews": true,
-    "require_code_owner_reviews": false
+    "require_code_owner_reviews": true
   },
   "restrictions": null,
   "allow_force_pushes": false,
@@ -118,5 +124,8 @@ echo "==> Done."
 gh api "repos/$REPO" --jq '"default branch: " + .default_branch'
 for b in main develop; do
   gh api "repos/$REPO/branches/$b/protection" \
-    --jq '"'"$b"': PR required, admins enforced=" + (.enforce_admins.enabled|tostring) + ", checks=" + ([.required_status_checks.contexts[]]|join(", "))'
+    --jq '"'"$b"': approvals=" + (.required_pull_request_reviews.required_approving_review_count|tostring)
+          + ", code-owner review=" + (.required_pull_request_reviews.require_code_owner_reviews|tostring)
+          + ", admins enforced=" + (.enforce_admins.enabled|tostring)
+          + ", checks=" + ([.required_status_checks.contexts[]]|join(", "))'
 done

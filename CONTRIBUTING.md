@@ -19,7 +19,9 @@ run in Expo Go. You'll need Xcode (iOS) or Android Studio (Android) for the firs
 - **`develop`** is the default branch and the one you target. Branch off it, PR back into it.
 - **`main`** is release-only. It receives merges from `develop`, and nothing else.
 
-Both branches are protected: no direct pushes, PR required, CI must pass.
+Both branches are protected: no direct pushes, PR required, CI must pass, and every PR needs
+an approving review from [@dorkycam](https://github.com/dorkycam) (see
+[.github/CODEOWNERS](./.github/CODEOWNERS)), who is auto-requested when you open it.
 
 ### Branch naming
 

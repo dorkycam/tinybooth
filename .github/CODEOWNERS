@@ -1,7 +1,10 @@
-# Default owner for everything.
-* @dorkycam
+# Code owners for TinyBooth.
+#
+# @dorkycam is automatically requested for review on every pull request, and
+# branch protection requires that review before a PR can merge.
+#
+# Note: GitHub does not let you approve your own pull request. On the
+# maintainer's own PRs, use the admin override on the merge button rather than
+# waiting for an approval that cannot arrive.
 
-# CI and release config: changes here are sensitive (they touch secrets), so they always
-# require the maintainer's review.
-/.github/ @dorkycam
-/eas.json @dorkycam
+* @dorkycam

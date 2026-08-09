@@ -78,8 +78,9 @@ Applies to code, comments, docs, and UI copy.
   `fix/88-countdown-drift`, `chore/210-bump-expo-audio`. A `pre-push` hook enforces this.
   Drop the number only when there is genuinely no issue (`docs/readme-links`).
 - **Every PR links its issue.** Put `Closes #123` in the PR body, or say why there isn't one.
-- Fill in the PR template. CI (typecheck, lint, test, secret scan) must pass. A maintainer
-  reviews and merges.
+- Fill in the PR template. CI (typecheck, lint, test, secret scan) must pass, and the PR needs
+  an approving review from the code owner (`@dorkycam`) before it can merge. Never merge your
+  own PR without that review.
 - Merges to `main` drive release-please, which tags `vX.Y.Z`, publishes a GitHub Release, and
   triggers the gated store build. See `CONTRIBUTING.md` for the full chain.
 
