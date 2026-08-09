@@ -9,8 +9,9 @@ because both reference the same env vars (`APPLE_ID`, `APPLE_TEAM_ID`,
 
 Install Bundler and the pinned Fastlane version:
 
+Run everything from the repo root — this is a single Expo app, not a monorepo.
+
 ```sh
-cd apps/mobile
 gem install bundler -v 2.5.9
 bundle install
 ```
@@ -23,7 +24,7 @@ $EDITOR fastlane/.env
 ```
 
 If you are using the App Store Connect API key (recommended for any
-non-interactive run), drop the `.p8` file at `apps/mobile/secrets/asc-api-key.p8`
+non-interactive run), drop the `.p8` file at `secrets/asc-api-key.p8`
 and set the three `ASC_API_*` env vars in `fastlane/.env`.
 
 ## Lanes
@@ -42,12 +43,18 @@ What each lane does:
   change back to git.
 - `metadata_push` runs `deliver` with `--skip_binary_upload --skip_screenshots`.
   Pushes only the contents of `fastlane/metadata/`. Never submits for review.
-- `screenshots` runs `snapshot` against the `TinyBoothUITests` UI test target
-  in `ios/TinyBoothUITests/`, then `frameit` to add device frames. Output
-  lands in `fastlane/screenshots/<lang>/<device>/`. Devices listed in
-  `Snapfile` (iPad Pro 12.9", iPhone 15 Pro Max, iPhone 11).
+- `screenshots` runs `snapshot` against a `TinyBoothUITests` UI test target,
+  then `frameit` to add device frames. Output lands in
+  `fastlane/screenshots/<lang>/<device>/`. Devices listed in `Snapfile`
+  (iPad Pro 12.9", iPhone 15 Pro Max, iPhone 11).
+  **Not functional yet:** the `TinyBoothUITests` target does not exist — `ios/`
+  only contains the `TinyBooth` app target. Creating that target is a
+  prerequisite before this lane can run. Until then, capture iOS screenshots by
+  hand, the same way `scripts/capture-android-screenshots.md` describes for
+  Android.
 - `screenshots_push` runs `deliver` with `--skip_metadata --skip_binary_upload`.
-  Uploads only the framed screenshots.
+  Uploads only the framed screenshots. Works with hand-captured PNGs too, as
+  long as they are laid out under `fastlane/screenshots/<lang>/<device>/`.
 
 ## What lives where
 

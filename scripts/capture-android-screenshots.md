@@ -32,40 +32,43 @@ Mirror the iOS Snapfile so the listings tell the same story:
 
 Each device gets the same six shots as iOS:
 
-1. Camera with countdown overlay
-2. Photostrip preview with the print button visible
-3. Layout picker showing the five strip layouts
-4. Connect to event flow (event slug + QR)
-5. Event branding applied to a strip
-6. Help screen with the Guided Access setup section
+1. Start screen, the booth at rest
+2. Layout picker showing both strip layouts
+3. Camera with countdown overlay
+4. Photostrip preview with the delivery buttons visible
+5. Settings, capture defaults section
+6. Settings, kiosk section (idle return)
 
 ## Step by step
 
-1. Install the latest preview APK on the device:
+1. Install the latest preview APK on the device (run from the repo root — this
+   is a single Expo app, not a monorepo):
    ```sh
-   cd apps/mobile
    pnpm exec eas build --platform android --profile preview --local
    adb install build-output.apk
    ```
-2. Launch the app. The seed-fixtures launch arg is not wired on Android yet,
-   so you populate fixture data by tapping through:
-   - Open the app, take 4 photos so the preview screen has real content.
-   - In Settings, set the default layout to `1x4 classic` then take another
-     strip for the layout picker shot.
+2. Launch the app. There is no seed-fixtures launch arg, so you populate real
+   content by tapping through:
+   - Open the app and run a full 4-shot strip so the preview screen has real
+     content.
+   - Leave the default layout preference on **User's choice** so the layout
+     picker actually appears at the start of a session (Settings > Capture
+     defaults > Default layout).
 3. Capture each screen with Android Studio Device Manager (Take Screenshot
    button) or `adb`:
    ```sh
    adb shell screencap -p /sdcard/01-camera-with-countdown.png
    adb pull /sdcard/01-camera-with-countdown.png ./fastlane/screenshots/android/
    ```
-4. Repeat for each device + each shot. Use the same filenames as the iOS
-   tests in `ios/TinyBoothUITests/TinyBoothUITests.swift`:
-   - `01-camera-with-countdown`
-   - `02-strip-preview-print`
-   - `03-layout-picker`
-   - `04-connect-to-event`
-   - `05-event-branding`
-   - `06-help-guided-access`
+4. Repeat for each device + each shot, using these filenames (the iOS side is
+   also captured by hand for now — the `TinyBoothUITests` target referenced by
+   `fastlane/Snapfile` has not been created yet):
+   - `01-start-screen`
+   - `02-layout-picker`
+   - `03-camera-with-countdown`
+   - `04-strip-preview-delivery`
+   - `05-settings-capture-defaults`
+   - `06-settings-kiosk`
 5. Drop each PNG into the matching Play Console listing field. There is no
    `fastlane supply` lane for screenshots in this repo yet; use the Play
    Console UI directly.
@@ -75,17 +78,16 @@ Each device gets the same six shots as iOS:
 Play Store screenshots can include their own text overlay (no Apple-style
 frame requirement). Use the same six captions as iOS:
 
-1. "Real photo booth, free on iPad and Android"
-2. "Print classic 1x4 photo strips"
-3. "Five strip layouts, 1x4 to 2x2"
-4. "Connect the booth to your event"
-5. "Branded strips for weddings and parties"
-6. "Guided Access keeps the booth on one screen"
+1. "A real photo booth, free and open source"
+2. "Two layouts: classic strip or quad grid"
+3. "Tap, count down, four photos"
+4. "Print, save, or share. All on your device."
+5. "Tune the countdown, flash, sound, and haptics"
+6. "Kiosk mode returns to Start on its own"
 
 If you want a quick overlay tool, [Screenshot Framer](https://github.com/Screenshot-Framer/Screenshot-Framer)
-ships caption presets for both stores. Otherwise the Figma file at
-`docs/brand/assets/store-frames.fig` (TODO: build this when designer pass
-runs) has the layered template.
+ships caption presets for both stores. There is no committed Figma template
+yet.
 
 ## When to switch to Screengrab
 

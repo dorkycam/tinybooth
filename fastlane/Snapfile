@@ -6,10 +6,12 @@
 # Optional but recommended for older-device coverage:
 #   - iPhone 11 (6.1") for compat shots.
 #
-# `snapshot` boots each simulator, runs the UI tests in
-# `ios/TinyBoothUITests`, and saves PNGs into
-# `apps/mobile/fastlane/screenshots/<lang>/<device>/`. `frameit` then adds the
-# device frame around each shot so the App Store cards look polished.
+# `snapshot` boots each simulator, runs the `TinyBoothUITests` UI tests, and
+# saves PNGs into `fastlane/screenshots/<lang>/<device>/`. `frameit` then adds
+# the device frame around each shot so the App Store cards look polished.
+#
+# NOTE: the `TinyBoothUITests` target referenced by `scheme` below has not been
+# created yet, so `fastlane screenshots` cannot run as-is. See fastlane/README.md.
 
 devices([
   "iPad Pro (12.9-inch) (6th generation)",
@@ -21,17 +23,18 @@ languages([
   "en-US"
 ])
 
-# Where the captured PNGs land (relative to apps/mobile/).
+# Where the captured PNGs land (relative to the repo root).
 output_directory("./fastlane/screenshots")
 
-# UI test scheme (matches the Xcode scheme created by `expo prebuild`).
+# UI test scheme. `expo prebuild` only generates the `TinyBooth` app scheme —
+# this UI-test scheme must be added in Xcode before the lane will run.
 scheme("TinyBoothUITests")
 
 # Build the app once per device family rather than per device.
 reinstall_app(true)
 
-# Reset the simulator between runs so the "first launch" modal shows up
-# in the captured shot (per the WhatsNewModal flow added in Phase 6 H).
+# Reset the simulator between runs so the app is captured in its true
+# first-launch state (permission primer, empty Start screen).
 erase_simulator(true)
 
 # Snapshot picks up the localized strings to overlay on the bottom of the

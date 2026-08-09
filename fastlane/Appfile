@@ -1,7 +1,7 @@
 # Appfile - identifies the iOS app for every Fastlane lane.
 #
 # All three values come from environment variables so nothing real is
-# committed. Camrynn populates these via `apps/mobile/fastlane/.env`
+# committed. Camrynn populates these via `fastlane/.env`
 # (gitignored); Bundler picks them up because the Fastfile loads `.env`
 # before invoking `Spaceship`.
 #
@@ -9,7 +9,7 @@
 #   APPLE_ID               your.apple.id@example.com
 #   APPLE_TEAM_ID          ABCDE12345                (10 char Apple team id)
 #
-# These names also match the EAS submit profiles in apps/mobile/eas.json so
+# These names also match the EAS submit profiles in eas.json so
 # Fastlane and EAS share one source of truth.
 
 app_identifier(ENV["APP_IDENTIFIER"] || "com.codesquad.tinybooth")

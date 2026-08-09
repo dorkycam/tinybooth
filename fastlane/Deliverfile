@@ -26,6 +26,6 @@ automatic_release(false)
 # purchases, so the IAP precheck is off.
 precheck_include_in_app_purchases(false)
 
-# Localized metadata directory (relative to apps/mobile/).
+# Localized metadata directory (relative to the repo root).
 metadata_path("./fastlane/metadata")
 screenshots_path("./fastlane/screenshots")
