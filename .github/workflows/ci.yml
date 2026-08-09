@@ -1,12 +1,12 @@
-# Runs on every push to main and every PR (including forks).
+# Runs on every push to a long-lived branch and every PR (including forks).
 # Safe by design: no secrets are used here, so a fork PR cannot exfiltrate anything.
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 permissions:
   contents: read
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   check:
-    name: typecheck + test
+    name: typecheck + lint + test
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -36,6 +36,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
 
       - name: Test
         run: pnpm test

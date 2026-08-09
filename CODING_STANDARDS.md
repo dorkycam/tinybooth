@@ -139,18 +139,23 @@ noted as such at the end.
 - **Build tiny single-responsibility hooks and compose. (new)** Prefer small primitives
   (`useBooleanState`, a debounced setter) and build flow hooks from them instead of re-writing
   `useState`/`useCallback` boilerplate.
-- **Access shared singletons through a Context + a guard hook that throws. (existing/new)** Wrap
-  app-wide services (settings/persistence, media-library/file-system, a logger) behind a Context
-  and a hook that throws if used outside its provider, so screens never reach into
-  `expo-file-system` / `expo-secure-store` directly and the dep is mockable. `ThemeContext`/
-  `useTheme` and `useSettings` are the model.
-  ```ts
-  export function useSettings(): SettingsStore {
-    const store = useContext(SettingsContext);
-    if (!store) throw new Error('useSettings must be used within a SettingsProvider');
-    return store;
-  }
-  ```
+- **Reach shared state through a hook, never through the storage dep directly. (existing)**
+  Screens must not import `expo-secure-store` / `async-storage` / `expo-file-system`; they go
+  through a hook so the dependency stays mockable and swappable. Two shapes are in use, both
+  fine:
+  - **Module-level store + `useSyncExternalStore`** — for state with no provider and no
+    per-tree variation. `useSettings` (`src/hooks/useSettings.ts`) is the model: a singleton
+    store, hydrated once, subscribed to via `useSyncExternalStore`.
+    ```ts
+    export function useSettings(): UseSettingsResult {
+      const settings = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+      // ...
+    }
+    ```
+  - **Context with real defaults** — for state a provider genuinely scopes. `ThemeContext` /
+    `useTheme` (`src/theme/`) is the model. Note it deliberately supplies working defaults
+    rather than throwing outside a provider, so a component rendered in isolation (or a test)
+    still gets a usable theme.
 - **Disciplined effects: guard async work and always clean up. (new)** Use a local
   `let ignore = false` closed over by the cleanup to drop stale async resolutions under
   StrictMode and fast screen transitions (critical for camera/permission/file-read effects).
