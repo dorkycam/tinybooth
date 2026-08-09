@@ -1,11 +1,17 @@
-Now on Android.
+Now on Android, and rebuilt from the ground up.
 
-New: a guest photo wall you can pair with the booth. Guests scan a QR, upload from any phone, and the photo lands on the TV in seconds. No app for guests.
+New: a second layout. Alongside the classic cut-down-the-middle strip there is now a 2x2 quad grid. Pick one each time, or set a default in Settings.
 
-New: more strip layouts. The classic 1x4 is still the default, plus 2x2, 1x3, single, and a 1x6 double if you have the paper.
+New: strips are composed at print resolution, sized for a 4x6, so prints look sharp instead of screen-grabbed.
 
-New: optional event branding for paying hosts. Drop a logo and pick a color and every printed strip carries it.
+New: a screen flash that lights faces in dim rooms, plus the torch on devices that have one.
 
-Still free for personal use. Still no account required. Your random messages from the original app are still here.
+New: kiosk settings. The screen stays awake, and the booth returns to Start after an idle timeout you choose.
 
-If anything looks off, the help screen has setup tips and a way to email me.
+New: you can hide the Save or Share button for a print-only booth, and optionally keep each individual frame.
+
+More encouraging messages between shots. The original nine are still in there, untouched.
+
+Still free, still no account, and now fully open source under the MIT license.
+
+Found a bug? https://github.com/dorkycam/tinybooth/issues

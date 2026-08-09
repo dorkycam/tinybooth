@@ -1,39 +1,45 @@
-TinyBooth turns an iPad or iPhone into a real photo booth. Tap, count down, take 4 photos, get a printable strip. No account, no signup, no ads.
+TinyBooth turns an iPad or iPhone into a real photo booth. Tap Start, count down, take 4 photos, get a printable strip. No account, no signup, no ads, no in-app purchases.
 
-Free forever for personal use. The classic strip with the random post-photo message is still the same one you remember. We added more layouts, a guest photo wall for parties, and a way to print or share without giving up your phone for the night.
+TinyBooth is free and open source, and it runs entirely on your device. There is no server behind it. Your photos never leave your phone or tablet unless you choose to save, share, or print them.
 
-WHAT YOU GET FOR FREE
-- Front camera, 3-second countdown, 4 photos in a row
-- Five strip layouts: 1x4 classic, 2x2, 1x3, single, and 1x6 double
-- The original 9 random messages between shots
-- Save to Camera Roll, share to Messages, Photos, or Mail
-- AirPrint to any compatible printer (Selphy CP1500 tested)
-- Works on iPad and iPhone, portrait or landscape
-- A small TinyBooth credit on the bottom of each strip
+It is a rebuild of a photo booth app first released in 2018. The classic strip and the random post-photo messages are still the same ones you remember.
 
-WHAT YOU CAN UNLOCK
-- Strip Unlock $1.99: drop the credit on your most recent strip
-- Event Pass $14.99: a full event for one day with custom branding, 150 guest uploads on the photo wall, email and SMS delivery to guests, and a 60-day cloud archive
-- Event Pass Plus $39: same as Event Pass with unlimited guests, custom messages added to the random pool, and a 90-day archive
+WHAT YOU GET
+- Front camera with a mirrored preview, so guests see themselves the right way round
+- Adjustable countdown (3 seconds by default), then 4 photos in a row
+- Two strip layouts: the classic 4-shot strip you cut down the middle, and a 2x2 quad grid
+- Pick a layout each time, or set one as your default
+- 17 random encouraging messages between shots, including the original nine
+- A screen flash that lights faces in dim rooms, plus the torch on devices that have one
+- Optional countdown sound, shutter sound, and haptics
+- Strips composed at print resolution (1200x1800, sized for a 4x6), not at screen size
 
-PHOTO WALL FOR PARTIES (TinyWall)
-- Pair the booth with a TV at your event
-- Guests scan a QR code, upload a photo, and it appears on the screen in seconds
-- No app for guests, no account, no friction
-- Free wall: 100 uploads, 7 days
-- Paid wall: per-event branding, more uploads, longer retention, bulk download
+DELIVERY, ALL ON DEVICE
+- Print straight to a printer with AirPrint on iOS or the Android print service
+- Save the strip to your photo library
+- Share to Messages, Mail, AirDrop, or any app in your share sheet
+- Optionally save each individual frame alongside the strip
+- Hide the Save or Share button if you want a print-only booth
 
-WHY HOSTS LIKE IT
-- Tablet-first design. Stand it up on a tripod and walk away.
-- Wedding-ready: pick a color, drop a logo, and every printed strip carries your branding
-- The host dashboard at tinybooth.com lets you download every strip and every guest upload at the end of the night
+BUILT TO RUN UNATTENDED
+- Tablet-first layout. Stand it on a tripod and walk away.
+- The screen stays awake while the booth is in use
+- Auto-returns to the Start screen after an idle timeout you choose, or never
+- Works on iPad and iPhone, in portrait and landscape
+- Light, dark, or system appearance
 
 PRIVACY
-- Standalone photos never leave your device
-- Event photos go through your event only and are deleted on a schedule you pick
-- No ads, no tracking, no resale of your photos
+- No accounts, no sign-in, no analytics, no trackers, no ads
+- The app makes no network requests at all
+- Photos are held only in memory while you take a strip, then handed to your own device's save, share, or print
+- Settings stay on your device
+
+OPEN SOURCE
+TinyBooth is MIT licensed. You can read every line, build it yourself, or contribute:
+https://github.com/dorkycam/tinybooth
 
 SUPPORT
-Open the help screen for setup tips. Stuck on a Selphy queue? Tap "restart printing" and the strip will resume.
+Questions, bugs, and feature requests all go to GitHub Issues:
+https://github.com/dorkycam/tinybooth/issues
 
-You take the photos. We take care of the print and the wall.
+You take the photos. Your device does the rest.

@@ -1,1 +1,1 @@
-photobooth,party,wedding,event,strip,ipad,airprint,polaroid,selphy,birthday,booth,prints
+photobooth,photo booth,party,wedding,event,strip,ipad,airprint,birthday,booth,prints,kiosk

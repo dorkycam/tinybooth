@@ -1,1 +1,1 @@
-https://tinybooth.com/legal/privacy
+https://github.com/dorkycam/tinybooth/blob/main/PRIVACY.md
