@@ -53,6 +53,12 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       PROFILE: ${{ github.event.inputs.profile || 'production' }}
       COMMIT_SHA: ${{ github.sha }}
+      # Hoisted here because the `secrets` context is NOT available inside an
+      # `if:` expression. Referencing it there fails the whole workflow file to
+      # parse, which makes GitHub log a failed run for every push on every
+      # branch. The steps below test these env vars instead.
+      PLAY_JSON: ${{ secrets.ANDROID_SERVICE_ACCOUNT_JSON }}
+      ASC_KEY_B64: ${{ secrets.ASC_API_KEY_BASE64 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -73,18 +79,14 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Materialize Play service account
-        if: ${{ secrets.ANDROID_SERVICE_ACCOUNT_JSON != '' }}
-        env:
-          PLAY_JSON: ${{ secrets.ANDROID_SERVICE_ACCOUNT_JSON }}
+        if: env.PLAY_JSON != ''
         run: |
           mkdir -p secrets
           printf '%s' "$PLAY_JSON" > secrets/play-service-account.json
           chmod 600 secrets/play-service-account.json
 
       - name: Materialize App Store Connect API key
-        if: ${{ secrets.ASC_API_KEY_BASE64 != '' }}
-        env:
-          ASC_KEY_B64: ${{ secrets.ASC_API_KEY_BASE64 }}
+        if: env.ASC_KEY_B64 != ''
         run: |
           mkdir -p secrets
           printf '%s' "$ASC_KEY_B64" | base64 --decode > secrets/asc-api-key.p8
