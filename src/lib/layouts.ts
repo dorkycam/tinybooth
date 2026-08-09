@@ -11,17 +11,17 @@
  * pure so they can be unit tested without the React Native or Skia runtime.
  */
 
+/** Every shipped layout, in display order. */
+export const STRIP_LAYOUTS = ['classic', 'quad'] as const;
+
 /** The strip layouts TinyBooth can produce. v1: Classic and Quad. */
-export type StripLayout = 'classic' | 'quad';
+export type StripLayout = (typeof STRIP_LAYOUTS)[number];
 
 /**
  * A stored default-layout preference. Either a concrete {@link StripLayout} that
  * skips the picker, or `'ask'` (User's choice) to show the picker every session.
  */
 export type LayoutPreference = StripLayout | 'ask';
-
-/** Every shipped layout, in display order. */
-export const STRIP_LAYOUTS: readonly StripLayout[] = ['classic', 'quad'] as const;
 
 /** Default layout when none is set. */
 export const DEFAULT_STRIP_LAYOUT: StripLayout = 'classic';
