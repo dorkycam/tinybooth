@@ -53,12 +53,6 @@ jobs:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
       PROFILE: ${{ github.event.inputs.profile || 'production' }}
       COMMIT_SHA: ${{ github.sha }}
-      # Hoisted here because the `secrets` context is NOT available inside an
-      # `if:` expression. Referencing it there fails the whole workflow file to
-      # parse, which makes GitHub log a failed run for every push on every
-      # branch. The steps below test these env vars instead.
-      PLAY_JSON: ${{ secrets.ANDROID_SERVICE_ACCOUNT_JSON }}
-      ASC_KEY_B64: ${{ secrets.ASC_API_KEY_BASE64 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -78,16 +72,36 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
+      # These two steps deliberately have no `if:`. The `secrets` context is not
+      # available in an `if:` expression, and referencing it there makes the
+      # whole workflow file unparseable, which in turn makes GitHub ignore the
+      # `on:` filters and log a failed run for every push on every branch.
+      #
+      # Hoisting the secrets to the job-level `env:` would also "work", but it
+      # would expose the Play and App Store credentials to every step in the
+      # job, including `pnpm install` and its third-party postinstall scripts.
+      # Keeping `env:` on the individual step and no-opping on an empty value
+      # gets the same skip behaviour with the original blast radius.
       - name: Materialize Play service account
-        if: env.PLAY_JSON != ''
+        env:
+          PLAY_JSON: ${{ secrets.ANDROID_SERVICE_ACCOUNT_JSON }}
         run: |
+          if [ -z "$PLAY_JSON" ]; then
+            echo "ANDROID_SERVICE_ACCOUNT_JSON not set, skipping."
+            exit 0
+          fi
           mkdir -p secrets
           printf '%s' "$PLAY_JSON" > secrets/play-service-account.json
           chmod 600 secrets/play-service-account.json
 
       - name: Materialize App Store Connect API key
-        if: env.ASC_KEY_B64 != ''
+        env:
+          ASC_KEY_B64: ${{ secrets.ASC_API_KEY_BASE64 }}
         run: |
+          if [ -z "$ASC_KEY_B64" ]; then
+            echo "ASC_API_KEY_BASE64 not set, skipping."
+            exit 0
+          fi
           mkdir -p secrets
           printf '%s' "$ASC_KEY_B64" | base64 --decode > secrets/asc-api-key.p8
           chmod 600 secrets/asc-api-key.p8
