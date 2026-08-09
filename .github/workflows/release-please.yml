@@ -19,3 +19,8 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
+          # Must be set explicitly. Without it the action targets the repository's
+          # DEFAULT branch, which is `develop` — so it opened its release PR against
+          # develop and would have tagged the release from there. Releases are cut
+          # from `main` only.
+          target-branch: main
