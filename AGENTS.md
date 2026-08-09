@@ -69,9 +69,13 @@ Applies to code, comments, docs, and UI copy.
 
 - **Conventional Commits:** `feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `test:`. Include
   a scope when useful (`feat(capture): ...`). Releases are automated from these messages.
-- Keep commits focused. Run `pnpm typecheck` and `pnpm test` before committing.
-- Open a PR against `main`. Fill in the PR template. CI (lint, typecheck, test, secret scan)
-  must pass. A maintainer reviews and merges.
+- Keep commits focused. Run `pnpm typecheck`, `pnpm lint`, and `pnpm test` before committing.
+- **Branch off `develop` and open the PR against `develop`.** `main` is release-only and
+  receives merges from `develop` alone. Both are protected: no direct pushes, ever.
+- Fill in the PR template. CI (typecheck, lint, test, secret scan) must pass. A maintainer
+  reviews and merges.
+- Merges to `main` drive release-please, which tags `vX.Y.Z`, publishes a GitHub Release, and
+  triggers the gated store build. See `CONTRIBUTING.md` for the full chain.
 
 ## Security (read before committing)
 
