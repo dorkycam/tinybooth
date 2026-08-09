@@ -71,7 +71,13 @@ before building something large.
 
 ## How releases work
 
-Contributors don't need to do anything release-related. For maintainers, the chain is:
+Contributors don't need to do anything release-related.
+
+**Merge strategy:** squash feature PRs into `develop`, but use a **merge commit** for the
+`develop` -> `main` promotion. Squashing that one rewrites history `develop` has no record of,
+so the branches diverge and the next promotion PR replays commits that are already shipped.
+
+For maintainers, the chain is:
 
 1. PRs merge into `develop`. CI runs typecheck, lint, test, and a secret scan.
 2. When `develop` is ready, a maintainer opens a PR from `develop` into `main`.
