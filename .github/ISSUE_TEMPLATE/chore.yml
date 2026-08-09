@@ -1,0 +1,53 @@
+name: Chore
+description: Maintenance, refactor, docs, tooling, or dependency work
+labels: ["chore"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What needs doing
+      description: The task, stated plainly.
+      placeholder: Bump expo-audio to the SDK 55 line and re-test the shutter sound.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options:
+        - Refactor
+        - Docs
+        - Tooling / CI
+        - Dependency upgrade
+        - Test coverage
+        - Cleanup / dead code
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why now
+      description: What this unblocks, or what breaks if it keeps waiting.
+    validations:
+      required: false
+
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: How we know it's finished.
+      placeholder: |
+        - [ ] pnpm typecheck, lint, and test pass
+        - [ ] No behaviour change on device
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope check
+      options:
+        - label: This does not add network, accounts, or a backend
+          required: true

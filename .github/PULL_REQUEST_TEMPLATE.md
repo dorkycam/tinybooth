@@ -1,6 +1,20 @@
+## Related issue
+
+<!--
+Every PR should trace back to an issue. Use a closing keyword so the issue
+closes on merge:
+
+    Closes #123
+
+If there genuinely isn't one (a typo fix, a dependency bump), write "No issue"
+and one line on why.
+-->
+
+Closes #
+
 ## What this changes
 
-<!-- One or two sentences. Link any related issue: Closes #123 -->
+<!-- One or two sentences, in plain language. -->
 
 ## Type of change
 
@@ -14,6 +28,7 @@
 
 ## Checklist
 
+- [ ] Linked an issue above (or explained why there isn't one)
 - [ ] `pnpm typecheck` passes
 - [ ] `pnpm lint` passes
 - [ ] `pnpm test` passes
