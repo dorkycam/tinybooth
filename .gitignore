@@ -59,15 +59,9 @@ android/.gradle/
 # EAS submit credentials (App Store + Play Store)
 secrets/
 
-# Fastlane outputs and secrets
-fastlane/report.xml
-fastlane/Preview.html
-fastlane/screenshots/
-fastlane/test_output/
-fastlane/metadata/review_information/
-fastlane/.env
-fastlane/.env.*
-!fastlane/.env.example
+# Store screenshots: large, regenerable, and the stores hold the canonical copy.
+# See docs/capture-screenshots.md.
+screenshots/
 
 # Internal planning docs (kept local, never published)
 .private/
