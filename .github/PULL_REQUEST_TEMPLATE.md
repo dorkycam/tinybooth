@@ -10,9 +10,12 @@
 - [ ] docs
 - [ ] test
 
+> Target `develop`, not `main`. `main` is release-only — see [CONTRIBUTING.md](../CONTRIBUTING.md).
+
 ## Checklist
 
 - [ ] `pnpm typecheck` passes
+- [ ] `pnpm lint` passes
 - [ ] `pnpm test` passes
 - [ ] Follows [AGENTS.md](../AGENTS.md) conventions (no `any`, explicit return types, theme
       tokens not hardcoded hex, one component per file)
