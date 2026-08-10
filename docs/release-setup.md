@@ -92,14 +92,34 @@ credentials and the build without touching a store. Once green, run it again wit
 6. Manual `preview` build with submit
 7. Only then rely on tags
 
+## How to ship
+
+Use the **build** workflow — Actions > build > Run workflow. There is no local shipping
+script; a second path would only drift from CI.
+
+Note that "submit" means "upload", not "release to users":
+
+- **Android** lands as a **draft** on its track (`releaseStatus: "draft"` in `eas.json`). You
+  promote it in Play Console.
+- **iOS** lands in App Store Connect and goes through TestFlight processing. Submitting for
+  App Store review is a separate manual step.
+- A **`production`** build additionally waits on the environment's required reviewer.
+
+All three are deliberate. Nothing reaches users without a human.
+
 ## Troubleshooting
 
-**`eas submit` cannot find the app on iOS.** Add `ascAppId` (the numeric App Store Connect app
-ID, from the app's URL in App Store Connect) to the `ios` block of the submit profile in
-`eas.json`.
+**`eas submit` cannot find the app on iOS.** Already handled: `ascAppId` is pinned in both
+submit profiles. That value is the numeric App Store Connect app ID, visible in the app's URL
+there. It is an identifier, not a credential, and is public in every App Store link, so it
+belongs in the committed config.
 
 **"You must be logged in" in CI.** `EXPO_TOKEN` is missing or expired. It is the only GitHub
 secret this workflow needs.
+
+**iOS builds start failing after Feb 2027.** The distribution certificate and provisioning
+profile expire 2027-02-17. EAS can usually renew them itself, since its App Store Connect API
+key holds an ADMIN role.
 
 ## What triggers a real release
 
