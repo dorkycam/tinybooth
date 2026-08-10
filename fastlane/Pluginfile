@@ -1,0 +1,4 @@
+# Pluginfile - declared as a Bundler-evaluated file from the parent Gemfile.
+# Fastlane plugins live here so `bundle install` and `bundle exec fastlane`
+# resolve them together.
+gem "fastlane-plugin-versioning"

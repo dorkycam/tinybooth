@@ -1,0 +1,31 @@
+# Deliverfile - configures `fastlane deliver` for App Store metadata pushes.
+#
+# Most fields are read from `fastlane/metadata/en-US/*.txt` by deliver
+# automatically. This file only sets safety defaults so a stray
+# `bundle exec fastlane metadata_push` cannot overwrite the binary, the
+# screenshots, or pricing/availability without explicit opt-in.
+
+app_identifier(ENV["APP_IDENTIFIER"] || "com.codesquad.tinybooth")
+username(ENV["APPLE_ID"])
+team_id(ENV["APPLE_TEAM_ID"])
+
+# Refuse to overwrite the build, screenshots, or pricing when running
+# `metadata_push`. Each lane in Fastfile flips the right flags off.
+skip_binary_upload(true)
+skip_screenshots(true)
+skip_metadata(false)
+skip_app_version_update(false)
+
+# Submit nothing for review automatically. Camrynn always submits manually
+# after she has eyes on the App Store Connect preview.
+submit_for_review(false)
+automatic_release(false)
+
+# Force review precheck so common rejection causes (broken URLs, banned
+# words) surface locally before push. TinyBooth is free with no in-app
+# purchases, so the IAP precheck is off.
+precheck_include_in_app_purchases(false)
+
+# Localized metadata directory (relative to apps/mobile/).
+metadata_path("./fastlane/metadata")
+screenshots_path("./fastlane/screenshots")

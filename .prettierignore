@@ -1,0 +1,9 @@
+node_modules
+.expo
+dist
+build
+coverage
+ios
+android
+*.md
+docs/

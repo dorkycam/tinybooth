@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "TinyBooth",
+    "slug": "tinybooth",
+    "version": "2.0.5",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "scheme": "tinybooth",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FBF7EE"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.codesquad.tinybooth",
+      "privacyManifests": {
+        "PrivacyInfoPath": "./ios/TinyBooth/PrivacyInfo.xcprivacy"
+      },
+      "infoPlist": {
+        "NSCameraUsageDescription": "TinyBooth uses the camera to take photos in the booth. Photos stay on this device. TinyBooth never uploads anything.",
+        "NSPhotoLibraryAddUsageDescription": "TinyBooth saves the strips you create to your Photos library so you have a copy to share or print later.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.codesquad.tinybooth",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FBF7EE"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "react-native-vision-camera",
+        {
+          "cameraPermissionText": "TinyBooth uses your camera to take photostrips.",
+          "enableMicrophonePermission": false
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "savePhotosPermission": "TinyBooth saves the strips you create to your Photos library.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ],
+      "expo-font",
+      "expo-secure-store",
+      "expo-audio"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "f0ed0282-f1d9-411e-a703-8cf671851ef6"
+      }
+    },
+    "owner": "dorkycam"
+  }
+}

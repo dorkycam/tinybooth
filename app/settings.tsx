@@ -1,0 +1,159 @@
+/**
+ * Settings screen.
+ *
+ * Capture defaults (flash, countdown length, sound, haptics, default layout,
+ * save individual frames), idle reset time, appearance (system / light / dark),
+ * a QA preview-class override, and an About section (version, MIT license, repo
+ * and legal links). Everything persists locally via the shared settings store;
+ * the app has no account and collects nothing.
+ *
+ * Thin screen: the section, row, and about-link pieces are extracted components.
+ */
+import type { JSX } from 'react';
+import Constants from 'expo-constants';
+import { Linking, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { AboutLink } from '@/components/AboutLink';
+import { LayoutPicker } from '@/components/LayoutPicker';
+import { SegmentedChoice } from '@/components/SegmentedChoice';
+import { SettingsRow } from '@/components/SettingsRow';
+import { SettingsSection } from '@/components/SettingsSection';
+import { Wordmark } from '@/components/Wordmark';
+import { useSettings } from '@/hooks/useSettings';
+import {
+  GITHUB_ISSUES_URL,
+  GITHUB_REPO_URL,
+  PRIVACY_URL,
+  TERMS_URL,
+} from '@/lib/links';
+import {
+  COUNTDOWN_CHOICES,
+  IDLE_RESET_CHOICES,
+  type IdleReset,
+  type PreviewClassOverride,
+} from '@/lib/sessionSettings';
+import { useThemePreference, type ThemePreference } from '@/theme/ThemeContext';
+import { useTheme } from '@/theme/useTheme';
+
+const PREVIEW_CHOICES: PreviewClassOverride[] = ['auto', 'phone', 'tablet'];
+const THEME_CHOICES: ThemePreference[] = ['system', 'light', 'dark'];
+
+/** Label an idle-reset choice for its chip. */
+function idleResetLabel(value: IdleReset): string {
+  return value === 'never' ? 'Never' : `${value}s`;
+}
+
+/** Open an external URL, ignoring failures (no browser is non-fatal here). */
+function openLink(url: string): void {
+  void Linking.openURL(url).catch(() => undefined);
+}
+
+/** Settings screen. */
+export default function SettingsScreen(): JSX.Element {
+  const theme = useTheme();
+  const themePref = useThemePreference();
+  const { settings, update } = useSettings();
+  const version = Constants.expoConfig?.version ?? '0.0.0';
+
+  return (
+    <SafeAreaView style={[styles.root, { backgroundColor: theme.colors.bg }]}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Wordmark size="md" />
+        <Text style={[styles.title, { color: theme.colors.fg }]}>Settings</Text>
+
+        <SettingsSection title="Capture defaults">
+          <SettingsRow title="Flash on by default">
+            <Switch value={settings.flash} onValueChange={(value) => update({ flash: value })} />
+          </SettingsRow>
+          <SettingsRow title="Countdown sound">
+            <Switch value={settings.sound} onValueChange={(value) => update({ sound: value })} />
+          </SettingsRow>
+          <SettingsRow title="Haptics">
+            <Switch
+              value={settings.haptics}
+              onValueChange={(value) => update({ haptics: value })}
+            />
+          </SettingsRow>
+          <SettingsRow title="Countdown length" stacked>
+            <SegmentedChoice
+              options={COUNTDOWN_CHOICES}
+              value={settings.countdown}
+              renderLabel={(seconds) => `${seconds}s`}
+              onSelect={(countdown) => update({ countdown })}
+            />
+          </SettingsRow>
+          <SettingsRow title="Default layout" stacked>
+            <LayoutPicker value={settings.layout} onChange={(layout) => update({ layout })} />
+          </SettingsRow>
+          <SettingsRow title="Save individual frames">
+            <Switch
+              value={settings.saveFrames}
+              onValueChange={(value) => update({ saveFrames: value })}
+            />
+          </SettingsRow>
+        </SettingsSection>
+
+        <SettingsSection title="Kiosk">
+          <SettingsRow title="Return to Start after idle" stacked>
+            <SegmentedChoice
+              options={IDLE_RESET_CHOICES}
+              value={settings.idleReset}
+              renderLabel={idleResetLabel}
+              onSelect={(idleReset) => update({ idleReset })}
+            />
+          </SettingsRow>
+        </SettingsSection>
+
+        <SettingsSection title="Appearance">
+          <SegmentedChoice
+            options={THEME_CHOICES}
+            value={themePref.preference}
+            onSelect={(choice) => void themePref.setPreference(choice)}
+          />
+        </SettingsSection>
+
+        <SettingsSection title="QA preview">
+          <SegmentedChoice
+            options={PREVIEW_CHOICES}
+            value={settings.previewClass}
+            onSelect={(previewClass) => update({ previewClass })}
+          />
+        </SettingsSection>
+
+        <SettingsSection title="About">
+          <Text style={[styles.aboutLine, { color: theme.colors.subtle }]}>
+            Version {version}
+          </Text>
+          <Text style={[styles.aboutLine, { color: theme.colors.subtle }]}>
+            TinyBooth runs fully on your device. No account, no network, nothing collected.
+          </Text>
+          <Text style={[styles.aboutLine, { color: theme.colors.subtle }]}>
+            Free and open source under the MIT license.
+          </Text>
+          <View style={styles.links}>
+            <AboutLink label="GitHub repository" onPress={() => openLink(GITHUB_REPO_URL)} />
+            <AboutLink label="Report a problem" onPress={() => openLink(GITHUB_ISSUES_URL)} />
+            <AboutLink label="Privacy Policy" onPress={() => openLink(PRIVACY_URL)} />
+            <AboutLink label="Terms" onPress={() => openLink(TERMS_URL)} />
+          </View>
+        </SettingsSection>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  content: { padding: 24, gap: 16 },
+  title: {
+    fontSize: 32,
+    fontWeight: '700',
+  },
+  aboutLine: {
+    fontSize: 15,
+  },
+  links: {
+    marginTop: 4,
+    gap: 4,
+  },
+});

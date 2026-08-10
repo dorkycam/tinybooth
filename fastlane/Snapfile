@@ -1,0 +1,39 @@
+# Snapfile - configures `fastlane snapshot` for screenshot capture.
+#
+# Devices we ship to the App Store. Apple requires:
+#   - One iPhone 6.7" (or 6.5") screenshot set: iPhone 15 Pro Max.
+#   - One iPad Pro 12.9" (3rd gen and later): iPad Pro (12.9-inch, 6th gen).
+# Optional but recommended for older-device coverage:
+#   - iPhone 11 (6.1") for compat shots.
+#
+# `snapshot` boots each simulator, runs the UI tests in
+# `ios/TinyBoothUITests`, and saves PNGs into
+# `apps/mobile/fastlane/screenshots/<lang>/<device>/`. `frameit` then adds the
+# device frame around each shot so the App Store cards look polished.
+
+devices([
+  "iPad Pro (12.9-inch) (6th generation)",
+  "iPhone 15 Pro Max",
+  "iPhone 11"
+])
+
+languages([
+  "en-US"
+])
+
+# Where the captured PNGs land (relative to apps/mobile/).
+output_directory("./fastlane/screenshots")
+
+# UI test scheme (matches the Xcode scheme created by `expo prebuild`).
+scheme("TinyBoothUITests")
+
+# Build the app once per device family rather than per device.
+reinstall_app(true)
+
+# Reset the simulator between runs so the "first launch" modal shows up
+# in the captured shot (per the WhatsNewModal flow added in Phase 6 H).
+erase_simulator(true)
+
+# Snapshot picks up the localized strings to overlay on the bottom of the
+# image when `frameit` runs. Strings live in `fastlane/screenshots/title.strings`.
+override_status_bar(true)
